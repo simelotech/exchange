@@ -1,7 +1,7 @@
 import logging
 import os
 from flask import Flask
-from flask_cache import Cache
+from flask_redis import FlaskRedis
 
 
 FLASK_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -22,8 +22,8 @@ logging.basicConfig(
     datefmt='%Y%m%d-%H:%M%p',
 )
 
-# Cache
-cache = Cache(app)
+# Redis
+redis_store = FlaskRedis(app, strict=False)
 
 # Business Logic
 from .api_1_0 import api as api_blueprint

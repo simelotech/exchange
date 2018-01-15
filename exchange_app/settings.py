@@ -19,10 +19,8 @@ class Config(object):
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    #: Cache
-    CACHE_TYPE = "redis"
-    CACHE_KEY_PREFIX = 'exchange'
-    CACHE_REDIS_URL = 'redis://localhost:6379/0'
+    #: Redis
+    REDIS_URL = 'redis://localhost:6379/0'
 
 
 class ProductionConfig(Config):
