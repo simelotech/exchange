@@ -30,7 +30,7 @@ def pending_events_cashin():
         # Remove pending “cashin” events with specified operation ids
         # Validate request json
         if not request.json \
-                or not "operationIds" in request.json:
+                or "operationIds" not in request.json:
             abort(400)  # Bad request
             # TODO: delete specified operation ids from blockchain and get result.
         result = True
@@ -41,6 +41,8 @@ def pending_events_cashin():
 
 @api.route('/pending-events/cashout-started', methods=['GET', 'DELETE'])
 def pending_events_cashout_started():
+    """
+    """
     if request.method == 'GET':  # GET handler
         max_events_number = request.args.get('maxEventsNumber', '')
         # TODO:Return up to maxEventsNumber results from blockchain
@@ -65,7 +67,7 @@ def pending_events_cashout_started():
         # Remove pending "cashout started" events with specified operation ids
         # Validate request json
         if not request.json \
-                or not "operationIds" in request.json:
+                or "operationIds" not in request.json:
             abort(400)  # Bad request
         # TODO: delete specified operation ids from blockchain and get result.
         result = True
@@ -104,7 +106,7 @@ def pending_events_cashout_completed():
         # Remove pending "cashout completed" events with specified operation ids
         # Validate request json
         if not request.json \
-                or not "operationIds" in request.json:
+                or "operationIds" not in request.json:
             abort(400)  # Bad request
         # TODO: delete specified operation ids from blockchain and get result.
         result = True
@@ -115,6 +117,7 @@ def pending_events_cashout_completed():
 
 @api.route('/pending-events/cashout-failed', methods=['GET', 'DELETE'])
 def pending_events_cashout_failed():
+    """"""
     # GET handler
     if request.method == 'GET':
         max_events_number = request.args.get('maxEventsNumber', '')
@@ -140,7 +143,7 @@ def pending_events_cashout_failed():
         # Remove pending "cashout failed" events with specified operation ids
         # Validate request json
         if not request.json \
-                or not "operationIds" in request.json:
+                or "operationIds" not in request.json:
             abort(400)  # Bad request
         # TODO: delete specified operation ids from blockchain and get result.
         result = True

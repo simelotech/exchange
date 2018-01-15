@@ -4,7 +4,8 @@ from . import api
 
 @api.route('/assets', methods=['GET'])
 def get_assets():
-    """"""
+    """
+    """
     # TODO: fill with values returned from blockchain api
     retvalue = {
         "assets": [
@@ -27,7 +28,8 @@ def get_assets():
 
 @api.route('/assets/<int:assetid>', methods=['GET'])
 def get_asset(assetid):
-    """"""
+    """
+    """
     # TODO: fill with values returned from blockchain api
     retvalue = {
         "assetId": assetid,
