@@ -27,4 +27,4 @@ redis_store = FlaskRedis(app, strict=False)
 
 # Business Logic
 from .api_1_0 import api as api_blueprint
-app.register_blueprint(api_blueprint)
+app.register_blueprint(api_blueprint, url_prefix='/api/v1.0')

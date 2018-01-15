@@ -2,7 +2,7 @@ from flask import jsonify
 from . import api
 
 
-@api.route('/api/assets', methods=['GET'])
+@api.route('/assets', methods=['GET'])
 def get_assets():
     """"""
     # TODO: fill with values returned from blockchain api
@@ -25,7 +25,7 @@ def get_assets():
     return jsonify(retvalue)
 
 
-@api.route('/api/assets/<int:assetid>', methods=['GET'])
+@api.route('/assets/<int:assetid>', methods=['GET'])
 def get_asset(assetid):
     """"""
     # TODO: fill with values returned from blockchain api

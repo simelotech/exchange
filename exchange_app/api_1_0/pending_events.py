@@ -2,7 +2,7 @@ from flask import request, jsonify, abort
 from . import api
 
 
-@api.route('/api/pending-events/cashin', methods=['GET', 'DELETE'])
+@api.route('/pending-events/cashin', methods=['GET', 'DELETE'])
 def pending_events_cashin():
     """
     """
@@ -39,7 +39,7 @@ def pending_events_cashin():
         return ""
 
 
-@api.route('/api/pending-events/cashout-started', methods=['GET', 'DELETE'])
+@api.route('/pending-events/cashout-started', methods=['GET', 'DELETE'])
 def pending_events_cashout_started():
     if request.method == 'GET':  # GET handler
         max_events_number = request.args.get('maxEventsNumber', '')
@@ -74,7 +74,7 @@ def pending_events_cashout_started():
         return ""
 
 
-@api.route('/api/pending-events/cashout-completed', methods=['GET', 'DELETE'])
+@api.route('/pending-events/cashout-completed', methods=['GET', 'DELETE'])
 def pending_events_cashout_completed():
     """
     """
@@ -113,7 +113,7 @@ def pending_events_cashout_completed():
         return ""
 
 
-@api.route('/api/pending-events/cashout-failed', methods=['GET', 'DELETE'])
+@api.route('/pending-events/cashout-failed', methods=['GET', 'DELETE'])
 def pending_events_cashout_failed():
     # GET handler
     if request.method == 'GET':

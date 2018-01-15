@@ -2,7 +2,7 @@ from flask import request, jsonify, abort
 from . import api
 
 
-@api.route('/api/wallets', methods=['POST'])
+@api.route('/wallets', methods=['POST'])
 def wallets():
     """
     """
@@ -11,7 +11,7 @@ def wallets():
     return jsonify({"address": address})
 
 
-@api.route('/api/wallets/<string:address>/cashout', methods=['POST'])
+@api.route('/wallets/<string:address>/cashout', methods=['POST'])
 def wallets_cashout(address):
     """
     Record transaction in blockchain from wallet address to destination address in json request
