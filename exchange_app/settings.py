@@ -16,9 +16,10 @@ class Config(object):
     LOG_LEVEL = logging.DEBUG
     SERVER_NAME = 'localhost:5000'
     #: Database
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-    SQLALCHEMY_RECORD_QUERIES = True
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    MONGOALCHEMY_DATABASE = ''
+    MONGOALCHEMY_SERVER = ''
+    MONGOALCHEMY_USER = ''
+    MONGOALCHEMY_PASSWORD = ''
     #: Redis
     REDIS_URL = 'redis://localhost:6379/0'
 

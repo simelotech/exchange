@@ -2,6 +2,7 @@ import logging
 import os
 from flask import Flask
 from flask_redis import FlaskRedis
+from flask_mongoalchemy import MongoAlchemy
 
 
 FLASK_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -24,6 +25,9 @@ logging.basicConfig(
 
 # Redis
 redis_store = FlaskRedis(app, strict=False)
+
+# MongoDB
+db = MongoAlchemy(app)
 
 # Business Logic
 from .api_1_0 import api as api_blueprint
