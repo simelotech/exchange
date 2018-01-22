@@ -1,5 +1,6 @@
 from flask import jsonify
 from . import api
+from . import blockchain
 
 
 @api.route('/assets', methods=['GET'])
