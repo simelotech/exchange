@@ -14,8 +14,11 @@ def get_url(path, values):
 		
 	url = base_url + path
 	
-	url_values = urllib.parse.urlencode(values) 
-	with urllib.request.urlopen(url + '?' + url_values) as response:
+	if values != "" :
+		url_values = urllib.parse.urlencode(values) 
+		url = url + '?' + url_values
+		
+	with urllib.request.urlopen(url) as response:
 		response_data = response.read()
 
 	#TODO: convert to JSON before return
