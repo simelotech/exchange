@@ -5,9 +5,9 @@ from . import blockchain
 
 @api.route('/api/v1.0/assets', methods=['GET'])
 def get_assets():
-    """
-    """
-    # getting data from blockchain
+	"""
+	"""
+	# getting data from blockchain
 	
 	# TODO: Must findout actual api call to get assets
 	path = "/assets"
@@ -17,44 +17,44 @@ def get_assets():
 	
 	#TODO: Get data items from response and generate output
 	
-    retvalue = {
-        "assets": [
-            {
-                "assetId": "1234",
-                "address": "some address",
-                "name": "asset name",
-                "accuracy": "asset accuracy"
-            },
-            {
-                "assetId": "5678",
-                "address": "some address",
-                "name": "asset name",
-                "accuracy": "asset accuracy"
-            }
-        ]
-    }
-    return jsonify(retvalue)
+	retvalue = {
+		"assets": [
+			{
+				"assetId": "1234",
+				"address": "some address",
+				"name": "asset name",
+				"accuracy": "asset accuracy"
+			},
+			{
+				"assetId": "5678",
+				"address": "some address",
+				"name": "asset name",
+				"accuracy": "asset accuracy"
+			}
+		]
+	}
+	return jsonify(retvalue)
 
 
 @api.route('/api/v1.0/assets/<int:assetid>', methods=['GET'])
 def get_asset(assetid):
-    """
-    """
-    
+	"""
+	"""
+	
 	# getting data from blockchain
 	
 	# TODO: Must findout actual api call to get assets
 	path = "/assets"
-	values[id] = assetid
+	values = {'id':assetid}
 	
 	response_data = get_url(path, values)
 	
 	#TODO: Get data items from response and generate output
 	
-    retvalue = {
-        "assetId": assetid,
-        "address": "some address",
-        "name": "asset name",
-        "accuracy": "asset accuracy"
-    }
-    return jsonify(retvalue)
+	retvalue = {
+		"assetId": assetid,
+		"address": "some address",
+		"name": "asset name",
+		"accuracy": "asset accuracy"
+	}
+	return jsonify(retvalue)
