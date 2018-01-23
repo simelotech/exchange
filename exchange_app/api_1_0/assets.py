@@ -3,7 +3,7 @@ from . import api
 from . import blockchain
 
 
-@api.route('/assets', methods=['GET'])
+@api.route('/api/v1.0/assets', methods=['GET'])
 def get_assets():
     """
     """
@@ -27,7 +27,7 @@ def get_assets():
     return jsonify(retvalue)
 
 
-@api.route('/assets/<int:assetid>', methods=['GET'])
+@api.route('/api/v1.0/assets/<int:assetid>', methods=['GET'])
 def get_asset(assetid):
     """
     """
