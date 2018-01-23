@@ -40,7 +40,17 @@ def get_assets():
 def get_asset(assetid):
     """
     """
-    # TODO: fill with values returned from blockchain api
+    
+	# getting data from blockchain
+	
+	# TODO: Must findout actual api call to get assets
+	path = "/assets"
+	values[id] = assetid
+	
+	response_data = get_url(path, values)
+	
+	#TODO: Get data items from response and generate output
+	
     retvalue = {
         "assetId": assetid,
         "address": "some address",
