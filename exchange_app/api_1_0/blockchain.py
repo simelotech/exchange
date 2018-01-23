@@ -6,10 +6,10 @@ import urllib.parse
 base_url = "http://blockchain.api.com"
 
 def get_url(path, values):
-    """
-    """
-	
-	if path[0] != '/' :
+	"""
+	"""
+
+	if path[0] != '/':
 		path = '/' + path
 		
 	url = base_url + path
@@ -26,8 +26,8 @@ def get_url(path, values):
 	
 
 def post_url(path, values):
-    """
-    """
+	"""
+	"""
 	
 	if path[0] != '/' :
 		path = '/' + path
