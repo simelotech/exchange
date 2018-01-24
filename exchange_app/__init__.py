@@ -27,7 +27,7 @@ logging.basicConfig(
 redis_store = FlaskRedis(app, strict=False)
 
 # MongoDB
-db = MongoAlchemy(app)
+#db = MongoAlchemy(app)
 
 # Business Logic
 from .api_1_0 import api as api_blueprint
