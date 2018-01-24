@@ -5,9 +5,9 @@ import json
 
 @api.route('/wallets', methods=['POST'])
 def wallets():
-    """
-    """
-    # generate new seed first
+	"""
+	"""
+	# generate new seed first
 	new_seed = get_url("/wallet/newSeed") 
 	new_seed = {"seed": "helmet van actor peanut"} #TODO: revove this mock response
 	
@@ -22,7 +22,7 @@ def wallets():
 					]} #TODO: remove this mock response.
 	
 	
-    return jsonify({"address": new_wallet["entries"][0]["address"]})
+	return jsonify({"address": new_wallet["entries"][0]["address"]})
 
 
 @api.route('/wallets/<string:address>/cashout', methods=['POST'])
