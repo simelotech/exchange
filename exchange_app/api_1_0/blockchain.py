@@ -23,10 +23,10 @@ def get_url(path, values = ""):
 
 	url = form_url(base_url, path)
 	
-	resp = requests.get(url, params = values)
-	response_data = resp.json()
+	#resp = requests.get(url, params = values)
+	#response_data = resp.json()
 		
-	#response_data = {"response": "data"}
+	response_data = {"Called": "get_url()", "url": url, "values:": values}
 
 	return response_data
 	
@@ -37,9 +37,9 @@ def post_url(path, values = ""):
 	
 	url = form_url(base_url, path)
 	
-	resp = requests.post(url, data = values)
-	response_data = resp.json()
+	#resp = requests.post(url, data = values)
+	#response_data = resp.json()
 		
-	#response_data = {"response": "data"}
+	response_data = {"Called": "post_url()", "url": url, "values:": values}
 
 	return response_data
