@@ -35,6 +35,20 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Settings
+
+Edit `settings.py` with the local settings for redis and mongodb services.
+
+Example:
+
+```shell
+MONGOALCHEMY_DATABASE = 'exchange'
+MONGOALCHEMY_SERVER = '127.0.0.1'
+MONGOALCHEMY_USER = 'dev00XX'
+MONGOALCHEMY_PASSWORD = 'f4cyp4assw0rd'
+REDIS_URL = 'redis://localhost:6379/0'
+```
+
 ### Running
 
 Once the dependencies are installed, run the app:
