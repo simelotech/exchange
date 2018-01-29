@@ -19,6 +19,7 @@ def wallets_cashout(address):
 	Record transaction in blockchain from wallet address to destination address in json request
 	Validate request json
 	"""
+
 	if not request.json \
 			or "operationId" not in request.json \
 			or "to" not in request.json \

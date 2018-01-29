@@ -3,7 +3,7 @@ import json
 
 #TODO: Get the actual url for blockchain api.
 #TODO: Dont't hardcode this. Read from settings maybe?
-base_url = "http://blockchain.api.com"
+base_url = "http://localhost:6420/"
 
 def form_url(base, path):
 	
@@ -50,19 +50,12 @@ def create_wallet():
 	"""
 	
 	# generate new seed first
-	#new_seed = requests.get(form_url(base_url, "/wallet/newSeed")).json()
-	new_seed = {"seed": "helmet van actor peanut"} #TODO: revove this mock response
-	
+	new_seed = requests.get(form_url(base_url, "/wallet/newSeed")).json()
+
 	# create the wallet from seed
 	values = {"seed": new_seed["seed"], "label": "wallet123", "scan": "5"} #TODO: Where to get labels? How about scan?
-	#new_wallet = requests.post(form_url(base_url, "/wallet/newSeed"), values).json()
-	new_wallet = {"meta":{"coin": "sky", "filename": "2018-01-24-d554.wlt"}, #TODO: should we store filenames?
-				  "entries":[{
-					"address": "addressjdjebcjdhbjehc", 
-					"public_key": "publicdwewewvefvfv",
-					"secret_key": "privatewthbregvefvwef"}
-					]} #TODO: remove this mock response.
-	
+	new_wallet = requests.post(form_url(base_url, "/wallet/create"), values).json()
+
 	result = {"address": new_wallet["entries"][0]["address"]}
 	
 	return result #TODO: Error handling
@@ -71,9 +64,9 @@ def create_wallet():
 def spend(values):
 	"""
 	"""
-	#resp = requests.post(form_url(base_url, "/wallets/cashout"), data = values)
+	resp = requests.post(form_url(base_url, "/wallet/spend"), data = values)
 	result = resp.status_code
-	result = 200
+	#result = 200
 	
 	return result #TODO: Error handling. Sometimes there is 200 response but there is error code in json
 
