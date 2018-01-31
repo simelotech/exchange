@@ -70,4 +70,11 @@ def spend(values):
 	
 	return result #TODO: Error handling. Sometimes there is 200 response but there is error code in json
 
+
+def get_version():
+	"""
+	"""
 	
+	version = requests.get(form_url(base_url, "/version")).json()
+	
+	return version
