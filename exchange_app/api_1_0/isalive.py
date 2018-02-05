@@ -12,7 +12,7 @@ def isalive():
 	
 	result = {"name": "Skycoin",
 			"version": version,
-			"env": app.config["ENVIRONMENT"], #TODO: Get actual ENV_INFO content
+			"env": app.config["ENVIRONMENT"],
 			"isDebug": app.config["DEBUG"]
 	}
 	
