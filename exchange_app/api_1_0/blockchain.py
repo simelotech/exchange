@@ -1,5 +1,6 @@
 import requests
 import json
+from .mongo import mongo_store_wallet
 
 #TODO: Get the actual url for blockchain api.
 #TODO: Dont't hardcode this. Read from settings maybe?
@@ -49,19 +50,39 @@ def create_wallet():
     """
     """
     
-    # generate new seed first
+    # generate new seed
     new_seed = requests.get(form_url(base_url, "/wallet/newSeed")).json()
     
     if not new_seed or "seed" not in new_seed:
         return {"status" : 500, "error": "Unknown server error"}
+        
+    # generate CSRF token
+    CSRF_token = requests.get(form_url(base_url, "/csrf")).json()
+    
+    if not CSRF_token or "csrf_token" not in CSRF_token:
+        return {"status" : 500, "error": "Unknown server error"}
 
-    # create the wallet from seed
-    values = {"seed": new_seed["seed"], "label": "wallet123", "scan": "5"} #TODO: Where to get labels? How about scan?
-    new_wallet = requests.post(form_url(base_url, "/wallet/create"), values).json()
+    # create the wallet from seed  
+    #TODO: Where to get labels? How about scan?    
+    resp = requests.post(form_url(base_url, "/wallet/create"), \
+                                  {"seed": new_seed["seed"], "label": "wallet123", "scan": "5"},\
+                                  headers = {'X-CSRF-Token': CSRF_token['csrf_token']})
+    
+    if not resp:
+        return {"status" : 500, "error": "Unknown server error"}
 
+    if resp.status_code != 200:
+        return {"status" : 500, "error": "Unknown server error"}
+    
+    new_wallet = resp.json()
+    
     if not new_wallet or "entries" not in new_wallet:
         return {"status" : 500, "error": "Unknown server error"}
     
+    # save wallet to MongoDB
+    mongo_store_wallet(new_wallet)
+    
+
     return  {"address": new_wallet["entries"][0]["address"]}
     
     

@@ -6,7 +6,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    DEBUG = False
+    DEBUG = True
     TESTING = False
     PRODUCTION = False
 
@@ -16,10 +16,11 @@ class Config(object):
     LOG_LEVEL = logging.DEBUG
     SERVER_NAME = 'localhost:5000'
     #: Database
-    MONGOALCHEMY_DATABASE = ''
-    MONGOALCHEMY_SERVER = ''
-    MONGOALCHEMY_USER = ''
-    MONGOALCHEMY_PASSWORD = ''
+    MONGOALCHEMY_DATABASE = 'LYKKE'
+    MONGOALCHEMY_SERVER = '192.168.56.101'
+    MONGOALCHEMY_PORT = 27017
+    #MONGOALCHEMY_USER = ''
+    #MONGOALCHEMY_PASSWORD = ''
     #: Redis
     REDIS_URL = 'redis://localhost:6379/0'
 

@@ -14,7 +14,7 @@ def wallets():
     if "address" in result:
         return jsonify(result)
     
-    return make_response(jsonify(build_error(result["error"])), result["status_code"])
+    return make_response(jsonify(build_error(result["error"])), result["status"])
 
     
 @api.route('/wallets/<string:address>/cashout', methods=['POST'])
@@ -50,6 +50,6 @@ def wallets_cashout(address):
     result = spend(values)
 
     if result["status_code"] != 200 or result["error"] !="":
-        return make_response(jsonify(build_error(result["error"])), result["status_code"])
+        return make_response(jsonify(build_error(result["error"])), result["status"])
     
     return make_response("", 200)
