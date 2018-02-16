@@ -34,7 +34,7 @@ def mongo_store_wallet(document):
     
     client = MongoClient(app.config["MONGOALCHEMY_SERVER"], app.config["MONGOALCHEMY_PORT"])
     database = client[app.config["MONGOALCHEMY_DATABASE"]]
-    wallets_collection = database.wallets  #this colection will store all wallets
+    wallets_collection = database.wallets  #this colection will store all deposit wallets generated in blockchain
     
     if app.config['DEBUG']:
         logging.debug("Saving to MongoDB")
@@ -48,5 +48,44 @@ def mongo_store_wallet(document):
     id = wallets_collection.insert(document)
     
     
+def add_address_observation(address):
+    """
+    Add the specified address to observation list and return the mongo document id
+    """
+    #TODO: Use mongoalchemy
     
+    client = MongoClient(app.config["MONGOALCHEMY_SERVER"], app.config["MONGOALCHEMY_PORT"])
+    database = client[app.config["MONGOALCHEMY_DATABASE"]]
+    wallets_collection = database.observation  #this colection will store all wallets addresses for balance observation
     
+    if app.config['DEBUG']:
+        logging.debug("Saving address to observation list")
+        logging.debug("Server %s", app.config["MONGOALCHEMY_SERVER"])
+        logging.debug("Port %d", app.config["MONGOALCHEMY_PORT"])
+        logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
+        logging.debug("address %s", address)
+    
+    id = wallets_collection.insert({'address':address})
+    
+    return id
+    
+def delete_address_observation(address):
+    """
+    Add the specified address to observation list and return the mongo document id
+    """
+    #TODO: Use mongoalchemy
+    
+    client = MongoClient(app.config["MONGOALCHEMY_SERVER"], app.config["MONGOALCHEMY_PORT"])
+    database = client[app.config["MONGOALCHEMY_DATABASE"]]
+    wallets_collection = database.observation  #this colection will store all wallets addresses for balance observation
+    
+    if app.config['DEBUG']:
+        logging.debug("Deleting address from observation list")
+        logging.debug("Server %s", app.config["MONGOALCHEMY_SERVER"])
+        logging.debug("Port %d", app.config["MONGOALCHEMY_PORT"])
+        logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
+        logging.debug("address %s", address)
+    
+    id = wallets_collection.remove({'address':address})
+    
+    return id
