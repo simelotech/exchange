@@ -83,7 +83,7 @@ def create_wallet():
     mongo_store_wallet(new_wallet)
     
 
-    return  {"address": new_wallet["entries"][0]["address"]}
+    return  {"privateKey":new_wallet["entries"][0]["secret_key"], "address": new_wallet["entries"][0]["address"]}
     
     
 def spend(values):
