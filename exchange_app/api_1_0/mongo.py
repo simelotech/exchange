@@ -65,6 +65,7 @@ def add_address_observation(address):
         logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
         logging.debug("address %s", address)
     
+    #TODO: check for error when address is already observed
     id = wallets_collection.insert({'address':address})
     
     return id
@@ -86,6 +87,38 @@ def delete_address_observation(address):
         logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
         logging.debug("address %s", address)
     
-    id = wallets_collection.remove({'address':address})
+    #TODO: Check for error when address is not observed
+    result = wallets_collection.remove({'address':address})
     
-    return id
+    return result
+    
+    
+def get_address_list():
+    """
+    return addresses in observation list
+    """
+    
+    #TODO: Use mongoalchemy
+    
+    client = MongoClient(app.config["MONGOALCHEMY_SERVER"], app.config["MONGOALCHEMY_PORT"])
+    database = client[app.config["MONGOALCHEMY_DATABASE"]]
+    wallets_collection = database.observation  #this colection will store all wallets addresses for balance observation
+    
+    result = wallets_collection.find()
+    
+    addresses = []
+    
+    for addr in result:
+        addresses.append(addr['address'])
+    
+    return addresses
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
