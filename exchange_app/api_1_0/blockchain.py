@@ -1,11 +1,16 @@
 import requests
 import json
+from .mongo import mongo_store_wallet
+import logging
+from .. import app
 
-#TODO: Get the actual url for blockchain api.
 #TODO: Dont't hardcode this. Read from settings maybe?
 base_url = "http://localhost:6420/"
 
 def form_url(base, path):
+    """
+    Conform the full URL from base URL and path
+    """
     
     if path[0] != '/':
         path = '/' + path
@@ -19,6 +24,7 @@ def form_url(base, path):
 
 def get_url(path, values = ""):
     """
+    General GET function for blockchain
     """
 
     url = form_url(base_url, path)
@@ -33,6 +39,7 @@ def get_url(path, values = ""):
 
 def post_url(path, values = ""):
     """
+    General POST function for blockchain
     """
     
     url = form_url(base_url, path)
@@ -47,26 +54,48 @@ def post_url(path, values = ""):
         
 def create_wallet():
     """
+    Create the wallet in blockchain
     """
     
-    # generate new seed first
+    # generate new seed
     new_seed = requests.get(form_url(base_url, "/wallet/newSeed")).json()
     
     if not new_seed or "seed" not in new_seed:
         return {"status" : 500, "error": "Unknown server error"}
+        
+    # generate CSRF token
+    CSRF_token = requests.get(form_url(base_url, "/csrf")).json()
+    
+    if not CSRF_token or "csrf_token" not in CSRF_token:
+        return {"status" : 500, "error": "Unknown server error"}
 
-    # create the wallet from seed
-    values = {"seed": new_seed["seed"], "label": "wallet123", "scan": "5"} #TODO: Where to get labels? How about scan?
-    new_wallet = requests.post(form_url(base_url, "/wallet/create"), values).json()
+    # create the wallet from seed  
+    #TODO: Where to get labels? How about scan?    
+    resp = requests.post(form_url(base_url, "/wallet/create"), \
+                                  {"seed": new_seed["seed"], "label": "wallet123", "scan": "5"},\
+                                  headers = {'X-CSRF-Token': CSRF_token['csrf_token']})
+    
+    if not resp:
+        return {"status" : 500, "error": "Unknown server error"}
 
+    if resp.status_code != 200:
+        return {"status" : 500, "error": "Unknown server error"}
+    
+    new_wallet = resp.json()
+    
     if not new_wallet or "entries" not in new_wallet:
         return {"status" : 500, "error": "Unknown server error"}
     
-    return  {"address": new_wallet["entries"][0]["address"]}
+    # save wallet to MongoDB
+    #mongo_store_wallet(new_wallet)
+    
+
+    return  {"privateKey":new_wallet["entries"][0]["secret_key"], "address": new_wallet["entries"][0]["address"]}
     
     
 def spend(values):
     """
+    Transfer balance 
     """
     resp = requests.post(form_url(base_url, "/wallet/spend"), data = values)
     
@@ -78,8 +107,36 @@ def spend(values):
 
 def get_version():
     """
+    Get blockchain version
     """
     
-    version = requests.get(form_url(base_url, "/version")).json()
+    version = requests.get(form_url(base_url, "/version"))
     
-    return version
+    if not version.json:
+        return {"status" : 500, "error": "Unknown server error"}
+    
+    return version.json()["version"]
+
+    
+def get_balance(address):
+    """
+    get the balance of given address in blockchain
+    """
+    
+    values = {"addrs": address}
+    balances = requests.get(form_url(base_url, "/balance"), params = values)
+    
+    if not balances.json:
+        return {"status" : 500, "error": "Unknown server error"}
+        
+    if app.config['DEBUG']:
+        logging.debug("Got balance for address")
+        logging.debug(balances.json())
+        
+    return balances.json()['confirmed']['coins']
+        
+    
+    
+    
+    
+    
