@@ -51,14 +51,15 @@ def get_balances(take=0, continuation=""):
     addresses = get_address_list()
     
     items = []
-    item = {}
     for addr in addresses:
+        item = {}
         item['address'] = addr
         item['assetId'] = 0
         item['balance'] = get_balance(addr)
         item['block'] = 0 #TODO: where to get block sequence?
-        items.append(item)
-        
+        if item['balance'] != 0:
+            items.append(item)
+    
     response = {"continuation": "1234abcd", "items": items}
     
     if app.config['DEBUG']:
