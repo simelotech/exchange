@@ -121,9 +121,6 @@ def get_version():
 def get_balance(address):
     """
     get the balance of given address in blockchain
-=======
-    Get blockchain varsion
->>>>>>> dev0023_t026_get_balances
     """
     
     values = {"addrs": address}
@@ -137,35 +134,5 @@ def get_balance(address):
         logging.debug(balances.json())
         
     return balances.json()['confirmed']['coins']
-        
     
-    
-    
-    
-<<<<<<< HEAD
-=======
-    return version
-    
-def get_balance(address):
-    """
-    get the balance of given address in blockchain
-    """
-    
-    values = {"addrs": address}
-    balances = requests.get(form_url(base_url, "/balance"), params = values)
-    
-    if not balances.json:
-        return {"status" : 500, "error": "Unknown server error"}
-        
-    if app.config['DEBUG']:
-        logging.debug("Got balance for address")
-        logging.debug(balances.json())
-        
-    return balances.json()['confirmed']['coins']
-        
-    
-    
-    
-    
->>>>>>> dev0023_t026_get_balances
     
