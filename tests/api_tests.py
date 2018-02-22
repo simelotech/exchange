@@ -10,11 +10,19 @@ class APITestCase(unittest.TestCase):
 
     def test_address_valid(self):
         data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
-        response = self.app.post(
-            '/address/{0}/isvalid'.format(data), data=json.dumps(data), content_type='application/json')
+        response = self.app.get(
+            '/api/v1.0/addresses/{}/isvalid'.format(data), data=json.dumps(data), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['isValid'], True)
+
+    def test_address_invalid(self):
+        data = dict(address=r'12345678')
+        response = self.app.get(
+            '/api/v1.0/addresses/{}/isvalid'.format(data), data=json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertEqual(json_response['isValid'], False)
 
     def test_get_assets(self):
         pass
