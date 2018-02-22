@@ -9,7 +9,12 @@ class APITestCase(unittest.TestCase):
         self.app = app.test_client()
 
     def test_address_valid(self):
-        pass
+        data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
+        response = self.app.post(
+            '/address/{0}/isvalid'.format(data), data=json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertEqual(json_response['isValid'], True)
 
     def test_get_assets(self):
         pass
