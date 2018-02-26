@@ -63,6 +63,19 @@ For available commands, run:
 python manage.py runserver
 ```
 
+### Testing
+
+In order to run the tests you must install `python-nose` package
+
+```shell
+pip install nose
+```
+And then, you should be able to run the tests:
+
+```shell
+nosetests
+```
+
 ### Adding or improving features
 
 Create a branch with the feature's name
