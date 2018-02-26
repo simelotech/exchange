@@ -22,7 +22,7 @@ class Config(object):
     #MONGOALCHEMY_USER = ''
     #MONGOALCHEMY_PASSWORD = ''
     #: Redis
-    REDIS_URL = 'redis://localhost:6379/0'
+    REDIS_URL = 'redis://192.168.56.101:6379/0'
 
 
 class ProductionConfig(Config):

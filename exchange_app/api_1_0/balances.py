@@ -1,8 +1,8 @@
-from flask import request, jsonify, abort, make_response
+from flask import request, jsonify, make_response
 from . import api
 from .common import build_error
-import json
 from .mongo import add_address_observation, delete_address_observation, get_address_list
+from .redis_interface import get_cont_address, set_cont_address, del_cont_address
 import logging
 from .. import app
 from .blockchain import get_balance
@@ -39,28 +39,67 @@ def delete_observation(address):
     
     
     
-@api.route('/balances?take=<int:take>&continuation=<string:continuation>', methods=['GET'])
-@api.route('/balances?take=<int:take>', methods=['GET'])
+
 @api.route('/balances', methods=['GET'])
-def get_balances(take=0, continuation=""):
+def get_balances():
     """
     Get balances of address in observation list
     """
     
+    take = request.args.get('take')
+    if take is None:
+        take = 0
+    else:
+        take = int(take)
+    
+    continuation = request.args.get('continuation')
+    if continuation is None:
+        continuation = ""
+    
+    #get continuation address if continuation context is set
+    cont_address = ""
+    if continuation != "":
+        cont_address = get_cont_address(continuation) #get the continuation address from redis
+    
     #Get address list from mongodb
-    addresses = get_address_list()
+    addresses = get_address_list()  
+
+    if app.config['DEBUG']:
+        logging.debug("addresses")
+        logging.debug(addresses)
     
     items = []
-    for addr in addresses:
+    
+    #define search boundaries
+    start_index = 0 if cont_address == "" or cont_address not in addresses else addresses.index(cont_address)
+    total_items = take if take != 0 else len(addresses)   
+
+    while len(items) < total_items and start_index < len(addresses):
         item = {}
-        item['address'] = addr
+        
+        if app.config['DEBUG']:
+            logging.debug("Start Index: %i", start_index)
+            logging.debug("Total Items: %i", total_items)
+            logging.debug("address: %s", addresses[start_index])
+            
+        item['address'] = addresses[start_index]
         item['assetId'] = 0
-        item['balance'] = get_balance(addr)
+        item['balance'] = 4# get_balance(addr)
         item['block'] = 0 #TODO: where to get block sequence?
         if item['balance'] != 0:
             items.append(item)
-    
-    response = {"continuation": "1234abcd", "items": items}
+        start_index += 1
+
+    #Save continuation address in Redis
+    if start_index < len(addresses): #Still data to read
+        set_cont_address(continuation, addresses[start_index])
+    else:
+        del_cont_address(continuation)
+        continuation = ""
+        
+        
+        
+    response = {"continuation": continuation, "items": items}
     
     if app.config['DEBUG']:
         logging.debug("Got balances from observation list")
