@@ -1,6 +1,6 @@
 from flask import request, jsonify, make_response
 from . import api
-from .common import build_error
+from .common import build_error, generate_hash_key
 from .mongo import add_address_observation, delete_address_observation, get_address_list
 from .redis_interface import get_cont_address, set_cont_address, del_cont_address
 import logging
@@ -60,6 +60,7 @@ def get_balances():
     cont_address = ""
     if continuation != "":
         cont_address = get_cont_address(continuation) #get the continuation address from redis
+        
     
     #Get address list from mongodb
     addresses = get_address_list()  
@@ -67,6 +68,7 @@ def get_balances():
     if app.config['DEBUG']:
         logging.debug("addresses")
         logging.debug(addresses)
+    
     
     items = []
     
@@ -91,20 +93,22 @@ def get_balances():
         start_index += 1
 
     #Save continuation address in Redis
-    if start_index < len(addresses): #Still data to read
+    if start_index < len(addresses): #Still data to read        
+        #If it is the first call and need continuation create the token
+        if continuation == "" and take != 0 and take < len(addresses):
+            continuation = generate_hash_key()        
         set_cont_address(continuation, addresses[start_index])
     else:
         del_cont_address(continuation)
         continuation = ""
-        
-        
-        
+
     response = {"continuation": continuation, "items": items}
     
     if app.config['DEBUG']:
         logging.debug("Got balances from observation list")
         logging.debug(items)
         
+
     return jsonify(response)
     
     
