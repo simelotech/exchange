@@ -16,9 +16,9 @@ class Config(object):
     LOG_LEVEL = logging.DEBUG
     SERVER_NAME = 'localhost:5000'
     #: Database
-    MONGOALCHEMY_DATABASE = 'LYKKE'
-    MONGOALCHEMY_SERVER = '192.168.56.101'
-    MONGOALCHEMY_PORT = 27017
+    MONGO_DBNAME = 'LYKKE'
+    MONGO_HOST = '127.0.0.1'
+    MONGO_PORT = 27017
     #MONGOALCHEMY_USER = ''
     #MONGOALCHEMY_PASSWORD = ''
     #: Redis
