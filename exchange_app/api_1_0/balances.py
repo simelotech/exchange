@@ -86,7 +86,7 @@ def get_balances():
             
         item['address'] = addresses[start_index]
         item['assetId'] = 0
-        item['balance'] = 4# get_balance(addr)
+        item['balance'] = 4# get_balance(addr) #TODO: uncomment get balances when finish testing. Otherwise nothing will be returned
         item['block'] = 0 #TODO: where to get block sequence?
         if item['balance'] != 0:
             items.append(item)

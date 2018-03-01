@@ -1,12 +1,20 @@
 import os
 import hashlib
+from enum import Enum
 
-def build_error(error_message="", failed_items={}):
+class error_codes(Enum):
+    unknown = 1
+    amountIsTooSmall = 2
+    notEnoughBalance = 3
+
+
+def build_error(error_message="", error_code = error_codes.unknown, failed_items={}):
     """
     Generate error message for output
     """
     error_obj = {"errorMessage": error_message,
-                    "modelErrors": failed_items
+                 "errorCode": error_code.name,
+                 "modelErrors": failed_items
     }
     
     return error_obj
