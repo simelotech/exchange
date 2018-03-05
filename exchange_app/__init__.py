@@ -2,7 +2,7 @@ import logging
 import os
 from flask import Flask
 from flask_redis import FlaskRedis
-from flask_mongoalchemy import MongoAlchemy
+from flask_pymongo import PyMongo
 
 
 FLASK_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -27,7 +27,7 @@ logging.basicConfig(
 redis_store = FlaskRedis(app, strict=False)
 
 # MongoDB
-db = MongoAlchemy(app)
+mongo = PyMongo(app)
 
 # Business Logic
 from .api_1_0 import api as api_blueprint
