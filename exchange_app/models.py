@@ -1,5 +1,4 @@
 import logging
-from flask_pymongo.wrappers import Collection
 from exchange_app import mongo, app
 
 
