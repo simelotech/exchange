@@ -2,7 +2,6 @@ import requests
 import json
 import logging
 from .. import app
-from ..models import store_wallet
 
 # TODO: Dont't hardcode this. Read from settings maybe?
 base_url = "http://localhost:6420/"
@@ -88,9 +87,6 @@ def create_wallet():
 
     if not new_wallet or "entries" not in new_wallet:
         return {"status": 500, "error": "Unknown server error"}
-
-    # save wallet to MongoDB
-    store_wallet(new_wallet)
 
     return {"privateKey": new_wallet["entries"][0]["secret_key"], "address": new_wallet["entries"][0]["address"]}
 

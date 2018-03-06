@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 from . import api
 from .common import build_error, generate_hash_key
-from .mongo import add_address_observation, delete_address_observation, get_address_list
+from ..models import add_address_observation, delete_address_observation, get_address_list
 from .redis_interface import get_cont_address, set_cont_address, del_cont_address
 import logging
 from .. import app
