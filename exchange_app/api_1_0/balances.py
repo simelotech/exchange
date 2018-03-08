@@ -1,14 +1,8 @@
 from flask import request, jsonify, make_response
 from . import api
-<<<<<<< .merge_file_a12316
 from .common import build_error, generate_hash_key
 from ..models import add_address_observation, delete_address_observation, get_address_list
 from .redis_interface import get_cont_address, set_cont_address, del_cont_address
-=======
-from .common import build_error
-import json
-from ..models import add_address_observation, delete_address_observation, get_address_list
->>>>>>> .merge_file_a05856
 import logging
 from .. import app
 from .blockchain import get_balance
@@ -42,23 +36,13 @@ def delete_observation(address):
         return ""
 
     return make_response(jsonify(build_error(result["error"])), result["status"])
-<<<<<<< .merge_file_a12316
-    
-    
-    
 
-=======
-
-
-@api.route('/balances?take=<int:take>&continuation=<string:continuation>', methods=['GET'])
-@api.route('/balances?take=<int:take>', methods=['GET'])
->>>>>>> .merge_file_a05856
+    
 @api.route('/balances', methods=['GET'])
 def get_balances():
     """
     Get balances of address in observation list
     """
-<<<<<<< .merge_file_a12316
     
     take = request.args.get('take')
     if take is None:
@@ -83,13 +67,6 @@ def get_balances():
         logging.debug("addresses")
         logging.debug(addresses)
     
-    
-=======
-
-    # Get address list from mongodb
-    addresses = get_address_list()
-
->>>>>>> .merge_file_a05856
     items = []
     
     #define search boundaries
@@ -106,7 +83,6 @@ def get_balances():
             
         item['address'] = addresses[start_index]
         item['assetId'] = 0
-<<<<<<< .merge_file_a12316
         item['balance'] = 4# get_balance(addr) #TODO: uncomment get balances when finish testing. Otherwise nothing will be returned
         item['block'] = 0 #TODO: where to get block sequence?
         if item['balance'] != 0:
@@ -129,16 +105,5 @@ def get_balances():
         logging.debug("Got balances from observation list")
         logging.debug(items)
         
-=======
-        item['balance'] = get_balance(addr)
-        item['block'] = 0  # TODO: where to get block sequence?
-        items.append(item)
-
-    response = {"continuation": "1234abcd", "items": items}
-
-    if app.config['DEBUG']:
-        logging.debug("Got balances from observation list")
-        logging.debug(items)
->>>>>>> .merge_file_a05856
 
     return jsonify(response)
