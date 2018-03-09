@@ -1,5 +1,4 @@
 import requests
-import json
 import logging
 from .. import app
 from ..models import store_wallet
@@ -31,8 +30,8 @@ def get_url(path, values=""):
 
     url = form_url(base_url, path)
 
-    #resp = requests.get(url, params = values)
-    #response_data = resp.json()
+    # resp = requests.get(url, params = values)
+    # response_data = resp.json()
 
     response_data = {"Called": "get_url()", "url": url, "values:": values}
 
@@ -46,8 +45,8 @@ def post_url(path, values=""):
 
     url = form_url(base_url, path)
 
-    #resp = requests.post(url, data = values)
-    #response_data = resp.json()
+    # resp = requests.post(url, data = values)
+    # response_data = resp.json()
 
     response_data = {"Called": "post_url()", "url": url, "values:": values}
 
@@ -92,12 +91,15 @@ def create_wallet():
     # save wallet to MongoDB
     store_wallet(new_wallet)
 
-    return {"privateKey": new_wallet["entries"][0]["secret_key"], "address": new_wallet["entries"][0]["address"]}
+    return {
+        "privateKey": new_wallet["entries"][0]["secret_key"],
+        "address": new_wallet["entries"][0]["address"]
+    }
 
 
 def spend(values):
     """
-    Transfer balance 
+    Transfer balance
     """
     resp = requests.post(form_url(base_url, "/wallet/spend"), data=values)
 
