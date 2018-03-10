@@ -1,7 +1,6 @@
-from flask import request, jsonify, abort, make_response
+from flask import jsonify, make_response
 from . import api
 from .common import build_error
-import json
 from ..models import add_address_observation, delete_address_observation, get_address_list
 import logging
 from .. import app

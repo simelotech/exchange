@@ -19,8 +19,6 @@ class Config(object):
     MONGO_DBNAME = 'LYKKE'
     MONGO_HOST = '127.0.0.1'
     MONGO_PORT = 27017
-    #MONGOALCHEMY_USER = ''
-    #MONGOALCHEMY_PASSWORD = ''
     #: Redis
     REDIS_URL = 'redis://localhost:6379/0'
 
