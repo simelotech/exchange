@@ -61,6 +61,11 @@ def add_history_to_address(address):
     Starts observation of the transactions that transfer fund from the address
     """
     
-    return make_response(jsonify(build_error("Not implemented add_history_to_address")), 200)
+    id = add_transaction_observation_from_address(address)
+    
+    if "error" in id:
+        return make_response(jsonify(build_error("Internal Server Error")), 500)
+    else:
+        return id
     
 
