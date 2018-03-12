@@ -17,10 +17,10 @@ def add_observation(address):
     result = add_address_observation(address)
 
     # if successfully stored in observation list, return a plain 200
-    if result:
+    if "error" in result:
+        return make_response(jsonify(build_error(result["error"])), result["status"])
+    else:
         return ""
-
-    return make_response(jsonify(build_error(result["error"])), result["status"])
 
 
 @api.route('/balances/<string:address>/observation', methods=['DELETE'])
@@ -32,11 +32,11 @@ def delete_observation(address):
     result = delete_address_observation(address)
 
     # if successfully stored in observation list, return a plain 200
-    if result:
+    if "error" in result:
+        return make_response(jsonify(build_error(result["error"])), result["status"])
+    else:
         return ""
-
-    return make_response(jsonify(build_error(result["error"])), result["status"])
-
+        
     
 @api.route('/balances', methods=['GET'])
 def get_balances():
