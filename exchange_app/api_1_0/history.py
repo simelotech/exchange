@@ -47,12 +47,13 @@ def add_history_from_address(address):
     Starts observation of the transactions that transfer fund from the address 
     """
     
-    id = add_transaction_observation_from_address(address)
+    result = add_transaction_observation_from_address(address)
     
-    if "error" in id:
-        return make_response(jsonify(build_error("Internal Server Error")), 500)
+    # if successfully stored in observation list, return a plain 200
+    if "error" in result:
+        return make_response(jsonify(build_error(result["error"])), result["status"])
     else:
-        return id
+        return ""
     
     
 @api.route('/transactions/history/to/<string:address>/observation', methods=['POST'])
@@ -61,11 +62,12 @@ def add_history_to_address(address):
     Starts observation of the transactions that transfer fund from the address
     """
     
-    id = add_transaction_observation_from_address(address)
+    result = add_transaction_observation_to_address(address)
     
-    if "error" in id:
-        return make_response(jsonify(build_error("Internal Server Error")), 500)
+    # if successfully stored in observation list, return a plain 200
+    if "error" in result:
+        return make_response(jsonify(build_error(result["error"])), result["status"])
     else:
-        return id
+        return ""
     
 

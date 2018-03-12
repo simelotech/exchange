@@ -8,13 +8,6 @@ def add_address_observation(address):
     
     wallets_collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
     
-    if app.config['DEBUG']:
-        logging.debug("Saving address to observation list")
-        logging.debug("Server %s", app.config["MONGOALCHEMY_SERVER"])
-        logging.debug("Port %d", app.config["MONGOALCHEMY_PORT"])
-        logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
-        logging.debug("address %s", address)
-    
     #If address not observed, insert it
     if not exists_address_observation(address):
         id = wallets_collection.insert({'address':address})
@@ -32,14 +25,7 @@ def delete_address_observation(address):
     """
     
     wallets_collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
-    
-    if app.config['DEBUG']:
-        logging.debug("Deleting address from observation list")
-        logging.debug("Server %s", app.config["MONGOALCHEMY_SERVER"])
-        logging.debug("Port %d", app.config["MONGOALCHEMY_PORT"])
-        logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
-        logging.debug("address %s", address)
-    
+        
     #If address already observed, delete it
     if exists_address_observation(address):
         result = wallets_collection.remove({'address':address})
@@ -113,20 +99,13 @@ def add_transaction_observation_from_address(address):
     """
     Add the specified address to transaction observation list to it and return the mongo document id
     """
-    #TODO: Use mongoalchemy
     
     wallets_collection = mongo.db.trans_obs_from  #this colection will store all wallets addresses for transaction observation from it
-    
-    if app.config['DEBUG']:
-        logging.debug("Saving address to transaction observation list from address")
-        logging.debug("Server %s", app.config["MONGOALCHEMY_SERVER"])
-        logging.debug("Port %d", app.config["MONGOALCHEMY_PORT"])
-        logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
-        logging.debug("address %s", address)
     
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
         id = wallets_collection.insert({'address':address})
+        
         if isinstance(id, ObjectId):
             return id 
         else:
@@ -139,20 +118,13 @@ def add_transaction_observation_to_address(address):
     """
     Add the specified address to transaction observation list to it and return the mongo document id
     """
-    #TODO: Use mongoalchemy
     
     wallets_collection = mongo.db.trans_obs_to  #this colection will store all wallets addresses for transaction observation from it
-    
-    if app.config['DEBUG']:
-        logging.debug("Saving address to transaction observation list from address")
-        logging.debug("Server %s", app.config["MONGOALCHEMY_SERVER"])
-        logging.debug("Port %d", app.config["MONGOALCHEMY_PORT"])
-        logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
-        logging.debug("address %s", address)
     
     #If address not observed, insert it
     if not exists_address_transfer_observation_to(address):
         id = wallets_collection.insert({'address':address})
+        
         if isinstance(id, ObjectId):
             return id 
         else:

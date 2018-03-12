@@ -31,7 +31,7 @@ def delete_observation(address):
 
     result = delete_address_observation(address)
 
-    # if successfully stored in observation list, return a plain 200
+    # if successfully deleted from observation list, return a plain 200
     if "error" in result:
         return make_response(jsonify(build_error(result["error"])), result["status"])
     else:
