@@ -18,7 +18,10 @@ def add_address_observation(address):
     #If address not observed, insert it
     if not exists_address_observation(address):
         id = wallets_collection.insert({'address':address})
-        return id
+        if isinstance(id, ObjectId):
+            return id 
+        else:
+            return {"status": 500, "error": "Unknown server error"}
     else:
         return {"status" : 409, "error": "Specified address is already observed"} 
 
