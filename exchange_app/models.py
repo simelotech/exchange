@@ -43,6 +43,12 @@ def delete_address_observation(address):
     #If address already observed, delete it
     if exists_address_observation(address):
         result = wallets_collection.remove({'address':address})
+        
+        if not 'n' in result:
+            return {"status": 500, "error": "Unknown server error"}
+        if result['n'] == 0:
+            return {"status": 500, "error": "Unknown server error"}
+            
         return result
     else:
         return {"status" : 204, "error": "Specified address is not observed"} 
