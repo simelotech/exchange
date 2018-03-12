@@ -5,7 +5,6 @@ def add_address_observation(address):
     """
     Add the specified address to observation list and return the mongo document id
     """
-    #TODO: Use mongoalchemy
     
     wallets_collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
     
@@ -16,17 +15,21 @@ def add_address_observation(address):
         logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
         logging.debug("address %s", address)
     
-    #TODO: check for error when address is already observed
-    id = wallets_collection.insert({'address':address})
-    
-    return id
+    #If address not observed, insert it
+    if not exists_address_observation(address):
+        id = wallets_collection.insert({'address':address})
+        if isinstance(id, ObjectId):
+            return id 
+        else:
+            return {"status": 500, "error": "Unknown server error"}
+    else:
+        return {"status" : 409, "error": "Specified address is already observed"} 
+
     
 def delete_address_observation(address):
     """
     Add the specified address to observation list and return the mongo document id
     """
-
-    #TODO: Use mongoalchemy
     
     wallets_collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
     
@@ -37,10 +40,20 @@ def delete_address_observation(address):
         logging.debug("Database %s", app.config["MONGOALCHEMY_DATABASE"])
         logging.debug("address %s", address)
     
-    #TODO: Check for error when address is not observed
-    result = wallets_collection.remove({'address':address})
+    #If address already observed, delete it
+    if exists_address_observation(address):
+        result = wallets_collection.remove({'address':address})
+        
+        if not 'n' in result:
+            return {"status": 500, "error": "Unknown server error"}
+        if result['n'] == 0:
+            return {"status": 500, "error": "Unknown server error"}
+            
+        return result
+    else:
+        return {"status" : 204, "error": "Specified address is not observed"} 
     
-    return result
+    
     
 
 def get_address_list():
