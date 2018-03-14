@@ -42,13 +42,11 @@ def delete_address_observation(address):
     
     
 
-def get_address_list():
+def get_address_list(collection):
     """
     return addresses in observation list
     """
 
-    collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
-    
     result = collection.find()
     
     addresses = []
@@ -57,6 +55,25 @@ def get_address_list():
         addresses.append(addr['address'])
     
     return addresses
+    
+
+def get_addresses_balance_observation():
+    """
+    return addresses in observation list
+    """    
+    return get_address_list(mongo.db.observation)
+    
+def get_addresses_transfers_observation_from():
+    """
+    return addresses in observation list
+    """    
+    return get_address_list(mongo.db.trans_obs_from)
+    
+def get_addresses_transfers_observation_to():
+    """
+    return addresses in observation list
+    """    
+    return get_address_list(mongo.db.trans_obs_to)
 
 
 def exists_address_observation(address):

@@ -1,8 +1,8 @@
 from flask import request, jsonify, make_response
 from . import api
 from .common import build_error, generate_hash_key
-from ..models import add_address_observation, delete_address_observation, get_address_list
-from .redis_interface import get_cont_address, set_cont_address, del_cont_address
+from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation
+from .redis_interface import get_cont_address_balances, set_cont_address_balances, del_cont_address_balances
 import logging
 from .. import app
 from .blockchain import get_balance
@@ -57,11 +57,11 @@ def get_balances():
     #get continuation address if continuation context is set
     cont_address = ""
     if continuation != "":
-        cont_address = get_cont_address(continuation) #get the continuation address from redis
+        cont_address = get_cont_address_balances(continuation) #get the continuation address from redis
         
     
     #Get address list from mongodb
-    addresses = get_address_list()  
+    addresses = get_addresses_balance_observation()  
 
     if app.config['DEBUG']:
         logging.debug("addresses")
@@ -84,6 +84,7 @@ def get_balances():
         item['address'] = addresses[start_index]
         item['assetId'] = 0
         item['balance'] = 4# get_balance(addr) #TODO: uncomment get balances when finish testing. Otherwise nothing will be returned
+        #TODO: Handle case when address is deleted during paging read
         item['block'] = 0 #TODO: where to get block sequence?
         if item['balance'] != 0:
             items.append(item)
@@ -94,9 +95,9 @@ def get_balances():
         #If it is the first call and need continuation create the token
         if continuation == "" and take != 0 and take < len(addresses):
             continuation = generate_hash_key()        
-        set_cont_address(continuation, addresses[start_index])
+        set_cont_address_balances(continuation, addresses[start_index])
     else:
-        del_cont_address(continuation)
+        del_cont_address_balances(continuation)
         continuation = ""
 
     response = {"continuation": continuation, "items": items}
