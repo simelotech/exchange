@@ -27,32 +27,32 @@ def del_cont_address(continuation, redisdb):
     
     
     
-def get_cont_address_balances():
-    return get_cont_address(redis_db.BALANCE_OBSERVATION)
+def get_cont_address_balances(continuation):
+    return get_cont_address(continuation, redis_db.BALANCE_OBSERVATION)
     
-def get_cont_address_transfers_from():
-    return get_cont_address(redis_db.TRANSFERS_OBSERVATION_FROM)
+def get_cont_address_transfers_from(continuation):
+    return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_FROM)
     
-def get_cont_address_transfers_to():
-    return get_cont_address(redis_db.TRANSFERS_OBSERVATION_TO)
+def get_cont_address_transfers_to(continuation):
+    return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_TO)
 
     
-def set_cont_address_balances():
-    return get_cont_address(redis_db.BALANCE_OBSERVATION)
+def set_cont_address_balances(continuation, address):
+    return get_cont_address(continuation, address, redis_db.BALANCE_OBSERVATION)
 
-def set_cont_address_transfers_from():
-    return get_cont_address(redis_db.TRANSFERS_OBSERVATION_FROM)
+def set_cont_address_transfers_from(continuation, address):
+    return get_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_FROM)
 
-def set_cont_address_transfers_to():
-    return get_cont_address(redis_db.TRANSFERS_OBSERVATION_TO)
+def set_cont_address_transfers_to(continuation, address):
+    return get_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_TO)
     
 
-def del_cont_address_balances():
-    return get_cont_address(redis_db.BALANCE_OBSERVATION)
+def del_cont_address_balances(continuation):
+    return get_cont_address(continuation, redis_db.BALANCE_OBSERVATION)
 
-def del_cont_address_transfers_from():
-    return get_cont_address(redis_db.TRANSFERS_OBSERVATION_FROM)
+def del_cont_address_transfers_from(continuation):
+    return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_FROM)
 
-def del_cont_address_transfers_to():
-    return get_cont_address(redis_db.TRANSFERS_OBSERVATION_TO)
+def del_cont_address_transfers_to(continuation):
+    return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_TO)
 
