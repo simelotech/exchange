@@ -36,7 +36,8 @@ def get_cont_address_transfers_from(continuation):
 def get_cont_address_transfers_to(continuation):
     return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_TO)
 
-    
+########
+
 def set_cont_address_balances(continuation, address):
     return get_cont_address(continuation, address, redis_db.BALANCE_OBSERVATION)
 
@@ -46,6 +47,7 @@ def set_cont_address_transfers_from(continuation, address):
 def set_cont_address_transfers_to(continuation, address):
     return get_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_TO)
     
+########
 
 def del_cont_address_balances(continuation):
     return get_cont_address(continuation, redis_db.BALANCE_OBSERVATION)

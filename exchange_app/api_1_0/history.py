@@ -1,9 +1,11 @@
 from flask import request, jsonify, make_response
-from . import 
-from .common import build_error, generate_hash_key
-from .blockchain.py import get_transactions_from, get_transactions_to
-from .redis_interface import get_cont_address_transfers_from, set_cont_address_transfers_from, del_cont_address_transfers_from
-from .redis_interface import get_cont_address_transfers_to, set_cont_address_transfers_to, del_cont_address_transfers_to
+from . import api
+from .common import build_error
+from ..models import exists_address_transfer_observation_to, exists_address_transfer_observation_from
+from ..models import add_transaction_observation_to_address, add_transaction_observation_from_address, delete_transaction_observation_to_address, delete_transaction_observation_from_address
+from .blockchain import get_transactions_from, get_transactions_to
+#from .redis_interface import get_cont_address_transfers_from, set_cont_address_transfers_from, del_cont_address_transfers_from
+#from .redis_interface import get_cont_address_transfers_to, set_cont_address_transfers_to, del_cont_address_transfers_to
 import logging
 from .. import app
 
@@ -13,6 +15,9 @@ def get_history_from_address(address):
     """
     Returns completed transactions that transfer fund from the address 
     """
+    
+    if not exists_address_transfer_observation_from(address):
+        return make_response(jsonify(build_error('No content. transactions from the address are not observed')), 204)
     
     take = request.args.get('take')
     if take is None:
@@ -24,7 +29,7 @@ def get_history_from_address(address):
     if afterhash is None:
         afterhash = ""  
        
-    items = get_transactions_to(addr, afterhash)
+    items = get_transactions_from(address, afterhash)
 
     response = items if take == 0 else items[0:take]
 
@@ -37,6 +42,9 @@ def get_history_to_address(address):
     Returns completed transactions that transfer fund to the address 
     """
     
+    if not exists_address_transfer_observation_to(address):
+        return make_response(jsonify(build_error('No content: transactions to the address are not observed')), 204)
+    
     take = request.args.get('take')
     if take is None:
         take = 0
@@ -47,7 +55,7 @@ def get_history_to_address(address):
     if afterhash is None:
         afterhash = ""  
        
-    items = get_transactions_to(addr, afterhash)
+    items = get_transactions_to(address, afterhash)
 
     response = items if take == 0 else items[0:take]
 

@@ -1,9 +1,10 @@
 import logging
 from exchange_app import mongo, app
+from bson.objectid import ObjectId
 
 def add_address_observation(address):
     """
-    Add the specified address to observation list and return the mongo document id
+    Add the specified address to balances observation list and return the mongo document id
     """
     
     collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
@@ -12,7 +13,7 @@ def add_address_observation(address):
     if not exists_address_observation(address):
         id = collection.insert({'address':address})
         if isinstance(id, ObjectId):
-            return id 
+            return str(id)
         else:
             return {"status": 500, "error": "Unknown server error"}
     else:
@@ -21,7 +22,7 @@ def add_address_observation(address):
     
 def delete_address_observation(address):
     """
-    Add the specified address to observation list and return the mongo document id
+    Add the specified address to balances observation list and return the mongo document id
     """
     
     collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
@@ -124,7 +125,7 @@ def add_transaction_observation_from_address(address):
         id = collection.insert({'address':address})
         
         if isinstance(id, ObjectId):
-            return id 
+            return str(id) 
         else:
             return {"status": 500, "error": "Unknown server error"}
     else:
@@ -143,7 +144,7 @@ def add_transaction_observation_to_address(address):
         id = collection.insert({'address':address})
         
         if isinstance(id, ObjectId):
-            return id 
+            return str(id) 
         else:
             return {"status": 500, "error": "Unknown server error"}
     else:

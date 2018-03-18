@@ -145,16 +145,16 @@ def get_transactions_from(address, afterhash):
         {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
          "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
          "fromAddress": address,
-         "toAddress": "abcd1234",
-         "assetId": "skycoin"
+         "toAddress": "xxxxxx",
+         "assetId": "skycoin",
          "amount": "1000000",
          "hash": "qwertyasdfg"
         }, 
         {"operationId": "guid", 
          "timestamp": "20180215T231403Z", 
          "fromAddress": address,
-         "toAddress": "efgh5678",
-         "assetId": "skycoin"
+         "toAddress": "xxxxxx",
+         "assetId": "skycoin",
          "amount": "2000000",
          "hash": "asdfgzxcvb"
         }
@@ -172,17 +172,17 @@ def get_transactions_to(address, afterhash):
     transfers = [
         {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
          "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
-         "fromAddress": "abcd1234",
+         "fromAddress": "xxxxxx",
          "toAddress": address,
-         "assetId": "skycoin"
+         "assetId": "skycoin",
          "amount": "1000000",
          "hash": "qwertyasdfg"
         }, 
         {"operationId": "guid", 
          "timestamp": "20180215T231403Z", 
-         "fromAddress": "efgh5678",
+         "fromAddress": "xxxxxx",
          "toAddress": address,
-         "assetId": "skycoin"
+         "assetId": "skycoin",
          "amount": "2000000",
          "hash": "asdfgzxcvb"
         }
