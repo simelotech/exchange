@@ -39,22 +39,22 @@ def get_cont_address_transfers_to(continuation):
 ########
 
 def set_cont_address_balances(continuation, address):
-    return get_cont_address(continuation, address, redis_db.BALANCE_OBSERVATION)
+    return set_cont_address(continuation, address, redis_db.BALANCE_OBSERVATION)
 
 def set_cont_address_transfers_from(continuation, address):
-    return get_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_FROM)
+    return set_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_FROM)
 
 def set_cont_address_transfers_to(continuation, address):
-    return get_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_TO)
+    return set_cont_address(continuation, address, redis_db.TRANSFERS_OBSERVATION_TO)
     
 ########
 
 def del_cont_address_balances(continuation):
-    return get_cont_address(continuation, redis_db.BALANCE_OBSERVATION)
+    return del_cont_address(continuation, redis_db.BALANCE_OBSERVATION)
 
 def del_cont_address_transfers_from(continuation):
-    return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_FROM)
+    return del_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_FROM)
 
 def del_cont_address_transfers_to(continuation):
-    return get_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_TO)
+    return del_cont_address(continuation, redis_db.TRANSFERS_OBSERVATION_TO)
 
