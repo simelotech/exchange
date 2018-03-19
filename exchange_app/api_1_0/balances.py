@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 from flask import request, jsonify, make_response
 from . import api
 from .common import build_error, generate_hash_key
 from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation
 from .redis_interface import get_cont_address_balances, set_cont_address_balances, del_cont_address_balances
+=======
+from flask import jsonify, make_response
+from . import api
+from .common import build_error
+from ..models import add_address_observation, delete_address_observation, get_address_list
+>>>>>>> 6c22cfc36b6b953eb43b7c69d9249aff8d740a36
 import logging
 from .. import app
 from .blockchain import get_balance

@@ -7,6 +7,7 @@ class error_codes(Enum):
     amountIsTooSmall = 2
     notEnoughBalance = 3
 
+<<<<<<< HEAD
 
 def build_error(error_message="", error_code = error_codes.unknown, failed_items={}):
     """
@@ -28,4 +29,13 @@ def generate_hash_key():
     m.update(os.urandom(64))
     return m.hexdigest()
 
+=======
+def build_error(error_message="", failed_items={}):
 
+    error_obj = {
+        "errorMessage": error_message,
+        "modelErrors": failed_items
+    }
+>>>>>>> 6c22cfc36b6b953eb43b7c69d9249aff8d740a36
+
+    return error_obj
