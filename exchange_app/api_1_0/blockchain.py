@@ -87,18 +87,10 @@ def create_wallet():
     if not new_wallet or "entries" not in new_wallet:
         return {"status": 500, "error": "Unknown server error"}
 
-<<<<<<< HEAD
-    return {"privateKey": new_wallet["entries"][0]["secret_key"], "address": new_wallet["entries"][0]["address"]}
-=======
-    # save wallet to MongoDB
-    store_wallet(new_wallet)
-
     return {
         "privateKey": new_wallet["entries"][0]["secret_key"],
         "address": new_wallet["entries"][0]["address"]
     }
->>>>>>> 6c22cfc36b6b953eb43b7c69d9249aff8d740a36
-
 
 def spend(values):
     """
