@@ -8,7 +8,7 @@ def capabilities():
     """
     
     #TODO: should check with blockchain what is actually supported
-    capabilities = {"isTransactionsRebuildingSupported": True,
+    capabilities = {"isTransactionsRebuildingSupported": False,
                     "areManyInputsSupported": True, 
                     "areManyOutputsSupported":True
     }
