@@ -1,7 +1,6 @@
 import requests
 import logging
 from .. import app
-from ..models import store_wallet
 
 # TODO: Dont't hardcode this. Read from settings maybe?
 base_url = "http://localhost:6420/"
@@ -88,14 +87,10 @@ def create_wallet():
     if not new_wallet or "entries" not in new_wallet:
         return {"status": 500, "error": "Unknown server error"}
 
-    # save wallet to MongoDB
-    store_wallet(new_wallet)
-
     return {
         "privateKey": new_wallet["entries"][0]["secret_key"],
         "address": new_wallet["entries"][0]["address"]
     }
-
 
 def spend(values):
     """
@@ -138,3 +133,60 @@ def get_balance(address):
         logging.debug(balances.json())
 
     return balances.json()['confirmed']['coins']
+    
+    
+def get_transactions_from(address, afterhash):
+    """
+    return all transactions from address after the one specified by afterhash
+    """
+    
+    #TODO: Read this from blockchain
+    
+    transfers = [
+        {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
+         "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
+         "fromAddress": address,
+         "toAddress": "xxxxxx",
+         "assetId": "skycoin",
+         "amount": "1000000",
+         "hash": "qwertyasdfg"
+        }, 
+        {"operationId": "guid", 
+         "timestamp": "20180215T231403Z", 
+         "fromAddress": address,
+         "toAddress": "xxxxxx",
+         "assetId": "skycoin",
+         "amount": "2000000",
+         "hash": "asdfgzxcvb"
+        }
+    ]
+    
+    return transfers
+    
+def get_transactions_to(address, afterhash):
+    """
+    return all transactions to address after the one specified by afterhash
+    """
+    
+    #TODO: Read this from blockchain
+    
+    transfers = [
+        {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
+         "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
+         "fromAddress": "xxxxxx",
+         "toAddress": address,
+         "assetId": "skycoin",
+         "amount": "1000000",
+         "hash": "qwertyasdfg"
+        }, 
+        {"operationId": "guid", 
+         "timestamp": "20180215T231403Z", 
+         "fromAddress": "xxxxxx",
+         "toAddress": address,
+         "assetId": "skycoin",
+         "amount": "2000000",
+         "hash": "asdfgzxcvb"
+        }
+    ]
+    
+    return transfers
