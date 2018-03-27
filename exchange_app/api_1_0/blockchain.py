@@ -142,7 +142,7 @@ def get_balance(address):
 
 def transaction_many_inputs(values):
     """
-    XXX
+    build a transaction with many inputs
     """
     csrf = requests.get(form_url(base_url, "/csrf")).json()
     if not csrf or "csrf_token" not in csrf:
