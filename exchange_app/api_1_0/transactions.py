@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import transaction_many_inputs, transaction_many_outputs, rebuild_transaction
+from .blockchain import transaction_many_inputs, transaction_many_outputs, rebuild_transaction, transaction_broadcast_signed_tx
 from .common import build_error
 
 
@@ -42,3 +42,14 @@ def rebuild_transactions():
     if "transactionContext" in result:
         return jsonify(result)
     return jsonify({"status": 500, "error": "Invalid response"})
+
+
+@api.route('/api/transactions/broadcast', methods=['POST'])
+def broadcast_signed_tx():
+    if not request.json:
+        return make_response(jsonify(build_error("Input format error")), 400)
+    params = {'operationId', 'signedTransaction'}
+    if all(x not in params for x in request.json):
+        return make_response(jsonify(build_error("Input data error")), 400)
+    result = transaction_broadcast_signed_tx(request.json)
+    return jsonify(result)
