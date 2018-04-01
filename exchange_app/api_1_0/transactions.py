@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import transaction_many_inputs
+from .blockchain import transaction_many_inputs, transaction_many_outputs
 from .common import build_error
 
 
@@ -25,7 +25,7 @@ def transactions_many_outputs():
     params = {'operationID', 'fromAddress', 'fromAddressContext', 'outputs', 'assetId'}
     if all(x not in params for x in request.json):
         return make_response(jsonify(build_error("Input data error")), 400)
-    result = transaction_many_inputs(request.json)
+    result = transaction_many_outputs(request.json)
     if "transactionContext" in result:
         return jsonify(result)
     return jsonify({"status": 500, "error": "Invalid response"})
