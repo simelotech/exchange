@@ -176,3 +176,22 @@ def transaction_many_outputs(values):
     if resp.status_code != 200:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def rebuild_transaction(values):
+    """
+    rebuild not signed transaction with the specified fee factor
+    """
+    csrf = requests.get(form_url(base_url, "/csrf")).json()
+    if not csrf or "csrf_token" not in csrf:
+        return {"status": 500, "error": "Unknown server error"}
+    resp = requests.put(
+        form_url(base_url, "/transactions"),
+        data=values,
+        headers={'X-CSRF-Token': csrf['csrf_token']}
+    )
+    if not resp:
+        return {"status": 500, "error": "Unknown server error"}
+    if resp.status_code != 200:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()
