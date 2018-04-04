@@ -78,7 +78,7 @@ def broadcasted_many_inputs(operationId):
 
 
 @api.route(' /api/transactions/broadcast/many-outputs/<int:operationId>', methods=['GET'])
-def broadcasted_many_inputs(operationId):
+def broadcasted_many_outputs(operationId):
     if not request.json:
         return make_response(jsonify(build_error("Input format error")), 400)
     params = {'operationId'}
