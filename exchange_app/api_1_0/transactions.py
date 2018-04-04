@@ -75,3 +75,14 @@ def broadcasted_many_inputs(operationId):
         return make_response(jsonify(build_error("Input data error")), 400)
     result = transaction_broadcast_many_inputs(request.json)
     return jsonify(result)
+
+
+@api.route(' /api/transactions/broadcast/many-outputs/<int:operationId>', methods=['GET'])
+def broadcasted_many_inputs(operationId):
+    if not request.json:
+        return make_response(jsonify(build_error("Input format error")), 400)
+    params = {'operationId'}
+    if all(x not in params for x in request.json):
+        return make_response(jsonify(build_error("Input data error")), 400)
+    result = transaction_broadcast_many_inputs(request.json)
+    return jsonify(result)
