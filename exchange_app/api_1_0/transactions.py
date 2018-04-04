@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import transaction_many_inputs, transaction_many_outputs, rebuild_transaction, transaction_broadcast_signed_tx, transaction_broadcasted_tx
+from .blockchain import transaction_many_inputs, transaction_many_outputs, rebuild_transaction, transaction_broadcast_signed_tx, transaction_broadcasted_tx. transaction_broadcast_many_inputs
 from .common import build_error
 
 
@@ -63,4 +63,15 @@ def broadcasted_tx(operationId):
     if all(x not in params for x in request.json):
         return make_response(jsonify(build_error("Input data error")), 400)
     result = transaction_broadcasted_tx(request.json)
+    return jsonify(result)
+
+
+@api.route(' /api/transactions/broadcast/many-inputs/<int:operationId>', methods=['GET'])
+def broadcasted_many_inputs(operationId):
+    if not request.json:
+        return make_response(jsonify(build_error("Input format error")), 400)
+    params = {'operationId'}
+    if all(x not in params for x in request.json):
+        return make_response(jsonify(build_error("Input data error")), 400)
+    result = transaction_broadcast_many_inputs(request.json)
     return jsonify(result)
