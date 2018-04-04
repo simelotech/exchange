@@ -271,3 +271,22 @@ def transaction_broadcast_many_outputs(values):
     if resp.status_code != 200:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def transaction_delete_broadcast_op(values):
+    """
+    remove specified transaction from the broadcasted transactions
+    """
+    csrf = requests.get(form_url(base_url, "/csrf")).json()
+    if not csrf or "csrf_token" not in csrf:
+        return {"status": 500, "error": "Unknown server error"}
+    resp = requests.delete(
+        form_url(base_url, "/transactions/broadcast"),
+        data=values,
+        headers={'X-CSRF-Token': csrf['csrf_token']}
+    )
+    if not resp:
+        return {"status": 500, "error": "Unknown server error"}
+    if resp.status_code != 200:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()

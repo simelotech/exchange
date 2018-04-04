@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import transaction_many_inputs, transaction_many_outputs, rebuild_transaction, transaction_broadcast_signed_tx, transaction_broadcasted_tx, transaction_broadcast_many_inputs, transaction_broadcast_many_outputs
+from .blockchain import transaction_many_inputs, transaction_many_outputs, rebuild_transaction, transaction_broadcast_signed_tx, transaction_broadcasted_tx, transaction_broadcast_many_inputs, transaction_broadcast_many_outputs, transaction_delete_broadcast_op
 from .common import build_error
 
 
@@ -85,4 +85,15 @@ def broadcasted_many_outputs(operationId):
     if all(x not in params for x in request.json):
         return make_response(jsonify(build_error("Input data error")), 400)
     result = transaction_broadcast_many_outputs(request.json)
+    return jsonify(result)
+
+
+@api.route(' /api/transactions/broadcast/<int:operationId>', methods=['DELETE'])
+def delete_broadcasted_op(operationId):
+    if not request.json:
+        return make_response(jsonify(build_error("Input format error")), 400)
+    params = {'operationId'}
+    if all(x not in params for x in request.json):
+        return make_response(jsonify(build_error("Input data error")), 400)
+    result = transaction_delete_broadcast_op(request.json)
     return jsonify(result)
