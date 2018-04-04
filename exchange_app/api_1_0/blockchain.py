@@ -134,6 +134,64 @@ def get_balance(address):
 
     return balances.json()['confirmed']['coins']
     
+
+def get_balance_scan(address, start_block = 1):
+    """
+    get the balance of given address in blockchain (use block scanning)
+    """
+    
+    block_count = get_block_count()
+    
+    if start_block > block_count:
+        return {"status": 400, "error": "Start block higher that block height", 'block': block_count}
+    
+        
+    values = {"start": start_block, "end": block_count}
+    blocks = requests.get(form_url(base_url, "/blocks"), params=values)
+    
+    if not blocks.json:
+        return {"status": 500, "error": "Unknown server error"}
+        
+    blocks = blocks.json()["blocks"]
+    
+    balance = 0
+    unspent_outputs = dict()
+    
+    for block in blocks:   #Scan the block range
+        for txn in block['body']['txns']:
+            
+            inputs = txn['inputs']
+            outputs = txn['outputs']
+            
+            #Outgoing
+            balance_out = 0
+            for input in inputs:
+                if input in unspent_outputs:
+                    balance_out += unspent_outputs.pop(input)
+                    
+            #Incoming
+            balance_in = 0
+            for output in outputs:
+                if output['dst'] == address:
+                    balance_in += float(output['coins'])
+                    unspent_outputs[output['uxid']] = float(output['coins'])
+
+                    
+            balance += balance_in
+            balance -= balance_out
+    
+    return {'balance': balance, 'block': block_count}
+    
+    
+def get_block_count():
+    """
+    Get the current block height of blockchain
+    """
+    progress = requests.get(form_url(base_url, "/blockchain/progress"))
+
+    return progress.json()['current']
+    
+    
     
 def get_transactions_from(address, afterhash):
     """

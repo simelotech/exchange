@@ -11,7 +11,7 @@ def add_address_observation(address):
     
     #If address not observed, insert it
     if not exists_address_observation(address):
-        id = collection.insert({'address':address})
+        id = collection.insert({'address':address, 'balance': 0, 'block': 1})
         if isinstance(id, ObjectId):
             return str(id)
         else:
@@ -19,10 +19,52 @@ def add_address_observation(address):
     else:
         return {"status" : 409, "error": "Specified address is already observed"} 
 
+
+def update_address_observation(address, balance, block):
+    """
+    Update the balance and block heigh in specified address entry
+    """
+    collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
+    
+    if exists_address_observation(address):
+        result = collection.update({'address': address}, {'$set': {'balance': balance, 'block': block}})
+        
+        if not 'n' in result:
+            return {"status": 500, "error": "Unknown server error"}
+        if result['n'] == 0:
+            return {"status": 500, "error": "Unknown server error"}
+            
+        return result
+    else:
+        return {"status" : 204, "error": "Specified address is not observed"} 
+    
+
+def get_address_observation_data(address):
+    """
+    Return the balance and block heigh in specified address entry 
+    """
+    collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
+        
+    #If address already observed, delete it
+    if exists_address_observation(address):
+        result = collection.find_one({'address':address})
+        
+        logging.debug(result)
+        
+        if not '_id' in result:
+            return {"status": 500, "error": "Unknown server error"}
+        
+        return {'address': result['address'], 'balance': result['balance'], 'block': result['block']}
+        
+    else:
+        return {"status" : 204, "error": "Specified address is not observed"} 
+    
+    
+    
     
 def delete_address_observation(address):
     """
-    Add the specified address to balances observation list and return the mongo document id
+    delete the specified address from balances observation list
     """
     
     collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation

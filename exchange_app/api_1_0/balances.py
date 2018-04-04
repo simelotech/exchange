@@ -1,11 +1,11 @@
 from flask import request, jsonify, make_response
 from . import api
 from .common import build_error, generate_hash_key
-from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation
+from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, get_address_observation_data, update_address_observation
 from .redis_interface import get_cont_address_balances, set_cont_address_balances, del_cont_address_balances
 import logging
 from .. import app
-from .blockchain import get_balance
+from .blockchain import get_balance, get_balance_scan
 
 
 @api.route('/balances/<string:address>/observation', methods=['POST'])
@@ -44,6 +44,10 @@ def get_balances():
     Get balances of address in observation list
     """
     
+    #balance = get_balance_scan('sKr6GJwXTBcvG1P3qdrwnd4UgtrrgDa4jU', 1)
+    #return str(balance)
+    
+    
     take = request.args.get('take')
     if take is None:
         take = 0
@@ -81,11 +85,29 @@ def get_balances():
             logging.debug("Total Items: %i", total_items)
             logging.debug("address: %s", addresses[start_index])
             
+        #Get stored balance and block in mongodb
+        balance_stored = get_address_observation_data(addresses[start_index])
+        stored_blockheight = balance_stored['block']
+        stored_balance = balance_stored['balance']
+        
+        #Get balance and block height from blockchain, join with stored
+        balance_update = get_balance_scan(addresses[start_index], stored_blockheight + 1)
+        if 'error' in balance_update:
+            if balance_update['error'] == "Start block higher that block height":
+                balance_update['balance'] = 0
+        
+        balance = stored_balance + balance_update['balance']
+        block = balance_update['block']
+        
+        #Store updated values in mongodb
+        update_address_observation(addresses[start_index], balance, block)        
+        
+        #Generate output response
         item['address'] = addresses[start_index]
         item['assetId'] = 0
-        item['balance'] = 4# get_balance(addr) #TODO: uncomment get balances when finish testing. Otherwise nothing will be returned
+        item['balance'] = balance
         #TODO: Handle case when address is deleted during paging read
-        item['block'] = 0 #TODO: where to get block sequence?
+        item['block'] = block
         if item['balance'] != 0:
             items.append(item)
         start_index += 1
