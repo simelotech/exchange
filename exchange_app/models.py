@@ -1,6 +1,8 @@
 import logging
 from exchange_app import mongo, app
 from bson.objectid import ObjectId
+from .api_1_0.blockchain import get_block_count, get_block_range
+import requests
 
 def add_address_observation(address):
     """
@@ -233,3 +235,78 @@ def delete_transaction_observation_to_address(address):
         return result
     else:
         return {"status" : 204, "error": "Specified address is not observed"} 
+        
+
+def update_index():
+    """
+    Update the index keeping observation addresses and blocks in which they are referred
+    """
+
+    #Get the latest block procesed in index (block height of block chain in last update)
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
+    
+    start_block = 0
+    result = collection.find_one({'meta':'blockheight'})
+    
+    if result is None: #index not created yet
+        collection.insert({'meta':'blockheight', 'blockheight': 0})
+        start_block = 1
+    else:
+        start_block = result['blockheight'] + 1
+        
+    
+    #Get current blockchain blockheight
+    block_count = get_block_count()
+    
+    if start_block > block_count: #No new blocks since last update
+        return
+        
+        
+    #Get blocks from indexed + 1 to end
+    blocks = get_block_range(start_block, block_count) #TODO:implement paging to read blocks
+    
+    if 'error' in blocks:
+        return blocks
+    
+    
+    #Process unindexed blocks. Search for observed adresses and add block# to index
+    unspent_outputs = collection.find_one({'meta':'unspent'})
+    if unspent_outputs is None:
+        unspent_outputs = {}
+    else:
+        unspent_outputs = unspent_outputs['unspent_outputs']
+    
+    addresses = get_addresses_balance_observation()
+    
+    for block in blocks:   #Scan the block range
+        
+        blocknum = block['header']['seq']
+        
+        for txn in block['body']['txns']:
+            
+            inputs = txn['inputs']
+            outputs = txn['outputs']            
+            
+            #Outgoing
+            for input in inputs:
+                if input in unspent_outputs: #Observed address is spending an output
+                    addr = unspent_outputs.pop(input)
+                    #Add this blocknum to index for addr
+                    collection.insert({addr: blocknum})
+                    
+            #Incoming
+            for output in outputs:
+                addr = output['dst']
+                if addr in addresses: #Observed address is receiving a transaction
+                    unspent_outputs[output['uxid']] = addr
+                    #Add this blocknum to index for addr
+                    collection.insert({addr: blocknum})
+
+    #Add remaining unspent outputs to address index
+    collection.update({'meta':'unspent'}, {"$set": {'unspent_outputs': unspent_outputs}})
+    
+    #Update blockheight
+    collection.insert({'meta':'blockheight', 'blockheight': block_count})
+
+    
+        

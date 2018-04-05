@@ -146,13 +146,10 @@ def get_balance_scan(address, start_block = 1):
         return {"status": 400, "error": "Start block higher that block height", 'block': block_count}
     
         
-    values = {"start": start_block, "end": block_count}
-    blocks = requests.get(form_url(base_url, "/blocks"), params=values)
+    blocks = get_block_range(start_block, block_count)
     
-    if not blocks.json:
-        return {"status": 500, "error": "Unknown server error"}
-        
-    blocks = blocks.json()["blocks"]
+    if 'error' in blocks:
+        return blocks
     
     balance = 0
     unspent_outputs = dict()
@@ -191,7 +188,21 @@ def get_block_count():
 
     return progress.json()['current']
     
+
+def get_block_range(start_block, end_block):
+    """
+    returns the blocks from blockchain in the specified range
+    """
     
+    values = {"start": start_block, "end": end_block}
+    result = requests.get(form_url(base_url, "/blocks"), params=values)
+    
+    if not result.json:
+        return {"status": 500, "error": "Unknown server error"}
+        
+    return result.json()['blocks']
+     
+
     
 def get_transactions_from(address, afterhash):
     """
