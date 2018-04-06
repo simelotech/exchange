@@ -31,7 +31,7 @@ def transactions_many_outputs():
     return jsonify({"status": 500, "error": "Invalid response"})
 
 
-@api.route('/api/transactions', methods=['PUT'])
+@api.route('/api/transactions', methods=['PUT', 'PATCH'])
 def rebuild_transactions():
     if not request.json:
         return make_response(jsonify(build_error("Input format error")), 400)
