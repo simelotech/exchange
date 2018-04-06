@@ -250,6 +250,7 @@ def update_index():
     
     if result is None: #index not created yet
         collection.insert({'meta':'blockheight', 'blockheight': 0})
+        collection.insert({'meta':'unspent', 'unspent_outputs': {}})        
         start_block = 1
     else:
         start_block = result['blockheight'] + 1
@@ -281,6 +282,7 @@ def update_index():
     for block in blocks:   #Scan the block range
         
         blocknum = block['header']['seq']
+        indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if already indexed
         
         for txn in block['body']['txns']:
             
@@ -292,7 +294,9 @@ def update_index():
                 if input in unspent_outputs: #Observed address is spending an output
                     addr = unspent_outputs.pop(input)
                     #Add this blocknum to index for addr
-                    collection.insert({addr: blocknum})
+                    if not addr in indexed_addresses:  # Make sure the blocknum is added only once to addr index
+                        collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
+                        indexed_addresses.append(addr)
                     
             #Incoming
             for output in outputs:
@@ -300,13 +304,15 @@ def update_index():
                 if addr in addresses: #Observed address is receiving a transaction
                     unspent_outputs[output['uxid']] = addr
                     #Add this blocknum to index for addr
-                    collection.insert({addr: blocknum})
+                    if not addr in indexed_addresses:
+                        collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
+                        indexed_addresses.append(addr)
 
     #Add remaining unspent outputs to address index
     collection.update({'meta':'unspent'}, {"$set": {'unspent_outputs': unspent_outputs}})
     
     #Update blockheight
-    collection.insert({'meta':'blockheight', 'blockheight': block_count})
+    collection.update({'meta':'blockheight'}, {"$set": {'blockheight': block_count}})
 
     
         

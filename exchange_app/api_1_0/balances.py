@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 from . import api
 from .common import build_error, generate_hash_key
-from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, get_address_observation_data, update_address_observation
+from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, get_address_observation_data, update_address_observation, update_index
 from .redis_interface import get_cont_address_balances, set_cont_address_balances, del_cont_address_balances
 import logging
 from .. import app
@@ -46,6 +46,8 @@ def get_balances():
     
     #balance = get_balance_scan('sKr6GJwXTBcvG1P3qdrwnd4UgtrrgDa4jU', 1)
     #return str(balance)
+    
+    update_index()
     
     
     take = request.args.get('take')
