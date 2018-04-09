@@ -277,7 +277,7 @@ def update_index():
     else:
         unspent_outputs = unspent_outputs['unspent_outputs']
     
-    addresses = dict.fromkeys( get_addresses_balance_observation(), 0) # Get addresses in observation list and initialize balance in 0
+    addresses = get_addresses_balance_observation()
     
     for block in blocks:   #Scan the block range
         
@@ -296,8 +296,8 @@ def update_index():
                     addr = uotpt['address']
                     spent_balance = uotpt['balance']
                     
-                    addresses[addr] -= spent_balance
-                    collection.update({'address': addr}, {'$set':{'balance': addresses[addr]}}, upsert = True)
+                    #update the balance of address in index
+                    collection.update({'address': addr}, {'$inc':{'balance': -spent_balance}}, upsert = True)
                     
                     #Add this blocknum to index for addr
                     if not addr in indexed_addresses:  # Make sure the blocknum is added only once to addr index
@@ -308,11 +308,10 @@ def update_index():
             for output in outputs:
                 addr = output['dst']
                 if addr in addresses: #Observed address is receiving a transaction
-                    received_balance = float(output['coins'])
+                    received_balance = float(output['coins'])                    
                     
-                    addresses[addr] += received_balance
-                    collection.update({'address': addr}, {'$set':{'balance': addresses[addr]}}, upsert = True)
-                    unspent_outputs[output['uxid']] = {'address': addr, 'balance': received_balance}
+                    collection.update({'address': addr}, {'$inc':{'balance': received_balance}}, upsert = True) #update the balance of address in index
+                    unspent_outputs[output['uxid']] = {'address': addr, 'balance': received_balance} # save unspent data for later use
                     #Add this blocknum to index for addr
                     if not addr in indexed_addresses:
                         collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
