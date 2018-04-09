@@ -237,15 +237,15 @@ def delete_transaction_observation_to_address(address):
         return {"status" : 204, "error": "Specified address is not observed"} 
         
 
-def update_index():
+def update_index(new_addr = ''):
     """
     Update the index keeping observation addresses and blocks in which they are referred
+    If new_addr is specified, scan from start and update index for the address
     """
 
     #Get the latest block procesed in index (block height of block chain in last update)
     collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
     
-    start_block = 0
     result = collection.find_one({'meta':'blockheight'})
     
     if result is None: #index not created yet
@@ -255,9 +255,13 @@ def update_index():
     else:
         start_block = result['blockheight'] + 1
         
+    if new_addr != '': #If new_addr is specified scan from the start to last index blockheight
+        start_block = 1
+        block_count = result['blockheight']
+    else:
+        #Get current blockchain blockheight
+        block_count = get_block_count()
     
-    #Get current blockchain blockheight
-    block_count = get_block_count()
     
     if start_block > block_count: #No new blocks since last update
         return
@@ -277,7 +281,10 @@ def update_index():
     else:
         unspent_outputs = unspent_outputs['unspent_outputs']
     
-    addresses = get_addresses_balance_observation()
+    if new_addr == '': #If new_addr is specified only search for new_addr
+        addresses = get_addresses_balance_observation()
+    else:
+        addresses[0] = new_addr
     
     for block in blocks:   #Scan the block range
         
