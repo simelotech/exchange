@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 from . import api
 from .common import build_error, generate_hash_key
-from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, get_address_observation_data, update_address_observation, update_index
+from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, update_index, get_indexed_balance, get_indexed_blockheight
 from .redis_interface import get_cont_address_balances, set_cont_address_balances, del_cont_address_balances
 import logging
 from .. import app
@@ -41,14 +41,10 @@ def delete_observation(address):
 @api.route('/balances', methods=['GET'])
 def get_balances():
     """
-    Get balances of address in observation list
+    Get balances of addresses in observation list
     """
-    
-    #balance = get_balance_scan('sKr6GJwXTBcvG1P3qdrwnd4UgtrrgDa4jU', 1)
-    #return str(balance)
-    
+
     update_index()
-    
     
     take = request.args.get('take')
     if take is None:
@@ -78,40 +74,29 @@ def get_balances():
     #define search boundaries
     start_index = 0 if cont_address == "" or cont_address not in addresses else addresses.index(cont_address)
     total_items = take if take != 0 else len(addresses)   
+    
+    blockheight = get_indexed_blockheight()
+    if 'error' in blockheight:
+        return make_response(jsonify(build_error(blockheight["error"])), blockheight["status"])
 
     while len(items) < total_items and start_index < len(addresses):
         item = {}
         
-        if app.config['DEBUG']:
-            logging.debug("Start Index: %i", start_index)
-            logging.debug("Total Items: %i", total_items)
-            logging.debug("address: %s", addresses[start_index])
-            
-        #Get stored balance and block in mongodb
-        balance_stored = get_address_observation_data(addresses[start_index])
-        stored_blockheight = balance_stored['block']
-        stored_balance = balance_stored['balance']
-        
-        #Get balance and block height from blockchain, join with stored
-        balance_update = get_balance_scan(addresses[start_index], stored_blockheight + 1)
-        if 'error' in balance_update:
-            if balance_update['error'] == "Start block higher that block height":
-                balance_update['balance'] = 0
-        
-        balance = stored_balance + balance_update['balance']
-        block = balance_update['block']
-        
-        #Store updated values in mongodb
-        update_address_observation(addresses[start_index], balance, block)        
-        
+        #Get balance from index
+        balance = get_indexed_balance(addresses[start_index])        
+        if 'error' in balance: #If there is an error in balance, continue with the next address
+            start_index += 1
+            continue
+     
         #Generate output response
         item['address'] = addresses[start_index]
         item['assetId'] = 0
-        item['balance'] = balance
+        item['balance'] = balance['balance']
         #TODO: Handle case when address is deleted during paging read
-        item['block'] = block
+        item['block'] = blockheight
         if item['balance'] != 0:
             items.append(item)
+        
         start_index += 1
 
     #Save continuation address in Redis

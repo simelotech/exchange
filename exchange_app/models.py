@@ -21,48 +21,6 @@ def add_address_observation(address):
     else:
         return {"status" : 409, "error": "Specified address is already observed"} 
 
-
-def update_address_observation(address, balance, block):
-    """
-    Update the balance and block heigh in specified address entry
-    """
-    collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
-    
-    if exists_address_observation(address):
-        result = collection.update({'address': address}, {'$set': {'balance': balance, 'block': block}})
-        
-        if not 'n' in result:
-            return {"status": 500, "error": "Unknown server error"}
-        if result['n'] == 0:
-            return {"status": 500, "error": "Unknown server error"}
-            
-        return result
-    else:
-        return {"status" : 204, "error": "Specified address is not observed"} 
-    
-
-def get_address_observation_data(address):
-    """
-    Return the balance and block heigh in specified address entry 
-    """
-    collection = mongo.db.observation  #this colection will store all wallets addresses for balance observation
-        
-    #If address already observed, delete it
-    if exists_address_observation(address):
-        result = collection.find_one({'address':address})
-        
-        logging.debug(result)
-        
-        if not '_id' in result:
-            return {"status": 500, "error": "Unknown server error"}
-        
-        return {'address': result['address'], 'balance': result['balance'], 'block': result['block']}
-        
-    else:
-        return {"status" : 204, "error": "Specified address is not observed"} 
-    
-    
-    
     
 def delete_address_observation(address):
     """
@@ -243,7 +201,7 @@ def update_index(new_addr = ''):
     If new_addr is specified, scan from start and update index for the address
     """
 
-    #Get the latest block procesed in index (block height of block chain in last update)
+    #Get the latest block procesed in index (block height of blockchain in last update)
     collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
     
     result = collection.find_one({'meta':'blockheight'})
@@ -333,4 +291,32 @@ def update_index(new_addr = ''):
     collection.update({'meta':'blockheight'}, {"$set": {'blockheight': block_count}})
 
     
+def get_indexed_balance(address):
+    """
+    Returns the balance stored in index for the specified address
+    """
+    
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
+    
+    result = collection.find_one({'address': address})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Address is not indexed"}
         
+    return {'address': address, 'balance': result['balance']}
+    
+
+def get_indexed_blockheight():
+    """
+    Returns the block height of the blockchain from index
+    """
+    
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
+    
+    result = collection.find_one({'meta':'blockheight'})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Index not created"}
+        
+    return {'blockheight': result['blockheight']}
+    
