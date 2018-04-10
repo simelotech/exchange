@@ -13,8 +13,9 @@ def add_address_observation(address):
     
     #If address not observed, insert it
     if not exists_address_observation(address):
-        id = collection.insert({'address':address, 'balance': 0, 'block': 1})
+        id = collection.insert({'address':address})
         if isinstance(id, ObjectId):
+            update_index(address)   # Scan the blockchain for the address and update index
             return str(id)
         else:
             return {"status": 500, "error": "Unknown server error"}
@@ -37,6 +38,10 @@ def delete_address_observation(address):
             return {"status": 500, "error": "Unknown server error"}
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
+           
+        #Remove from index also
+        collection = mongo.db.observed_index
+        collection.remove({'address': address})
             
         return result
     else:
@@ -239,10 +244,11 @@ def update_index(new_addr = ''):
     else:
         unspent_outputs = unspent_outputs['unspent_outputs']
     
+    addresses = []
     if new_addr == '': #If new_addr is specified only search for new_addr
         addresses = get_addresses_balance_observation()
     else:
-        addresses[0] = new_addr
+        addresses.append(new_addr)
     
     for block in blocks:   #Scan the block range
         
