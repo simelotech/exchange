@@ -90,11 +90,11 @@ def get_balances():
      
         #Generate output response
         item['address'] = addresses[start_index]
-        item['assetId'] = 0
-        item['balance'] = balance['balance']
+        item['assetId'] = 'SKY'
+        item['balance'] = str(balance['balance'])  #TODO: Asset accuracy
         #TODO: Handle case when address is deleted during paging read
         item['block'] = blockheight
-        if item['balance'] != 0:
+        if balance['balance'] != 0:
             items.append(item)
         
         start_index += 1
