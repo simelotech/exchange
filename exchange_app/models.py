@@ -1,7 +1,7 @@
 import logging
 from exchange_app import mongo, app
 from bson.objectid import ObjectId
-from .api_1_0.blockchain import get_block_count, get_block_range
+from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq
 import requests
 
 def add_address_observation(address):
@@ -279,12 +279,12 @@ def update_index(new_addr = ''):
             for output in outputs:
                 addr = output['dst']
                 hash = output['uxid']
+                received_balance = float(output['coins'])
                 
                 #Store hash/address mapping
-                add_input_mapping(hash, addr)
+                add_input_mapping(hash, addr, received_balance)
                 
-                if addr in addresses: #Observed address is receiving a transaction
-                    received_balance = float(output['coins'])
+                if addr in addresses: #Observed address is receiving a transaction                    
                     
                     collection.update({'address': addr}, {'$inc':{'balance': received_balance}}, upsert = True) #update the balance of address in index
                     unspent_outputs[hash] = {'address': addr, 'balance': received_balance} # save unspent data for later use
@@ -334,50 +334,111 @@ def get_indexed_blockheight():
     return {'blockheight': result['blockheight']}
     
     
-def add_input_mapping(input_hash, address):
+def add_input_mapping(input_hash, address, balance):
     """
     Adds an entry to input hash mapping table
     """
     
     collection = mongo.db.input_mapping  #this colection will store the mapping of inputs to their address
     
-    collection.insert({'input_hash': input_hash, 'address': address})
+    collection.insert({'input_hash': input_hash, 'address': address, 'balance': balance})
+    
+    
+def get_hash_address(input_hash):
+    """
+    Adds an entry to input hash mapping table
+    """
+    
+    collection = mongo.db.input_mapping  #this colection will store the mapping of inputs to their address
+    
+    result = collection.find_one({'input_hash': input_hash})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Index not created"}
+        
+    return {'address': result['address'], 'balance': result['balance']}
     
         
-def get_transactions_from(address, afterhash):
+def get_transactions_from(address, afterhash = ''):
     """
     return all transactions from address after the one specified by afterhash
     """
     
-    #TODO: Read this from blockchain
+    #Convert afterhash to block sequence number
+    if afterhash == '':
+        seqno = 1
+    else:
+        blk = get_block_by_hash(afterhash)
+        if 'error' in blk:
+            return blk
+            
+        seqno = blk['header']['seq']
     
-    transfers = [
-        {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
-         "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
-         "fromAddress": address,
-         "toAddress": "xxxxxx",
-         "assetId": "skycoin",
-         "amount": "1000000",
-         "hash": "qwertyasdfg"
-        }, 
-        {"operationId": "guid", 
-         "timestamp": "20180215T231403Z", 
-         "fromAddress": address,
-         "toAddress": "xxxxxx",
-         "assetId": "skycoin",
-         "amount": "2000000",
-         "hash": "asdfgzxcvb"
-        }
-    ]
+    # Get the blocks containing address higher than seqno
     
-    return transfers
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
+    
+    result = collection.find_one({'address': address})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Address is not indexed"}
+        
+    mentioned_blocks = result['blocks']
+    
+    blocks = []  #Holds the mentioned blocks higher than seqno
+    
+    items = []   # Hold the history output items from specified address
+    
+    for blockseq in mentioned_blocks:
+        if blockseq <= seqno:
+            continue
+            
+        #Read the block from blockchain
+        block = get_block_by_seq(blockseq)
+        if 'error' in block:
+            return block
+        
+        timestamp = block['header']['timestamp']  #TODO: Convert to ISO 8601 UTC  (Eg: "20071103T161805Z")
+        
+        for txn in block['body']['txns']:
+            inputs = txn['inputs']
+            outputs = txn['outputs']   
+
+            operation_id = txn['txid']
+            tx_hash = txn['inner_hash']
+            
+            
+            
+            #Outgoing
+            for input in inputs:
+                addr = get_hash_address(input)['address']
+                logging.debug(addr)
+                if addr == address: # This is a transaction from specified address    
+                    
+                    for output in outputs: # Read destination addresses
+                        dst_addr = output['dst']
+                        if dst_addr != addr:  #Only record if dst is different from self. #TODO: Handle multiple outputs
+                            #Record to history output
+                            item = {}
+                            item['operationId'] =  operation_id
+                            item['timestamp'] = timestamp
+                            item['fromAddress'] = address
+                            item['toAddress'] = dst_addr
+                            item['assetId'] = 'SKY'
+                            item['amount'] = output['coins']
+                            item['hash'] = tx_hash                            
+                            items.append(item)
+                            
+    return items    
+    
     
 def get_transactions_to(address, afterhash):
     """
     return all transactions to address after the one specified by afterhash
     """
     
-    #TODO: Read this from blockchain
+    #Convert afterhash to blockseq
+    
     
     transfers = [
         {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?

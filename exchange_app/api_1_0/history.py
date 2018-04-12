@@ -30,6 +30,8 @@ def get_history_from_address(address):
         afterhash = ""  
        
     items = get_transactions_from(address, afterhash)
+    if 'error' in items:
+        return make_response(jsonify(build_error(items['error'])), items['status'])
 
     response = items if take == 0 else items[0:take]
 
