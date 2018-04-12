@@ -334,7 +334,7 @@ def get_indexed_blockheight():
     return {'blockheight': result['blockheight']}
     
     
-def add_input_mapping(input_hash, address)
+def add_input_mapping(input_hash, address):
     """
     Adds an entry to input hash mapping table
     """
@@ -344,4 +344,58 @@ def add_input_mapping(input_hash, address)
     collection.insert({'input_hash': input_hash, 'address': address})
     
         
+def get_transactions_from(address, afterhash):
+    """
+    return all transactions from address after the one specified by afterhash
+    """
     
+    #TODO: Read this from blockchain
+    
+    transfers = [
+        {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
+         "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
+         "fromAddress": address,
+         "toAddress": "xxxxxx",
+         "assetId": "skycoin",
+         "amount": "1000000",
+         "hash": "qwertyasdfg"
+        }, 
+        {"operationId": "guid", 
+         "timestamp": "20180215T231403Z", 
+         "fromAddress": address,
+         "toAddress": "xxxxxx",
+         "assetId": "skycoin",
+         "amount": "2000000",
+         "hash": "asdfgzxcvb"
+        }
+    ]
+    
+    return transfers
+    
+def get_transactions_to(address, afterhash):
+    """
+    return all transactions to address after the one specified by afterhash
+    """
+    
+    #TODO: Read this from blockchain
+    
+    transfers = [
+        {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
+         "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
+         "fromAddress": "xxxxxx",
+         "toAddress": address,
+         "assetId": "skycoin",
+         "amount": "1000000",
+         "hash": "qwertyasdfg"
+        }, 
+        {"operationId": "guid", 
+         "timestamp": "20180215T231403Z", 
+         "fromAddress": "xxxxxx",
+         "toAddress": address,
+         "assetId": "skycoin",
+         "amount": "2000000",
+         "hash": "asdfgzxcvb"
+        }
+    ]
+    
+    return transfers

@@ -3,7 +3,7 @@ from . import api
 from .common import build_error
 from ..models import exists_address_transfer_observation_to, exists_address_transfer_observation_from
 from ..models import add_transaction_observation_to_address, add_transaction_observation_from_address, delete_transaction_observation_to_address, delete_transaction_observation_from_address
-from .blockchain import get_transactions_from, get_transactions_to
+from ..models import get_transactions_from, get_transactions_to
 #from .redis_interface import get_cont_address_transfers_from, set_cont_address_transfers_from, del_cont_address_transfers_from
 #from .redis_interface import get_cont_address_transfers_to, set_cont_address_transfers_to, del_cont_address_transfers_to
 import logging
