@@ -278,11 +278,18 @@ def update_index(new_addr = ''):
             #Incoming
             for output in outputs:
                 addr = output['dst']
+                hash = output['uxid']
+                
+                #Store hash/address mapping
+                add_input_mapping(hash, addr)
+                
                 if addr in addresses: #Observed address is receiving a transaction
-                    received_balance = float(output['coins'])                    
+                    received_balance = float(output['coins'])
                     
                     collection.update({'address': addr}, {'$inc':{'balance': received_balance}}, upsert = True) #update the balance of address in index
-                    unspent_outputs[output['uxid']] = {'address': addr, 'balance': received_balance} # save unspent data for later use
+                    unspent_outputs[hash] = {'address': addr, 'balance': received_balance} # save unspent data for later use
+                    
+                    
                     #Add this blocknum to index for addr
                     if not addr in indexed_addresses:
                         collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
@@ -325,4 +332,16 @@ def get_indexed_blockheight():
         return {"status": 500, "error": "Index not created"}
         
     return {'blockheight': result['blockheight']}
+    
+    
+def add_input_mapping(input_hash, address)
+    """
+    Adds an entry to input hash mapping table
+    """
+    
+    collection = mongo.db.input_mapping  #this colection will store the mapping of inputs to their address
+    
+    collection.insert({'input_hash': input_hash, 'address': address})
+    
+        
     
