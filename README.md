@@ -37,16 +37,22 @@ pip install -r requirements.txt
 
 ### Running
 
-Once the dependencies are installed, run the app:
+Ensure that mongodb-server is up and running
 
 ```shell
-python manage.py runserver
+systemctl start mongod
 ```
+
+Once the dependencies are installed, run the app:
 
 For available commands, run:
 
 ```shell
 python manage.py --help
+```
+
+```shell
+python manage.py runserver
 ```
 
 ### Adding or improving features
