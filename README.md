@@ -46,7 +46,7 @@ python manage.py runserver
 For available commands, run:
 
 ```shell
-python manage.py runserver
+python manage.py --help
 ```
 
 ### Adding or improving features
