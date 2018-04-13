@@ -130,6 +130,7 @@ def add_transaction_observation_from_address(address):
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
         id = collection.insert({'address':address})
+        update_index(address)
         
         if isinstance(id, ObjectId):
             return str(id) 
@@ -149,6 +150,7 @@ def add_transaction_observation_to_address(address):
     #If address not observed, insert it
     if not exists_address_transfer_observation_to(address):
         id = collection.insert({'address':address})
+        update_index(address)
         
         if isinstance(id, ObjectId):
             return str(id) 
@@ -219,6 +221,9 @@ def update_index(new_addr = ''):
         start_block = result['blockheight'] + 1
         
     if new_addr != '': #If new_addr is specified scan from the start to last index blockheight
+        if collection.find_one({'address': new_addr}) is not None:   #address already indexed
+            return {}
+        
         start_block = 1
         block_count = result['blockheight']
     else:
@@ -227,7 +232,7 @@ def update_index(new_addr = ''):
     
     
     if start_block > block_count: #No new blocks since last update
-        return
+        return {}
         
         
     #Get blocks from indexed + 1 to end
