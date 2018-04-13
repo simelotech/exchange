@@ -39,9 +39,10 @@ def delete_address_observation(address):
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
            
-        #Remove from index also
-        collection = mongo.db.observed_index
-        collection.remove({'address': address})
+        #Remove address from index if not exists in other observation lists.
+        
+        if not exists_address_transfer_observation_from(address) and not exists_address_transfer_observation_to(address):
+            remove_from_index(address)
             
         return result
     else:
@@ -130,9 +131,9 @@ def add_transaction_observation_from_address(address):
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
         id = collection.insert({'address':address})
-        update_index(address)
         
         if isinstance(id, ObjectId):
+            update_index(address)
             return str(id) 
         else:
             return {"status": 500, "error": "Unknown server error"}
@@ -150,9 +151,9 @@ def add_transaction_observation_to_address(address):
     #If address not observed, insert it
     if not exists_address_transfer_observation_to(address):
         id = collection.insert({'address':address})
-        update_index(address)
         
         if isinstance(id, ObjectId):
+            update_index(address)
             return str(id) 
         else:
             return {"status": 500, "error": "Unknown server error"}
@@ -176,6 +177,11 @@ def delete_transaction_observation_from_address(address):
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
             
+        #Remove address from index if not exists in other observation lists.
+        
+        if not exists_address_transfer_observation_to(address) and not exists_address_observation(address):
+            remove_from_index(address)            
+            
         return result
     else:
         return {"status" : 204, "error": "Specified address is not observed"} 
@@ -196,6 +202,11 @@ def delete_transaction_observation_to_address(address):
             return {"status": 500, "error": "Unknown server error"}
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
+            
+        #Remove address from index if not exists in other observation lists.
+        
+        if not exists_address_transfer_observation_from(address) and not exists_address_observation(address):
+            remove_from_index(address)
             
         return result
     else:
@@ -308,6 +319,14 @@ def update_index(new_addr = ''):
     #Update blockheight
     collection.update({'meta':'blockheight'}, {"$set": {'blockheight': block_count}})
 
+def remove_from_index(address):
+    """
+    Remove address from index
+    """
+    collection = mongo.db.observed_index
+    collection.remove({'address': address})
+    
+    
     
 def get_indexed_balance(address):
     """
