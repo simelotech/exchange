@@ -3,6 +3,7 @@ from exchange_app import mongo, app
 from bson.objectid import ObjectId
 from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq
 import requests
+from datetime import  datetime, timezone
 
 def add_address_observation(address):
     """
@@ -270,7 +271,7 @@ def update_index(new_addr = ''):
         for block in blocks:   #Scan the block range
             
             blocknum = block['header']['seq']
-            logging.debug(blocknum)
+            
             indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if address already indexed
             
             for txn in block['body']['txns']:
@@ -426,7 +427,8 @@ def get_transactions_from(address, afterhash = ''):
         if 'error' in block:
             return block
         
-        timestamp = block['header']['timestamp']  #TODO: Convert to ISO 8601 UTC  (Eg: "20071103T161805Z")
+        timestamp = block['header']['timestamp']
+        timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         
         for txn in block['body']['txns']:
             inputs = txn['inputs']
