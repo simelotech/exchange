@@ -39,9 +39,10 @@ def delete_address_observation(address):
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
            
-        #Remove from index also
-        collection = mongo.db.observed_index
-        collection.remove({'address': address})
+        #Remove address from index if not exists in other observation lists.
+        
+        if not exists_address_transfer_observation_from(address) and not exists_address_transfer_observation_to(address):
+            remove_from_index(address)
             
         return result
     else:
@@ -132,6 +133,7 @@ def add_transaction_observation_from_address(address):
         id = collection.insert({'address':address})
         
         if isinstance(id, ObjectId):
+            update_index(address)
             return str(id) 
         else:
             return {"status": 500, "error": "Unknown server error"}
@@ -151,6 +153,7 @@ def add_transaction_observation_to_address(address):
         id = collection.insert({'address':address})
         
         if isinstance(id, ObjectId):
+            update_index(address)
             return str(id) 
         else:
             return {"status": 500, "error": "Unknown server error"}
@@ -174,6 +177,11 @@ def delete_transaction_observation_from_address(address):
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
             
+        #Remove address from index if not exists in other observation lists.
+        
+        if not exists_address_transfer_observation_to(address) and not exists_address_observation(address):
+            remove_from_index(address)            
+            
         return result
     else:
         return {"status" : 204, "error": "Specified address is not observed"} 
@@ -194,6 +202,11 @@ def delete_transaction_observation_to_address(address):
             return {"status": 500, "error": "Unknown server error"}
         if result['n'] == 0:
             return {"status": 500, "error": "Unknown server error"}
+            
+        #Remove address from index if not exists in other observation lists.
+        
+        if not exists_address_transfer_observation_from(address) and not exists_address_observation(address):
+            remove_from_index(address)
             
         return result
     else:
@@ -219,6 +232,9 @@ def update_index(new_addr = ''):
         start_block = result['blockheight'] + 1
         
     if new_addr != '': #If new_addr is specified scan from the start to last index blockheight
+        if collection.find_one({'address': new_addr}) is not None:   #address already indexed
+            return {}
+        
         start_block = 1
         block_count = result['blockheight']
     else:
@@ -227,7 +243,7 @@ def update_index(new_addr = ''):
     
     
     if start_block > block_count: #No new blocks since last update
-        return
+        return {}
         
         
     #Get blocks from indexed + 1 to end
@@ -246,14 +262,14 @@ def update_index(new_addr = ''):
     
     addresses = []
     if new_addr == '': #If new_addr is specified only search for new_addr
-        addresses = get_addresses_balance_observation()
+        addresses = list(set(get_addresses_balance_observation() + get_addresses_transfers_observation_from() + get_addresses_transfers_observation_to()))
     else:
         addresses.append(new_addr)
     
     for block in blocks:   #Scan the block range
         
         blocknum = block['header']['seq']
-        indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if already indexed
+        indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if address already indexed
         
         for txn in block['body']['txns']:
             
@@ -303,6 +319,14 @@ def update_index(new_addr = ''):
     #Update blockheight
     collection.update({'meta':'blockheight'}, {"$set": {'blockheight': block_count}})
 
+def remove_from_index(address):
+    """
+    Remove address from index
+    """
+    collection = mongo.db.observed_index
+    collection.remove({'address': address})
+    
+    
     
 def get_indexed_balance(address):
     """
@@ -412,7 +436,6 @@ def get_transactions_from(address, afterhash = ''):
             #Outgoing
             for input in inputs:
                 addr = get_hash_address(input)['address']
-                logging.debug(addr)
                 if addr == address: # This is a transaction from specified address    
                     
                     for output in outputs: # Read destination addresses
@@ -437,26 +460,63 @@ def get_transactions_to(address, afterhash):
     return all transactions to address after the one specified by afterhash
     """
     
-    #Convert afterhash to blockseq
+    #Convert afterhash to block sequence number
+    if afterhash == '':
+        seqno = 1
+    else:
+        blk = get_block_by_hash(afterhash)
+        if 'error' in blk:
+            return blk
+            
+        seqno = blk['header']['seq']
     
+    # Get the blocks containing address higher than seqno
     
-    transfers = [
-        {"operationId": "guid", #TODO: Where to get this. If is only valid for this app's transactions, when do we generate/store it? Can blockchain provide it?
-         "timestamp": "20071103T161805Z", #TODO: confirm if should use ISO-8601 basic or extended timestamp representation
-         "fromAddress": "xxxxxx",
-         "toAddress": address,
-         "assetId": "skycoin",
-         "amount": "1000000",
-         "hash": "qwertyasdfg"
-        }, 
-        {"operationId": "guid", 
-         "timestamp": "20180215T231403Z", 
-         "fromAddress": "xxxxxx",
-         "toAddress": address,
-         "assetId": "skycoin",
-         "amount": "2000000",
-         "hash": "asdfgzxcvb"
-        }
-    ]
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
     
-    return transfers
+    result = collection.find_one({'address': address})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Address is not indexed"}
+        
+    mentioned_blocks = result['blocks']
+    
+    blocks = []  #Holds the mentioned blocks higher than seqno
+    
+    items = []   # Hold the history output items from specified address
+    
+    for blockseq in mentioned_blocks:
+        if blockseq <= seqno:
+            continue
+            
+        #Read the block from blockchain
+        block = get_block_by_seq(blockseq)
+        if 'error' in block:
+            return block
+        
+        timestamp = block['header']['timestamp']  #TODO: Convert to ISO 8601 UTC  (Eg: "20071103T161805Z")
+        
+        for txn in block['body']['txns']:
+            inputs = txn['inputs']
+            outputs = txn['outputs']   
+
+            operation_id = txn['txid']
+            tx_hash = txn['inner_hash']
+            
+            orig_addr = get_hash_address(inputs[0])['address']
+            
+            for output in outputs: # Read destination addresses
+                if output['dst'] == address and orig_addr != address:  
+                    #Record to history output
+                    item = {}
+                    item['operationId'] =  operation_id
+                    item['timestamp'] = timestamp
+                    item['fromAddress'] = orig_addr  #TODO: Handle multiple inputs
+                    item['toAddress'] = address
+                    item['assetId'] = 'SKY'
+                    item['amount'] = output['coins']
+                    item['hash'] = tx_hash                            
+                    items.append(item)
+                            
+    return items    
+    
