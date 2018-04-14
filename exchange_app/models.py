@@ -262,14 +262,14 @@ def update_index(new_addr = ''):
     
     addresses = []
     if new_addr == '': #If new_addr is specified only search for new_addr
-        addresses = get_addresses_balance_observation()
+        addresses = list(set(get_addresses_balance_observation() + get_addresses_transfers_observation_from() + get_addresses_transfers_observation_to()))
     else:
         addresses.append(new_addr)
     
     for block in blocks:   #Scan the block range
         
         blocknum = block['header']['seq']
-        indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if already indexed
+        indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if address already indexed
         
         for txn in block['body']['txns']:
             
