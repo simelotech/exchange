@@ -245,73 +245,75 @@ def update_index(new_addr = ''):
     if start_block > block_count: #No new blocks since last update
         return {}
         
-        
-    #Get blocks from indexed + 1 to end
-    blocks = get_block_range(start_block, block_count) #TODO:implement paging to read blocks
-    
-    if 'error' in blocks:
-        return blocks
-    
-    
     #Process unindexed blocks. Search for observed adresses and add block# to index
     unspent_outputs = collection.find_one({'meta':'unspent'})
     if unspent_outputs is None:
         unspent_outputs = {}
     else:
         unspent_outputs = unspent_outputs['unspent_outputs']
-    
+        
     addresses = []
     if new_addr == '': #If new_addr is specified only search for new_addr
         addresses = list(set(get_addresses_balance_observation() + get_addresses_transfers_observation_from() + get_addresses_transfers_observation_to()))
     else:
-        addresses.append(new_addr)
+        addresses.append(new_addr)   
+        
+        
+    #Get blocks from indexed + 1 to end in batches of 100
+    step = 100   #How many blocks to retrieve in one batch
+    for bn in range(start_block, block_count, step):
     
-    for block in blocks:   #Scan the block range
+        blocks = get_block_range(bn, bn + step - 1) #TODO:implement paging to read blocks        
+        if 'error' in blocks:
+            return blocks
         
-        blocknum = block['header']['seq']
-        indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if address already indexed
-        
-        for txn in block['body']['txns']:
+        for block in blocks:   #Scan the block range
             
-            inputs = txn['inputs']
-            outputs = txn['outputs']            
+            blocknum = block['header']['seq']
+            logging.debug(blocknum)
+            indexed_addresses = [] #Already indexed addresses in this block. Used to not repeat block entry in index if address already indexed
             
-            #Outgoing
-            for input in inputs:
-                if input in unspent_outputs: #Observed address is spending an output
-                    uotpt = unspent_outputs.pop(input)
-                    addr = uotpt['address']
-                    spent_balance = uotpt['balance']
-                    
-                    #update the balance of address in index
-                    collection.update({'address': addr}, {'$inc':{'balance': -spent_balance}}, upsert = True)
-                    
-                    #Add this blocknum to index for addr
-                    if not addr in indexed_addresses:  # Make sure the blocknum is added only once to addr index
-                        collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
-                        indexed_addresses.append(addr)
-                    
-            #Incoming
-            for output in outputs:
-                addr = output['dst']
-                hash = output['uxid']
-                received_balance = float(output['coins'])
+            for txn in block['body']['txns']:
                 
-                #Store hash/address mapping
-                add_input_mapping(hash, addr, received_balance)
+                inputs = txn['inputs']
+                outputs = txn['outputs']            
                 
-                if addr in addresses: #Observed address is receiving a transaction                    
-                    
-                    collection.update({'address': addr}, {'$inc':{'balance': received_balance}}, upsert = True) #update the balance of address in index
-                    unspent_outputs[hash] = {'address': addr, 'balance': received_balance} # save unspent data for later use
-                    
-                    
-                    #Add this blocknum to index for addr
-                    if not addr in indexed_addresses:
-                        collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
-                        indexed_addresses.append(addr)
+                #Outgoing
+                for input in inputs:
+                    if input in unspent_outputs: #Observed address is spending an output
+                        uotpt = unspent_outputs.pop(input)
+                        addr = uotpt['address']
+                        spent_balance = uotpt['balance']
                         
-        
+                        #update the balance of address in index
+                        collection.update({'address': addr}, {'$inc':{'balance': -spent_balance}}, upsert = True)
+                        
+                        #Add this blocknum to index for addr
+                        if not addr in indexed_addresses:  # Make sure the blocknum is added only once to addr index
+                            collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
+                            indexed_addresses.append(addr)
+                        
+                #Incoming
+                for output in outputs:
+                    addr = output['dst']
+                    hash = output['uxid']
+                    received_balance = float(output['coins'])
+                    
+                    #Store hash/address mapping
+                    add_input_mapping(hash, addr, received_balance)
+                    
+                    if addr in addresses: #Observed address is receiving a transaction
+                        
+                        collection.update({'address': addr}, {'$inc':{'balance': received_balance}}, upsert = True) #update the balance of address in index
+                        unspent_outputs[hash] = {'address': addr, 'balance': received_balance} # save unspent data for later use
+                        
+                        
+                        #Add this blocknum to index for addr
+                        if not addr in indexed_addresses:
+                            collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
+                            indexed_addresses.append(addr)
+                            
+            
 
     #Add remaining unspent outputs to address index
     collection.update({'meta':'unspent'}, {"$set": {'unspent_outputs': unspent_outputs}})
@@ -319,6 +321,8 @@ def update_index(new_addr = ''):
     #Update blockheight
     collection.update({'meta':'blockheight'}, {"$set": {'blockheight': block_count}})
 
+    
+    
 def remove_from_index(address):
     """
     Remove address from index
