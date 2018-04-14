@@ -461,7 +461,7 @@ def get_transactions_from(address, afterhash = ''):
     return items    
     
     
-def get_transactions_to(address, afterhash):
+def get_transactions_to(address, afterhash = ''):
     """
     return all transactions to address after the one specified by afterhash
     """
@@ -500,7 +500,8 @@ def get_transactions_to(address, afterhash):
         if 'error' in block:
             return block
         
-        timestamp = block['header']['timestamp']  #TODO: Convert to ISO 8601 UTC  (Eg: "20071103T161805Z")
+        timestamp = block['header']['timestamp']
+        timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         
         for txn in block['body']['txns']:
             inputs = txn['inputs']
