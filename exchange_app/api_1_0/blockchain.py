@@ -1,9 +1,7 @@
 import requests
 import logging
 from .. import app
-
-# TODO: Dont't hardcode this. Read from settings maybe?
-base_url = "http://localhost:6420/"
+from ..settings import app_config
 
 
 def form_url(base, path):
@@ -27,7 +25,7 @@ def get_url(path, values=""):
     General GET function for blockchain
     """
 
-    url = form_url(base_url, path)
+    url = form_url(app_config.SKYCOIN_NODE_URL, path)
 
     # resp = requests.get(url, params = values)
     # response_data = resp.json()
@@ -42,7 +40,7 @@ def post_url(path, values=""):
     General POST function for blockchain
     """
 
-    url = form_url(base_url, path)
+    url = form_url(app_config.SKYCOIN_NODE_URL, path)
 
     # resp = requests.post(url, data = values)
     # response_data = resp.json()
@@ -58,20 +56,20 @@ def create_wallet():
     """
 
     # generate new seed
-    new_seed = requests.get(form_url(base_url, "/wallet/newSeed")).json()
+    new_seed = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/newSeed")).json()
 
     if not new_seed or "seed" not in new_seed:
         return {"status": 500, "error": "Unknown server error"}
 
     # generate CSRF token
-    CSRF_token = requests.get(form_url(base_url, "/csrf")).json()
+    CSRF_token = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/csrf")).json()
 
     if not CSRF_token or "csrf_token" not in CSRF_token:
         return {"status": 500, "error": "Unknown server error"}
 
     # create the wallet from seed
     # TODO: Where to get labels? How about scan?
-    resp = requests.post(form_url(base_url, "/wallet/create"),
+    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/create"),
                          {"seed": new_seed["seed"],
                              "label": "wallet123", "scan": "5"},
                          headers={'X-CSRF-Token': CSRF_token['csrf_token']})
@@ -96,7 +94,7 @@ def spend(values):
     """
     Transfer balance
     """
-    resp = requests.post(form_url(base_url, "/wallet/spend"), data=values)
+    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/spend"), data=values)
 
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -109,7 +107,7 @@ def get_version():
     Get blockchain version
     """
 
-    version = requests.get(form_url(base_url, "/version"))
+    version = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/version"))
 
     if not version.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -123,7 +121,7 @@ def get_balance(address):
     """
 
     values = {"addrs": address}
-    balances = requests.get(form_url(base_url, "/balance"), params=values)
+    balances = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/balance"), params=values)
 
     if not balances.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -133,18 +131,18 @@ def get_balance(address):
         logging.debug(balances.json())
 
     return balances.json()['confirmed']['coins']
-    
+
 
 def get_balance_scan(address, start_block = 1):
     """
     get the balance of given address in blockchain (use block scanning)
     """
-    
+
     block_count = get_block_count()
-    
+
     if start_block > block_count:
         return {"status": 400, "error": "Start block higher that block height", 'block': block_count}
-    
+
         
     blocks = get_block_range(start_block, block_count)
     
@@ -187,7 +185,7 @@ def get_block_count():
     progress = requests.get(form_url(base_url, "/blockchain/progress"))
 
     return progress.json()['current']
-    
+
 
 def get_block_range(start_block, end_block):
     """
