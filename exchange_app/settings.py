@@ -17,10 +17,10 @@ class Config(object):
     SERVER_NAME = 'localhost:5000'
     #: Database
     MONGO_DBNAME = 'LYKKE'
-    MONGO_HOST = '127.0.0.1'
+    MONGO_HOST = '192.168.56.101'
     MONGO_PORT = 27017
     #: Redis
-    REDIS_HOST = '127.0.0.1'
+    REDIS_HOST = '192.168.56.101'
     REDIS_PORT = 6379
     #: SKYCOIN
     SKYCOIN_NODE_URL = 'http://localhost:6420/'
