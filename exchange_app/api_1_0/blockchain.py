@@ -182,7 +182,7 @@ def get_block_count():
     """
     Get the current block height of blockchain
     """
-    progress = requests.get(form_url(base_url, "/blockchain/progress"))
+    progress = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/blockchain/progress"))
 
     return progress.json()['current']
 
@@ -193,7 +193,7 @@ def get_block_range(start_block, end_block):
     """
     
     values = {"start": start_block, "end": end_block}
-    result = requests.get(form_url(base_url, "/blocks"), params=values)
+    result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/blocks"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -207,7 +207,7 @@ def get_block_by_hash(hash):
     """
     
     values = {"hash": hash}
-    result = requests.get(form_url(base_url, "/block"), params=values)
+    result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -221,7 +221,7 @@ def get_block_by_seq(seqnum):
     """
     
     values = {"seq": seqnum}
-    result = requests.get(form_url(base_url, "/block"), params=values)
+    result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
