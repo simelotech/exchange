@@ -266,7 +266,7 @@ def update_index(new_addr = ''):
     step = 100   #How many blocks to retrieve in one batch
     for bn in range(start_block, block_count, step):
     
-        blocks = get_block_range(bn, bn + step - 1, session) #TODO:implement paging to read blocks        
+        blocks = get_block_range(bn, bn + step - 1, session)      
         if 'error' in blocks:
             return blocks
         
@@ -395,6 +395,8 @@ def get_transactions_from(address, afterhash = ''):
     return all transactions from address after the one specified by afterhash
     """
     
+    session = requests.Session() 
+    
     #Convert afterhash to block sequence number
     if afterhash == '':
         seqno = 1
@@ -467,6 +469,8 @@ def get_transactions_to(address, afterhash = ''):
     """
     return all transactions to address after the one specified by afterhash
     """
+    
+    session = requests.Session() 
     
     #Convert afterhash to block sequence number
     if afterhash == '':
