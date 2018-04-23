@@ -178,22 +178,30 @@ def get_balance_scan(address, start_block = 1):
     return {'balance': balance, 'block': block_count}
     
     
-def get_block_count():
+def get_block_count(session = ''):
     """
     Get the current block height of blockchain
     """
-    progress = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/blockchain/progress"))
+    
+    if session == '':
+        progress = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/blockchain/progress"))
+    else:
+        progress = session.get(form_url(app_config.SKYCOIN_NODE_URL, "/blockchain/progress"))
 
     return progress.json()['current']
 
 
-def get_block_range(start_block, end_block):
+def get_block_range(start_block, end_block, session = ''):
     """
     returns the blocks from blockchain in the specified range
     """
     
     values = {"start": start_block, "end": end_block}
-    result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/blocks"), params=values)
+    
+    if session == '':
+        result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/blocks"), params=values)
+    else:
+        result = session.get(form_url(app_config.SKYCOIN_NODE_URL, "/blocks"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -201,13 +209,17 @@ def get_block_range(start_block, end_block):
     return result.json()['blocks']
      
 
-def get_block_by_hash(hash):
+def get_block_by_hash(hash, session = ''):
     """
     returns the blocks from blockchain in the specified range
     """
     
     values = {"hash": hash}
-    result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
+    
+    if session == '':
+        result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
+    else:
+        result = session.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -215,15 +227,21 @@ def get_block_by_hash(hash):
     return result.json()
     
     
-def get_block_by_seq(seqnum):
+def get_block_by_seq(seqnum, session = ''):
     """
     returns the blocks from blockchain in the specified range
     """
     
     values = {"seq": seqnum}
-    result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
+    
+    if session == '':
+        result = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
+    else:
+        result = session.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
         
     return result.json()
+    
+    
