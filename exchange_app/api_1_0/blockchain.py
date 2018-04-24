@@ -275,3 +275,18 @@ def get_tx_info(txid):
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def get_raw_tx(txid):
+    """
+    Get raw tx by id
+    """
+
+    values = {"txid": txid}
+    resp = requests.get(
+        form_url(app_config.SKYCOIN_NODE_URL, "/rawtx"),
+        params=values
+    )
+    if not resp.json:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()

@@ -2,7 +2,7 @@ import logging
 from flask import jsonify
 
 from . import api
-from .blockchain import get_unconfirmed_txs, get_tx_info
+from .blockchain import get_unconfirmed_txs, get_tx_info, get_raw_tx
 from .. import app
 
 
@@ -18,6 +18,15 @@ def transactions_unconfirmed():
 @api.route('/transactions/info/<string:txid>', methods=['GET'])
 def transactions_info(txid):
     result = get_tx_info(txid)
+    if app.config['DEBUG']:
+        logging.debug("Transaction Info")
+        logging.debug(result)
+    return jsonify(result)
+
+
+@api.route('/transactions/raw/<string:txid>', methods=['GET'])
+def transaction_raw(txid):
+    result = get_raw_tx(txid)
     if app.config['DEBUG']:
         logging.debug("Transaction Info")
         logging.debug(result)
