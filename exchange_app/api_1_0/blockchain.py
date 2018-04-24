@@ -327,3 +327,16 @@ def get_tx_address_related(values):
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def resend_unconfirmed_txs():
+    """
+    Resend unconfirmed transactions
+    """
+
+    resp = requests.get(
+        form_url(app_config.SKYCOIN_NODE_URL, "/resendUnconfirmedTxns")
+    )
+    if not resp.json:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()

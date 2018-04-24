@@ -2,7 +2,7 @@ import logging
 from flask import jsonify, request, make_response
 
 from . import api
-from .blockchain import get_unconfirmed_txs, get_tx_info, get_raw_tx, inject_raw_tx, get_tx_address_related
+from .blockchain import get_unconfirmed_txs, get_tx_info, get_raw_tx, inject_raw_tx, get_tx_address_related, resend_unconfirmed_txs
 from .. import app
 from .common import build_error
 
@@ -56,4 +56,10 @@ def inject_raw_transaction():
 def transactions_address_related(addrs, confirmed):
     values = {'addrs': addrs, 'confirmed': confirmed}
     result = get_tx_address_related(values)
+    return jsonify(result)
+
+
+@api.route('/transactions/resend', methods=['GET'])
+def transactions_resend():
+    result = resend_unconfirmed_txs()
     return jsonify(result)
