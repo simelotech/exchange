@@ -313,3 +313,17 @@ def inject_raw_tx(rawtx):
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def get_tx_address_related(values):
+    """
+    Get transactions that are addresses related
+    """
+
+    resp = requests.get(
+        form_url(app_config.SKYCOIN_NODE_URL, "/transactions"),
+        params=values
+    )
+    if not resp.json:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()
