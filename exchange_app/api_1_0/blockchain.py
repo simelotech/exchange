@@ -269,7 +269,7 @@ def get_tx_info(txid):
 
     values = {"txid": txid}
     resp = requests.get(
-        form_url(app_config.SKYCOIN_NODE_URL, "/rawtx"),
+        form_url(app_config.SKYCOIN_NODE_URL, "/transaction"),
         params=values
     )
     if not resp.json:
