@@ -290,3 +290,23 @@ def get_raw_tx(txid):
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def inject_raw_tx(rawtx):
+    """
+    Broadcasts an encoded transaction to the network
+    """
+
+    csrf = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/csrf")).json()
+
+    if not csrf or "csrf_token" not in csrf:
+        return {"status": 500, "error": "Unknown server error"}
+
+    resp = requests.post(
+        form_url(app_config.SKYCOIN_NODE_URL, "/injectTransaction"),
+        params=rawtx,
+        headers={'X-CSRF-Token': csrf['csrf_token']}
+    )
+    if not resp.json:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()
