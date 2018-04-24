@@ -245,3 +245,18 @@ def get_block_by_seq(seqnum):
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
     return result.json()
+
+
+def get_unconfirmed_txs():
+    """
+    get unconfirmed transactions
+    """
+
+    resp = requests.get(
+        form_url(app_config.SKYCOIN_NODE_URL, "/pendingTxs")
+    )
+    if not resp:
+        return {"status": 500, "error": "Unknown server error"}
+    if resp.status_code != 200:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()
