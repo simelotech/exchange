@@ -41,9 +41,9 @@ def inject_raw_transaction():
     if "rawtx" not in request.json:
         return make_response(jsonify(build_error("Input data error")), 400)
     result = inject_raw_tx(request.json)
-    if result["status_code"] != 200 or result["error"] != "":
+    if result['status'] != 200 or result['error'] != "":
         return make_response(
-            jsonify(build_error(result)),
-            400
+            jsonify(build_error(result['error'])),
+            result['status']
         )
     return jsonify(result)

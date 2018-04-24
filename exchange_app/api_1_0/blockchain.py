@@ -1,3 +1,4 @@
+import json
 import requests
 import logging
 from .. import app
@@ -304,9 +305,11 @@ def inject_raw_tx(rawtx):
 
     resp = requests.post(
         form_url(app_config.SKYCOIN_NODE_URL, "/injectTransaction"),
-        params=rawtx,
+        data=json.dumps(rawtx),
         headers={'X-CSRF-Token': csrf['csrf_token']}
     )
+    if resp.status_code == 503:
+        return {"status": 503, "error": "Service Unavailable"}
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
