@@ -260,3 +260,18 @@ def get_unconfirmed_txs():
     if resp.status_code != 200:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+
+def get_tx_info(txid):
+    """
+    Get transaction info by id
+    """
+
+    values = {"txid": txid}
+    resp = requests.get(
+        form_url(app_config.SKYCOIN_NODE_URL, "/rawtx"),
+        params=values
+    )
+    if not resp.json:
+        return {"status": 500, "error": "Unknown server error"}
+    return resp.json()
