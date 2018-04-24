@@ -32,18 +32,3 @@ def transaction_raw(txid):
         logging.debug("Transaction Info")
         logging.debug(result)
     return jsonify(result)
-
-
-@api.route('/transaction/inject', methods=['POST'])
-def inject_raw_transaction():
-    if not request.json:
-        return make_response(jsonify(build_error("Input format error")), 400)
-    if "rawtx" not in request.json:
-        return make_response(jsonify(build_error("Input data error")), 400)
-    result = inject_raw_tx(request.json)
-    if result["status_code"] != 200 or result["error"] != "":
-        return make_response(
-            jsonify(build_error(result)),
-            400
-        )
-    return jsonify(result)
