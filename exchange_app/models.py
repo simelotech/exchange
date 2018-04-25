@@ -232,8 +232,6 @@ def update_index(new_addr = ''):
     else:
         start_block = result['blockheight'] + 1
         
-    session = requests.Session()   #Session to handle multiple requests to blockchain
-    
     if new_addr != '': #If new_addr is specified scan from the start to last index blockheight
         if collection.find_one({'address': new_addr}) is not None:   #address already indexed
             return {}
@@ -242,7 +240,7 @@ def update_index(new_addr = ''):
         block_count = result['blockheight']
     else:
         #Get current blockchain blockheight
-        block_count = get_block_count(session)
+        block_count = get_block_count()
     
     
     if start_block > block_count: #No new blocks since last update
@@ -266,7 +264,7 @@ def update_index(new_addr = ''):
     step = 100   #How many blocks to retrieve in one batch
     for bn in range(start_block, block_count, step):
     
-        blocks = get_block_range(bn, bn + step - 1, session)      
+        blocks = get_block_range(bn, bn + step - 1)      
         if 'error' in blocks:
             return blocks
         
@@ -393,15 +391,13 @@ def get_hash_address(input_hash):
 def get_transactions_from(address, afterhash = ''):
     """
     return all transactions from address after the one specified by afterhash
-    """
-    
-    session = requests.Session() 
+    """ 
     
     #Convert afterhash to block sequence number
     if afterhash == '':
         seqno = 1
     else:
-        blk = get_block_by_hash(afterhash, session)
+        blk = get_block_by_hash(afterhash)
         if 'error' in blk:
             return blk
             
@@ -427,7 +423,7 @@ def get_transactions_from(address, afterhash = ''):
             continue
             
         #Read the block from blockchain
-        block = get_block_by_seq(blockseq, session)
+        block = get_block_by_seq(blockseq)
         if 'error' in block:
             return block
         
@@ -470,13 +466,11 @@ def get_transactions_to(address, afterhash = ''):
     return all transactions to address after the one specified by afterhash
     """
     
-    session = requests.Session() 
-    
     #Convert afterhash to block sequence number
     if afterhash == '':
         seqno = 1
     else:
-        blk = get_block_by_hash(afterhash, session)
+        blk = get_block_by_hash(afterhash)
         if 'error' in blk:
             return blk
             
@@ -502,7 +496,7 @@ def get_transactions_to(address, afterhash = ''):
             continue
             
         #Read the block from blockchain
-        block = get_block_by_seq(blockseq, session)
+        block = get_block_by_seq(blockseq)
         if 'error' in block:
             return block
         
