@@ -4,6 +4,7 @@ from bson.objectid import ObjectId
 from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq
 import requests
 from datetime import  datetime, timezone
+from time import perf_counter
 
 def add_address_observation(address):
     """
@@ -219,7 +220,7 @@ def update_index(new_addr = ''):
     Update the index keeping observation addresses and blocks in which they are referred
     If new_addr is specified, scan from start and update index for the address
     """
-
+    
     #Get the latest block procesed in index (block height of blockchain in last update)
     collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
     
@@ -241,7 +242,7 @@ def update_index(new_addr = ''):
     else:
         #Get current blockchain blockheight
         block_count = get_block_count()
-    
+   
     
     if start_block > block_count: #No new blocks since last update
         return {}

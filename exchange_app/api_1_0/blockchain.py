@@ -2,7 +2,7 @@ import requests
 import logging
 from .. import app
 from ..settings import app_config
-
+from time import perf_counter
 
 def form_url(base, path):
     """
@@ -121,8 +121,8 @@ def get_balance(address):
     """
 
     values = {"addrs": address}
-    balances = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/balance"), params=values)
-
+    balances = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/balance"), params=values)
+    
     if not balances.json:
         return {"status": 500, "error": "Unknown server error"}
 

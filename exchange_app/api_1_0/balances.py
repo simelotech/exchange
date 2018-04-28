@@ -6,6 +6,7 @@ from .redis_interface import get_cont_address_balances, set_cont_address_balance
 import logging
 from .. import app
 from .blockchain import get_balance, get_balance_scan
+from time import perf_counter
 
 
 @api.route('/balances/<string:address>/observation', methods=['POST'])
@@ -44,7 +45,10 @@ def get_balances():
     Get balances of addresses in observation list
     """
 
+    perf = perf_counter()
     update_index()
+    logging.debug("index check perf : {0:.3f}".format( perf_counter() - perf ))
+    
     
     take = request.args.get('take')
     if take is None:
@@ -64,10 +68,6 @@ def get_balances():
     
     #Get address list from mongodb
     addresses = get_addresses_balance_observation()  
-
-    if app.config['DEBUG']:
-        logging.debug("addresses")
-        logging.debug(addresses)
     
     items = []
     
@@ -83,6 +83,7 @@ def get_balances():
         item = {}
         
         #Get balance from index
+        #balance = get_indexed_balance(addresses[start_index])        
         balance = get_indexed_balance(addresses[start_index])        
         if 'error' in balance: #If there is an error in balance, continue with the next address
             start_index += 1
@@ -110,10 +111,6 @@ def get_balances():
         continuation = ""
 
     response = {"continuation": continuation, "items": items}
-    
-    if app.config['DEBUG']:
-        logging.debug("Got balances from observation list")
-        logging.debug(items)
         
 
     return jsonify(response)
