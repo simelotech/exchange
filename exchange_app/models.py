@@ -1,7 +1,7 @@
 import logging
 from exchange_app import mongo, app
 from bson.objectid import ObjectId
-from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq
+from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq, get_address_transactions
 import requests
 from datetime import  datetime, timezone
 from time import perf_counter
@@ -462,7 +462,7 @@ def get_transactions_from(address, afterhash = ''):
     return items    
     
     
-def get_transactions_to(address, afterhash = ''):
+def _get_transactions_to(address, take, afterhash = ''):
     """
     return all transactions to address after the one specified by afterhash
     """
@@ -528,3 +528,59 @@ def get_transactions_to(address, afterhash = ''):
                             
     return items    
     
+
+def get_transactions_to(address, take, afterhash = ''):
+    """
+    return 'take' transactions to address after the one specified by afterhash
+    """
+    
+    collection = mongo.db.trans_obs_to  #this colection will store the addresses in observation list
+    
+    result = collection.find_one({'address': address})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Address is not observed"}
+   
+    txns = get_address_transactions(address)
+    
+    items = []   # Hold the history output items from specified address
+    process_txn = False
+    taken = 0
+    finish = False
+
+    for txn in txns:
+        
+        #If afterhash is specified, return from that point only 
+        if afterhash == '' or txn['txn']['inner_hash'] == afterhash:
+            process_txn = True
+            
+        if not process_txn:
+            continue
+            
+                
+                
+        timestamp = txn['time']
+        timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+        txn_hash = txn['txn']['inner_hash']
+        txn_type = txn['txn']['type']
+        orig_addr = get_hash_address(txn['txn']['inputs'][0])['address']
+    
+        for output in txn['txn']['outputs']: # Read destination addresses
+            if output['dst'] == address and orig_addr != address:  
+                #Record to history output
+                item = {}
+                item['timestamp'] =  timestamp
+                item['fromAddress'] = orig_addr
+                item['toAddress'] = address  #TODO: Handle multiple inputs
+                item['assetId'] = 'SKY'
+                item['amount'] = output['coins']
+                item['hash'] = txn_hash
+                item['transactionType'] = txn_type                            
+                items.append(item)
+                taken += 1
+                if taken >= take:
+                    finish = True
+        if finish:
+            break
+            
+    return items

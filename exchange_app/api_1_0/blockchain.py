@@ -232,4 +232,17 @@ def get_block_by_seq(seqnum):
         
     return result.json()
     
+
+def get_address_transactions(address):
+    """
+    Return the transactions to the specified address
+    """
     
+    values = {'confirmed': 1, 'addrs': address}
+    
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/transactions"), params=values)
+    
+    if not result.json:
+        return {"status": 500, "error": "Unknown server error"}
+        
+    return result.json()
