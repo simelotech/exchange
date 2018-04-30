@@ -546,7 +546,6 @@ def get_transactions_to(address, take, afterhash = ''):
     items = []   # Hold the history output items from specified address
     process_txn = False
     taken = 0
-    finish = False
 
     for txn in txns:
         
@@ -579,8 +578,6 @@ def get_transactions_to(address, take, afterhash = ''):
                 items.append(item)
                 taken += 1
                 if taken >= take:
-                    finish = True
-        if finish:
-            break
+                    return items
             
     return items
