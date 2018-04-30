@@ -441,8 +441,17 @@ def get_transactions_from(address, afterhash = ''):
             
             
             #Outgoing
+            
+            input_addresses = []
+            
             for input in inputs:
                 addr = get_hash_address(input)['address']
+                
+                if addr not in input_addresses: # count multiple inputs hashes from same address as one
+                    input_addresses.append(addr)
+                else: 
+                    continue
+                
                 if addr == address: # This is a transaction from specified address    
                     
                     for output in outputs: # Read destination addresses
