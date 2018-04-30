@@ -389,39 +389,26 @@ def get_hash_address(input_hash):
     return {'address': result['address'], 'balance': result['balance']}
     
         
-def get_transactions_from(address, afterhash = ''):
+def get_transactions_from(address, take, afterhash = ''):
     """
     return all transactions from address after the one specified by afterhash
     """ 
     
-    #Convert afterhash to block sequence number
-    if afterhash == '':
-        seqno = 1
-    else:
-        blk = get_block_by_hash(afterhash)
-        if 'error' in blk:
-            return blk
-            
-        seqno = blk['header']['seq']
-    
-    # Get the blocks containing address higher than seqno
-    
-    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
-    
-    result = collection.find_one({'address': address})
+    # Get the blocks mentioning address    
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list    
+    result = collection.find_one({'address': address})  
     
     if result is None: #index not created yet
         return {"status": 500, "error": "Address is not indexed"}
         
     mentioned_blocks = result['blocks']
-    
-    blocks = []  #Holds the mentioned blocks higher than seqno
-    
+
     items = []   # Hold the history output items from specified address
+    process_txn = False
+    taken = 0
+    finish = False
     
     for blockseq in mentioned_blocks:
-        if blockseq <= seqno:
-            continue
             
         #Read the block from blockchain
         block = get_block_by_seq(blockseq)
@@ -432,13 +419,19 @@ def get_transactions_from(address, afterhash = ''):
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         
         for txn in block['body']['txns']:
+            
+            #If afterhash is specified, return from that point only 
+            if afterhash == '' or txn['inner_hash'] == afterhash:
+                process_txn = True
+                
+            if not process_txn:
+                continue
+                
             inputs = txn['inputs']
             outputs = txn['outputs']   
 
             operation_id = txn['txid']
             tx_hash = txn['inner_hash']
-            
-            
             
             #Outgoing
             
@@ -466,8 +459,11 @@ def get_transactions_from(address, afterhash = ''):
                             item['assetId'] = 'SKY'
                             item['amount'] = output['coins']
                             item['hash'] = tx_hash                            
-                            items.append(item)
-                            
+                            items.append(item)                    
+                            taken += 1
+                            if taken >= take:
+                                return items            
+            
     return items    
     
     
