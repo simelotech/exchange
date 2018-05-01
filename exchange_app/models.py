@@ -430,8 +430,8 @@ def get_transactions_from(address, take, afterhash = ''):
             inputs = txn['inputs']
             outputs = txn['outputs']   
 
-            operation_id = txn['txid']
             tx_hash = txn['inner_hash']
+            txn_type = txn['type']
             
             #Outgoing
             
@@ -452,7 +452,7 @@ def get_transactions_from(address, take, afterhash = ''):
                         if dst_addr != addr:  #Only record if dst is different from self. #TODO: Handle multiple outputs
                             #Record to history output
                             item = {}
-                            item['operationId'] =  operation_id
+                            item['transactionType'] =  txn_type
                             item['timestamp'] = timestamp
                             item['fromAddress'] = address
                             item['toAddress'] = dst_addr
