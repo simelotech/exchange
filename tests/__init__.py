@@ -87,7 +87,9 @@ def init_service(service_name, version, default_port, *args):
         docker_run(
             service_name,
             tag=version,
-            name=docker_service_name(), ports={'%s/tcp' % (defaultPort,): port})
+            name=docker_service_name(),
+            ports={'%s/tcp' % (defaultPort,): port}
+        )
         launched = True
     services_started[service_name] = (port, launched)
 
@@ -106,7 +108,12 @@ def docker_run(service_name, name, **docker_options):
 
     image_tag = docker_options.get('tag', 'latest')
     client.images.pull(service_name, image_tag)
-    client.containers.run('%s:%s' % (service_name, image_tag), detach=True, name=name, ports=docker_options.get('ports', dict()))
+    client.containers.run(
+        '%s:%s' % (service_name, image_tag),
+        detach=True,
+        name=name,
+        ports=docker_options.get('ports', dict())
+    )
 
 
 def docker_dispose(service_name):
@@ -124,7 +131,10 @@ def wait_for_all(services_started, max_retries=5):
     """
     Wait for all services to be available.
     """
-    log.info('Waiting for services started: %s', ', '.join(key for key, (_, launched) in services_started.items() if launched))
+    log.info(
+        'Waiting for services started: %s',
+        ', '.join(key for key, (_, launched) in services_started.items() if launched)
+    )
     step = max_retries
     pending = services_started.keys()
     timeout = 0.01
@@ -135,7 +145,10 @@ def wait_for_all(services_started, max_retries=5):
         timeout = 3
         step -= 1
     if len(pending) > 0:
-        log.warning('Some services could not be started: %s', ', '.join('%s at %s' % entry for entry in pending))
+        log.warning(
+            'Some services could not be started: %s',
+            ', '.join('%s at %s' % entry for entry in pending)
+        )
         return False
     log.info('All services started')
     return True
