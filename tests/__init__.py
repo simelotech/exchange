@@ -41,7 +41,8 @@ def setup():
 
 
 def teardown():
-    """Unload launched services if no test suite is running.
+    """
+    Unload launched services if no test suite is running.
     """
     del services_started[testrun_service_name()]
     if all(not key.startswith(service_prefix)
@@ -83,7 +84,10 @@ def init_service(service_name, version, default_port, *args):
     launched = False
     if not is_listening_at(port):
         args['ports']
-        docker_run(service_name, tag=version, name=docker_service_name(), ports={'%s/tcp' % (defaultPort,): port})
+        docker_run(
+            service_name,
+            tag=version,
+            name=docker_service_name(), ports={'%s/tcp' % (defaultPort,): port})
         launched = True
     services_started[service_name] = (port, launched)
 
@@ -95,7 +99,8 @@ def docker_service_name(service_name):
 
 
 def docker_run(service_name, name, **docker_options):
-    """Run service in a Docker container.
+    """
+    Run service in a Docker container.
     """
     client = docker.from_env()
 
@@ -105,7 +110,8 @@ def docker_run(service_name, name, **docker_options):
 
 
 def docker_dispose(service_name):
-    """Remove container used to run service
+    """
+    Remove container used to run service
     """
     client = docker.from_env()
     container = client.containers.get(docker_service_name(service_name))
