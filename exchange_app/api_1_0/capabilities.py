@@ -11,10 +11,10 @@ def capabilities():
     capabilities = {"isTransactionsRebuildingSupported": False,
                     "areManyInputsSupported": True, 
                     "areManyOutputsSupported": True,
-                    "isTestingTransfersSupported": True,
+                    "isTestingTransfersSupported": False,
                     "isPublicAddressExtensionRequired": False,
                     "isReceiveTransactionRequired": False,
-                    "canReturnExplorerUrl": False
+                    "canReturnExplorerUrl": True
     }
     
     return jsonify(capabilities)
