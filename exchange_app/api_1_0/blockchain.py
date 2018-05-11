@@ -86,8 +86,9 @@ def create_wallet():
         return {"status": 500, "error": "Unknown server error"}
 
     return {
-        "privateKey": new_wallet["entries"][0]["secret_key"],
-        "address": new_wallet["entries"][0]["address"]
+        "privateKey": '',#new_wallet["entries"][0]["secret_key"],
+        "address": new_wallet["entries"][0]["address"],
+        "addressContext": new_wallet['meta']['filename']
     }
 
 def spend(values):
