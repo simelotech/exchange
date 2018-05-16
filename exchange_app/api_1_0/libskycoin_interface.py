@@ -16,7 +16,7 @@ class GoString(Structure):
         self.n = len(string)
         
 class GoSlice(Structure):
-    _fields_ = [("data", c_void_p), 
+    _fields_ = [("data", c_char_p), 
                 ("len", c_int), 
                 ("cap", c_int)]
 
@@ -175,7 +175,31 @@ def GenerateDeterministicKeyPairsSeed(p0, p1):
     print(pubkey1.cap)
     
     
+def GenerateDeterministicKeyPair(seed):
+    """
+    GoSlice p0, cipher__PubKey* p1, cipher__SecKey* p2
+    """
     
+    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    
+    string = c_char_p(seed.encode(encoding = 'ansi'))    
+    length = len(seed)
+    
+    print(hex(cast(string, c_void_p).value))
+    print(length)
+    slice = GoSlice()
+    slice.data = string
+    slice.len = length
+    slice.cap = length
+    
+    pubkey = cipher__PubKey()
+    seckey = cipher__SecKey()
+    
+    skylib.SKY_cipher_GenerateDeterministicKeyPair(slice, byref(pubkey), byref(seckey))
+    
+    return (pubkey.data, seckey.data)
+    
+
     
 #CreateRawTxFromAddress(40, "qwerrqwr", "dgdgdgdg", "hjhjhjhjh", GoSlice())
 
@@ -183,10 +207,10 @@ def GenerateDeterministicKeyPairsSeed(p0, p1):
 
 #CreateRawTx(40, wallet__Wallet(), GoSlice(), "dsdjfjdfdjfldjfljdf", GoSlice())
 
-(ret, result) = DecodeBase58Address("2HHjFnp8FgJzh87J36pCuDhDYtUBMPEgomZ")
-for bt in result:
-    print(hex(bt))
-    
+#(ret, result) = DecodeBase58Address("2HHjFnp8FgJzh87J36pCuDhDYtUBMPEgomZ")
+#for bt in result:
+#    print(hex(bt))
+#    
 #SignHash(cipher__SHA256(), cipher__SecKey(), cipher__Sig())
 #(ret, public, private) = GenerateKeyPair()
 #for pub in public:
@@ -198,9 +222,15 @@ for bt in result:
 #print(private.decode(encoding = 'ansi'))
 
 #GenerateDeterministicKeyPairsSeed(GoSlice(), 5)
+#{'_id': ObjectId('5a866b13cf105916e4180cb9'), 'meta': {'coin': 'skycoin', 'filename': '2018_02_16_3fe6.wlt', 'label': 'wallet123', 'lastSeed': '83281765eccf5efed260b261d4c7ac621b202e95b6593680ba5662f0c2c5a274', 'seed': 'pass cactus woman shop lunch city ankle menu affair conduct column trade', 'tm': '1518758675', 'type': 'deterministic', 'version': '0.1'}, 'entries': [{'address': 'xTaXPcDrZjBPqjJA7Y9eC5SLK3fyHh1cMw', 'public_key': '02a30c94c8f1152f71b7a4fc2ee5e5fcdc697689a32aab1a77b6c7423bdba976e1', 'secret_key': '6724e307f28cb05802ddaafca64e92ebc4aed02ffa9c756dbc4b8b735db3e288'}]}
 
-print("\n", ret)
+(pubkey, seckey) = GenerateDeterministicKeyPair("pass cactus woman shop lunch city ankle menu affair conduct column trade");
 
+for pub in pubkey:
+    print(hex(pub))
+print()
+for prv in seckey:
+    print(hex(prv))
 
 
 
