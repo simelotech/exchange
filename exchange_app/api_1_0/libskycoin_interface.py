@@ -59,8 +59,8 @@ def DecodeBase58Address(addr):
     GoString p0, cipher__Address* p1
     """
     
-    #skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
+    #skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
     
     addr = GoString(addr)
     cypher_addr = cipher__Address()
@@ -70,7 +70,7 @@ def DecodeBase58Address(addr):
     
     #print(cast(cypher_addr.Key, c_char_p).value)
     
-    return (result, cypher_addr.Key)
+    return result
     
     
 def GenerateKeyPair():
@@ -78,8 +78,8 @@ def GenerateKeyPair():
     cipher__PubKey* p0, cipher__SecKey* p1
     """
 
-    #skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
+    #skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
     
     public_key = cipher__PubKey()
     private_key = cipher__SecKey()
@@ -96,7 +96,7 @@ def CreateRawTxFromAddress(p0, p1, p2, p3, p4):
     Handle p0, GoString p1, GoString p2, GoString p3, GoSlice p4, coin__Transaction* p5
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -108,7 +108,7 @@ def CreateRawTxFromAddress(p0, p1, p2, p3, p4):
     
     ret = skylib.SKY_cli_CreateRawTxFromAddress(p0, p1, p2, p3, p4, byref(p5))
     
-    print(ret)
+    return (ret, p5)
 
 
 def CreateRawTxFromWallet(p0, p1, p2, p3):
@@ -127,7 +127,7 @@ def CreateRawTxFromWallet(p0, p1, p2, p3):
     
     ret = skylib.SKY_cli_CreateRawTxFromWallet(p0, p1, p2, p3, byref(p4))
     
-    print(ret)
+    return (ret, p4)
 
     
 def CreateRawTx(p0, p1, p2, p3, p4):
@@ -135,7 +135,7 @@ def CreateRawTx(p0, p1, p2, p3, p4):
     Handle p0, wallet__Wallet* p1, GoSlice p2, GoString p3, GoSlice p4, coin__Transaction* p5
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -145,7 +145,7 @@ def CreateRawTx(p0, p1, p2, p3, p4):
     
     ret = skylib.SKY_cli_CreateRawTx(p0, byref(p1), p2, p3, p4, byref(p5))
     
-    print(ret)
+    return (ret, p5)
     
     
 def SignHash(p0, p1, p2):
@@ -153,11 +153,11 @@ def SignHash(p0, p1, p2):
     cipher__SHA256* p0, cipher__SecKey* p1, cipher__Sig* p2
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
     
     skylib.SKY_cipher_SignHash(byref(p0), byref(p1), byref(p2))
     
-    print(p2)
+    return p2
     
     
 def GenerateDeterministicKeyPairsSeed(p0, p1):
@@ -174,32 +174,6 @@ def GenerateDeterministicKeyPairsSeed(p0, p1):
     
     print(pubkey1.cap)
     
-    
-    
-    
-#CreateRawTxFromAddress(40, "qwerrqwr", "dgdgdgdg", "hjhjhjhjh", GoSlice())
-
-#CreateRawTxFromWallet(40, "qwerrqwr", "dgdgdgdg", GoSlice())
-
-#CreateRawTx(40, wallet__Wallet(), GoSlice(), "dsdjfjdfdjfldjfljdf", GoSlice())
-
-(ret, result) = DecodeBase58Address("2HHjFnp8FgJzh87J36pCuDhDYtUBMPEgomZ")
-for bt in result:
-    print(hex(bt))
-    
-#SignHash(cipher__SHA256(), cipher__SecKey(), cipher__Sig())
-#(ret, public, private) = GenerateKeyPair()
-#for pub in public:
-#    print(hex(pub))
-#print()
-#for prv in private:
-#    print(hex(prv))
-#
-#print(private.decode(encoding = 'ansi'))
-
-#GenerateDeterministicKeyPairsSeed(GoSlice(), 5)
-
-print("\n", ret)
 
 
 
