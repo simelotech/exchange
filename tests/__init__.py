@@ -2,7 +2,7 @@
 """Default test suite for the Skycoin Lykke integration.
 """
 
-import docker
+import docker, docker.errors
 import logging
 import os
 import uuid
@@ -14,31 +14,32 @@ services_started = dict()
 logging.basicConfig()
 log = logging.getLogger(service_prefix)
 
+TestSetupError = RuntimeError
+
 def setup():
     """Setup integration tests
     """
-    testservice_name = testrun_service_name()
-    testsuite_id = str(uuid.uuid1()).replace('-', '')
-    services_started[testservice_name] = (testsuite_id, False)
-    log.info('Initializing service : mongo')
-    init_service('mongo',           'latest',  27017)
-    log.info('Initializing service : redis')
-    init_service('redis',           '3.0.7-alpine',  6379)
-    log.info('Initializing service : skycoin')
-    skycoin_cmd_path = None
-    gopath = os.getenv('GOPATH', None)
-    if gopath:
-        skycoin_cmd_path = os.path.join(
-                gopath, *('src/github.com/skycoin/skycoin'.split('/')))
-    if skycoin_cmd_path is not None:
-       
-    init_service('skycoin/skycoin', 'develop', 6420)
-    wait_for_all(services_started)
+    try:
+        testservice_name = testrun_service_name()
+        testsuite_id = str(uuid.uuid1()).replace('-', '')
+        log.info('Starting test run %s' % (testservice_name,))
+        services_started[testservice_name] = (testsuite_id, False)
+        log.info('Initializing service : mongo')
+        init_service('mongo',           '3.6.4-jessie',  27017)
+        log.info('Initializing service : redis')
+        init_service('redis',           '3.0.7-alpine',  6379)
+        log.info('Initializing service : skycoin')
+        init_service('skycoin/skycoin', 'develop', 6420)
+        wait_for_all(services_started)
+    except:
+        teardown()
 
 def teardown():
     """Unload launched services if no test suite is running.
     """
-    del services_started[testrun_service_name()]
+    testservice_name = testrun_service_name()
+    log.info('Clean up after test run %s' % (testservice_name,))
+    del services_started[testservice_name]
     if all(not key.startswith(service_prefix)
             for key in services_started):
         for service_name, (_, launched) in services_started.items():
@@ -55,7 +56,7 @@ def testrun_service_name():
 def testrun_id():
     """Global identifier of this test run.
     """
-    return services_started[test_run_service_name()][0]
+    return services_started[testrun_service_name()][0]
 
 def init_service(service_name, version, default_port):
     """Ensure service is running. If not available run it with Docker.
@@ -72,10 +73,9 @@ def init_service(service_name, version, default_port):
 
     launched = False
     if not is_listening_at(port):
-        args['ports', ]
         docker_run(service_name, tag=version,
-                name=docker_service_name(),
-                ports={'%s/tcp' % (defaultPort,): port})
+                name=docker_service_name(service_name),
+                ports={'%s/tcp' % (default_port,): port})
         launched = True
     services_started[service_name] = (port, launched)
 
@@ -90,7 +90,12 @@ def docker_run(service_name, name, **docker_options):
     client = docker.from_env()
 
     image_tag = docker_options.get('tag', 'latest')
-    client.images.pull(service_name, image_tag)
+#    try:
+#        image = client.images.get(service_name)
+#        log.info('Image %s:%s available locally' % (service_name, image_tag))
+#    except:
+#        log.warning('Image %s:%s not found locally ... pulling' % (service_name, image_tag))
+#        client.images.pull(service_name, image_tag)
     client.containers.run('%s:%s' % (service_name, image_tag), detach=True,
             name=name, ports=docker_options.get('ports', dict()))
 
