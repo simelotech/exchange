@@ -1,6 +1,6 @@
 from ctypes import *
 from os import path
-#import logging
+from .settings import app_config
 
 
 ###########################################################
@@ -9,16 +9,16 @@ from os import path
 
 class GoString(Structure):
     _fields_ = [("p", c_char_p), 
-                ("n", c_int)]
+                ("n", c_longlong)]
     
     def __init__(self, string):
         self.p = c_char_p(string.encode(encoding = 'ansi'))
         self.n = len(string)
         
 class GoSlice(Structure):
-    _fields_ = [("data", c_char_p), 
-                ("len", c_int), 
-                ("cap", c_int)]
+    _fields_ = [("data", c_void_p), 
+                ("len", c_longlong), 
+                ("cap", c_longlong)]
 
 class cipher__Address(Structure):
     _fields_ = [("Version", c_ubyte), 
@@ -37,8 +37,8 @@ class cipher__SHA256(Structure):
     _fields_ = [("data", c_ubyte * 32)]
   
 class coin__Transaction(Structure):
-    _fields_ = [("Length", c_int), 
-                ("Type", c_char), 
+    _fields_ = [("Length", c_int32), 
+                ("Type", c_int8), 
                 ("InnerHash", cipher__SHA256), 
                 ("Sigs", GoSlice), 
                 ("In", GoSlice), 
@@ -60,7 +60,7 @@ def DecodeBase58Address(addr):
     """
     
     #skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     addr = GoString(addr)
     cypher_addr = cipher__Address()
@@ -79,7 +79,7 @@ def GenerateKeyPair():
     """
 
     #skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     public_key = cipher__PubKey()
     private_key = cipher__SecKey()
@@ -96,7 +96,7 @@ def CreateRawTxFromAddress(p0, p1, p2, p3, p4):
     Handle p0, GoString p1, GoString p2, GoString p3, GoSlice p4, coin__Transaction* p5
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -116,7 +116,7 @@ def CreateRawTxFromWallet(p0, p1, p2, p3):
     Handle p0, GoString p1, GoString p2, GoSlice p3, coin__Transaction* p4
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -135,7 +135,7 @@ def CreateRawTx(p0, p1, p2, p3, p4):
     Handle p0, wallet__Wallet* p1, GoSlice p2, GoString p3, GoSlice p4, coin__Transaction* p5
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -153,7 +153,7 @@ def SignHash(p0, p1, p2):
     cipher__SHA256* p0, cipher__SecKey* p1, cipher__Sig* p2
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     skylib.SKY_cipher_SignHash(byref(p0), byref(p1), byref(p2))
     
@@ -165,7 +165,7 @@ def GenerateDeterministicKeyPairsSeed(p0, p1):
     GoSlice p0, GoInt p1, cipher__PubKeySlice* p2, cipher__PubKeySlice* p3
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     pubkey1 = GoSlice()
     pubkey2 = GoSlice()
@@ -180,17 +180,15 @@ def GenerateDeterministicKeyPair(seed):
     GoSlice p0, cipher__PubKey* p1, cipher__SecKey* p2
     """
     
-    skylib = cdll.LoadLibrary(path.relpath('../libskycoin.so'))
+    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
     
     string = c_char_p(seed.encode(encoding = 'ansi'))    
     length = len(seed)
     
-    print(hex(cast(string, c_void_p).value))
-    print(length)
     slice = GoSlice()
-    slice.data = string
-    slice.len = length
-    slice.cap = length
+    slice.data = cast(string, c_void_p)
+    slice.len = c_longlong(length)
+    slice.cap = c_longlong(length)
     
     pubkey = cipher__PubKey()
     seckey = cipher__SecKey()
@@ -224,13 +222,12 @@ def GenerateDeterministicKeyPair(seed):
 #GenerateDeterministicKeyPairsSeed(GoSlice(), 5)
 #{'_id': ObjectId('5a866b13cf105916e4180cb9'), 'meta': {'coin': 'skycoin', 'filename': '2018_02_16_3fe6.wlt', 'label': 'wallet123', 'lastSeed': '83281765eccf5efed260b261d4c7ac621b202e95b6593680ba5662f0c2c5a274', 'seed': 'pass cactus woman shop lunch city ankle menu affair conduct column trade', 'tm': '1518758675', 'type': 'deterministic', 'version': '0.1'}, 'entries': [{'address': 'xTaXPcDrZjBPqjJA7Y9eC5SLK3fyHh1cMw', 'public_key': '02a30c94c8f1152f71b7a4fc2ee5e5fcdc697689a32aab1a77b6c7423bdba976e1', 'secret_key': '6724e307f28cb05802ddaafca64e92ebc4aed02ffa9c756dbc4b8b735db3e288'}]}
 
-(pubkey, seckey) = GenerateDeterministicKeyPair("pass cactus woman shop lunch city ankle menu affair conduct column trade");
+#(pubkey, seckey) = GenerateDeterministicKeyPair("pass cactus woman shop lunch city ankle menu affair conduct column trade");
+#
+#print(bytearray(pubkey).hex() )
+#print(bytearray(seckey).hex() )
 
-for pub in pubkey:
-    print(hex(pub))
-print()
-for prv in seckey:
-    print(hex(prv))
+
 
 
 
