@@ -1,6 +1,6 @@
 from ctypes import *
 from os import path
-from .settings import app_config
+from exchange_app import app
 
 
 ###########################################################
@@ -60,7 +60,7 @@ def DecodeBase58Address(addr):
     """
     
     #skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     addr = GoString(addr)
     cypher_addr = cipher__Address()
@@ -79,7 +79,7 @@ def GenerateKeyPair():
     """
 
     #skylib = cdll.LoadLibrary(path.relpath('./exchange_app/libskycoin.so'))
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     public_key = cipher__PubKey()
     private_key = cipher__SecKey()
@@ -96,7 +96,7 @@ def CreateRawTxFromAddress(p0, p1, p2, p3, p4):
     Handle p0, GoString p1, GoString p2, GoString p3, GoSlice p4, coin__Transaction* p5
     """
     
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -116,7 +116,7 @@ def CreateRawTxFromWallet(p0, p1, p2, p3):
     Handle p0, GoString p1, GoString p2, GoSlice p3, coin__Transaction* p4
     """
     
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -135,7 +135,7 @@ def CreateRawTx(p0, p1, p2, p3, p4):
     Handle p0, wallet__Wallet* p1, GoSlice p2, GoString p3, GoSlice p4, coin__Transaction* p5
     """
     
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     #Convert input to ctypes
     p0 = c_longlong(p0)
@@ -153,7 +153,7 @@ def SignHash(p0, p1, p2):
     cipher__SHA256* p0, cipher__SecKey* p1, cipher__Sig* p2
     """
     
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     skylib.SKY_cipher_SignHash(byref(p0), byref(p1), byref(p2))
     
@@ -165,7 +165,7 @@ def GenerateDeterministicKeyPairsSeed(p0, p1):
     GoSlice p0, GoInt p1, cipher__PubKeySlice* p2, cipher__PubKeySlice* p3
     """
     
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     pubkey1 = GoSlice()
     pubkey2 = GoSlice()
@@ -180,7 +180,7 @@ def GenerateDeterministicKeyPair(seed):
     GoSlice p0, cipher__PubKey* p1, cipher__SecKey* p2
     """
     
-    skylib = cdll.LoadLibrary(path.relpath(app_config['LIBSKYCOIN_PATH']))
+    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
     string = c_char_p(seed.encode(encoding = 'ansi'))    
     length = len(seed)
