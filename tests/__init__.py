@@ -32,19 +32,17 @@ def setup():
         init_service('skycoin/skycoin', 'develop', 6420)
         wait_for_all(services_started)
     except:
-        teardown()
+        log.error('Error found in test suite setup')
 
 def teardown():
     """Unload launched services if no test suite is running.
     """
     testservice_name = testrun_service_name()
     log.info('Clean up after test run %s' % (testservice_name,))
+    for service_id, (_, launched) in services_started.items():
+        if service_id.startswith('_'.join((service_prefix, testrun_id()))) and launched:
+            docker_dispose(service_id)
     del services_started[testservice_name]
-    if all(not key.startswith(service_prefix)
-            for key in services_started):
-        for service_name, (_, launched) in services_started.items():
-            if launched:
-                docker_dispose(service_name)
 
 def testrun_service_name():
     """Name to register this test run as a service.
@@ -72,17 +70,18 @@ def init_service(service_name, version, default_port):
         port = default_port
 
     launched = False
+    service_id = docker_service_name(service_name)
     if not is_listening_at(port):
         docker_run(service_name, tag=version,
-                name=docker_service_name(service_name),
+                name=service_id ,
                 ports={'%s/tcp' % (default_port,): port})
         launched = True
-    services_started[service_name] = (port, launched)
+    services_started[service_id] = (port, launched)
 
 def docker_service_name(service_name):
     """Name of the container running a service used by this test run, if any.
     """
-    return '_'.join((service_prefix, testrun_id(), service_name))
+    return '_'.join((service_prefix, testrun_id(), service_name.replace('/', '_')))
 
 def docker_run(service_name, name, **docker_options):
     """Run service in a Docker container.
@@ -99,11 +98,12 @@ def docker_run(service_name, name, **docker_options):
     client.containers.run('%s:%s' % (service_name, image_tag), detach=True,
             name=name, ports=docker_options.get('ports', dict()))
 
-def docker_dispose(service_name):
+def docker_dispose(service_id):
     """Remove container used to run service
     """
     client = docker.from_env()
-    container = client.containers.get(docker_service_name(service_name))
+    log.debug('Stopping Docker container ... ' + service_id)
+    container = client.containers.get(service_id)
     container.stop()
     container.wait()
     container.remove()
