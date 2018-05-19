@@ -3,6 +3,7 @@ import logging
 from .. import app
 from ..settings import app_config
 from time import perf_counter
+from .libskycoin_interface import GenerateDeterministicKeyPair
 
 def form_url(base, path):
     """
@@ -68,7 +69,6 @@ def create_wallet():
         return {"status": 500, "error": "Unknown server error"}
 
     # create the wallet from seed
-    # TODO: Where to get labels? How about scan?
     resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/create"),
                          {"seed": new_seed["seed"],
                              "label": "wallet123", "scan": "5"},
@@ -84,10 +84,13 @@ def create_wallet():
 
     if not new_wallet or "entries" not in new_wallet:
         return {"status": 500, "error": "Unknown server error"}
+        
+    #Generate Private/Public key pairs from seed
+    (pubkey, privkey) = GenerateDeterministicKeyPair(new_seed['seed'])
 
     return {
-        "privateKey": '',#new_wallet["entries"][0]["secret_key"],
-        "address": new_wallet["entries"][0]["address"],
+        "privateKey": bytearray(privkey).hex(),
+        "publicAddress": new_wallet["entries"][0]["address"],
         "addressContext": new_wallet['meta']['filename']
     }
 
