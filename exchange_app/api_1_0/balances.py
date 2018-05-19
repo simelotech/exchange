@@ -7,6 +7,7 @@ import logging
 from .. import app
 from .blockchain import get_balance, get_balance_scan
 from time import perf_counter
+from .libskycoin_interface import *
 
 
 @api.route('/balances/<string:address>/observation', methods=['POST'])
@@ -44,7 +45,7 @@ def get_balances():
     """
     Get balances of addresses in observation list
     """
-
+    
     perf = perf_counter()
     update_index()
     logging.debug("index check perf : {0:.3f}".format( perf_counter() - perf ))
