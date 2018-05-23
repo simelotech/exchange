@@ -11,7 +11,7 @@ def wallets():
 
     result = create_wallet()
 
-    if "address" in result:
+    if "publicAddress" in result:
         return jsonify(result)
 
     return make_response(
