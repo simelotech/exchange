@@ -24,6 +24,7 @@ class Config(object):
     REDIS_PORT = 6379
     #: SKYCOIN
     SKYCOIN_NODE_URL = 'http://localhost:6420/'
+    LIBSKYCOIN_PATH = './exchange_app/libskycoin.so'
 
 
 class ProductionConfig(Config):
