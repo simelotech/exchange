@@ -54,12 +54,12 @@ def get_history_to_address(address):
     else:
         take = int(take)
     
-    afterhash = request.args.get('afterHash')
+    afterhash = request.args.get('afterHash'.lower())
     if afterhash is None:
-        afterhash = ""  
+        afterhash = ''
        
     update_index() 
-    items = get_transactions_to(address, afterhash)
+    items = get_transactions_to(address, take, afterhash)
 
     response = items if take == 0 else items[0:take]
 
