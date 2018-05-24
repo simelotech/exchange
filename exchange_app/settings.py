@@ -6,7 +6,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    DEBUG = False
+    DEBUG = True
     TESTING = False
     PRODUCTION = False
 
@@ -16,12 +16,15 @@ class Config(object):
     LOG_LEVEL = logging.DEBUG
     SERVER_NAME = 'localhost:5000'
     #: Database
-    MONGOALCHEMY_DATABASE = ''
-    MONGOALCHEMY_SERVER = ''
-    MONGOALCHEMY_USER = ''
-    MONGOALCHEMY_PASSWORD = ''
+    MONGO_DBNAME = 'LYKKE'
+    MONGO_HOST = '127.0.0.1'
+    MONGO_PORT = 27017
     #: Redis
-    REDIS_URL = 'redis://localhost:6379/0'
+    REDIS_HOST = '127.0.0.1'
+    REDIS_PORT = 6379
+    #: SKYCOIN
+    SKYCOIN_NODE_URL = 'http://localhost:6420/'
+    LIBSKYCOIN_PATH = './exchange_app/libskycoin.so'
 
 
 class ProductionConfig(Config):

@@ -2,7 +2,8 @@ import logging
 import os
 from flask import Flask
 from flask_redis import FlaskRedis
-from flask_mongoalchemy import MongoAlchemy
+from flask_pymongo import PyMongo
+import requests
 
 
 FLASK_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -23,12 +24,15 @@ logging.basicConfig(
     datefmt='%Y%m%d-%H:%M%p',
 )
 
+#Session
+app.lykke_session = requests.Session()  #Used for connection pooling requests to lykke api
+
 # Redis
 redis_store = FlaskRedis(app, strict=False)
 
 # MongoDB
-db = MongoAlchemy(app)
+mongo = PyMongo(app)
 
 # Business Logic
 from .api_1_0 import api as api_blueprint
-app.register_blueprint(api_blueprint, url_prefix='/api/v1.0')
+app.register_blueprint(api_blueprint, url_prefix='/v1.0')

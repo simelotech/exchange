@@ -1,13 +1,21 @@
 from flask import jsonify
 from . import api
+from .blockchain import get_url
 
 
 @api.route('/assets', methods=['GET'])
 def get_assets():
-    """
-    """
-    # TODO: fill with values returned from blockchain api
-    retvalue = {
+    """"""
+    # getting data from blockchain
+    # TODO: Must findout actual api call to get assets
+    path = "/assets"
+    # values = ""
+
+    response_data = get_url(path)
+
+    # TODO: Get data items from response and generate output
+
+    retvaule = {
         "assets": [
             {
                 "assetId": "1234",
@@ -23,18 +31,28 @@ def get_assets():
             }
         ]
     }
-    return jsonify(retvalue)
+    return jsonify(response_data)
 
 
 @api.route('/assets/<int:assetid>', methods=['GET'])
 def get_asset(assetid):
-    """
-    """
-    # TODO: fill with values returned from blockchain api
+    """"""
+
+    # getting data from blockchain
+
+    # TODO: Must findout actual api call to get assets
+    path = "/assets"
+    values = {'id': assetid}
+
+    response_data = get_url(path, values)
+
+    # TODO: Get data items from response and generate output
+
     retvalue = {
         "assetId": assetid,
         "address": "some address",
         "name": "asset name",
         "accuracy": "asset accuracy"
     }
-    return jsonify(retvalue)
+
+    return jsonify(response_data)
