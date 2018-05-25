@@ -1,32 +1,28 @@
 from flask import jsonify, request
 from . import api
-
-
-@api.route('/wallets', methods=['POST'])
-def post_wallets():
-    """
-    """
-    
-	# TODO: fill with values returned from blockchain api
-    retvalue = {
-        "privateKey": "superprivatekey",
-		"publicAddress": "the address"
-    }
-    return jsonify(retvalue)
-
+from .libskycoin_interface import SignHash
+from .common import error_codes
 
 @api.route('/sign', methods=['POST'])
 def post_sign():
     """
+    Sign transacction with private key
     """
-    if not request.json \
-            or "privateKey" not in request.json \
-            or "transactionHex" not in request.json:
-        abort(400)  # Bad request
-		
-	# TODO: fill with values returned from blockchain api
-	signed_data = "(^_^)"
+    if not request.json:
+        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
+        
+    if "privateKeys" not in request.json:
+        return make_response(jsonify(build_error('Invalid Input Parameters', error_codes.missingParameter)), 400)
+        
+    if "transactionContext" not in request.json:
+        return make_response(jsonify(build_error('Invalid Input Parameters', error_codes.missingParameter)), 400)
+        
+    secKey = request.json['privateKeys'][0] #TODO: handle multiple keys in many inputs transactions scenario
+    hash = request.json['transactionContext']
+    
+    signedHash = SignHash(hash, secKey)
+    
     retvalue = {
-        "signedTransaction": signed_data
+        "signedTransaction": signedHash
     }
     return jsonify(retvalue)

@@ -1,7 +1,7 @@
 from ctypes import *
 from os import path
 from exchange_app import app
-
+import logging
 
 ###########################################################
 #                  Types definitions
@@ -29,7 +29,7 @@ class cipher__PubKey(Structure):
 class cipher__SecKey(Structure):
     _fields_ = [("data", c_ubyte * 32)]    
     def __init__(self, string):
-        self.data = create_string_buffer(string.encode(encoding = 'ansi'))[:32]
+        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ansi'))
     
 class cipher__Sig(Structure):
     _fields_ = [("data", c_ubyte * 65)]
@@ -37,7 +37,7 @@ class cipher__Sig(Structure):
 class cipher__SHA256(Structure):
     _fields_ = [("data", c_ubyte * 32)]    
     def __init__(self, string):
-        self.data = create_string_buffer(string.encode(encoding = 'ansi'))[:32]
+        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ansi'))
   
 class coin__Transaction(Structure):
     _fields_ = [("Length", c_int32), 
@@ -160,10 +160,11 @@ def SignHash(hash, secKey):
     
     
     signedHash = cipher__Sig()
-    
+    logging.debug(hash)
+    logging.debug(secKey)
     skylib.SKY_cipher_SignHash(byref(cipher__SHA256(hash)), byref(cipher__SecKey(secKey)), byref(signedHash))
     
-    return signedHash.decode()
+    return bytearray(signedHash).hex()
     
     
 def GenerateDeterministicKeyPair(seed):
