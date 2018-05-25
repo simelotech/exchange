@@ -1,7 +1,7 @@
 from ctypes import *
 from os import path
 from exchange_app import app
-
+import logging
 
 ###########################################################
 #                  Types definitions
@@ -9,8 +9,7 @@ from exchange_app import app
 
 class GoString(Structure):
     _fields_ = [("p", c_char_p), 
-                ("n", c_longlong)]
-    
+                ("n", c_longlong)]    
     def __init__(self, string):
         self.p = c_char_p(string.encode(encoding = 'ansi'))
         self.n = len(string)
@@ -28,13 +27,17 @@ class cipher__PubKey(Structure):
     _fields_ = [("data", c_ubyte * 33)]
 
 class cipher__SecKey(Structure):
-    _fields_ = [("data", c_ubyte * 32)]
+    _fields_ = [("data", c_ubyte * 32)]    
+    def __init__(self, string):
+        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ansi'))
     
 class cipher__Sig(Structure):
     _fields_ = [("data", c_ubyte * 65)]
     
 class cipher__SHA256(Structure):
-    _fields_ = [("data", c_ubyte * 32)]
+    _fields_ = [("data", c_ubyte * 32)]    
+    def __init__(self, string):
+        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ansi'))
   
 class coin__Transaction(Structure):
     _fields_ = [("Length", c_int32), 
@@ -108,7 +111,7 @@ def CreateRawTxFromAddress(p0, p1, p2, p3, p4):
     
     ret = skylib.SKY_cli_CreateRawTxFromAddress(p0, p1, p2, p3, p4, byref(p5))
     
-    print(ret)
+    return ret
 
 
 def CreateRawTxFromWallet(p0, p1, p2, p3):
@@ -127,7 +130,7 @@ def CreateRawTxFromWallet(p0, p1, p2, p3):
     
     ret = skylib.SKY_cli_CreateRawTxFromWallet(p0, p1, p2, p3, byref(p4))
     
-    print(ret)
+    return ret
 
     
 def CreateRawTx(p0, p1, p2, p3, p4):
@@ -145,39 +148,28 @@ def CreateRawTx(p0, p1, p2, p3, p4):
     
     ret = skylib.SKY_cli_CreateRawTx(p0, byref(p1), p2, p3, p4, byref(p5))
     
-    print(ret)
+    return ret
     
     
-def SignHash(p0, p1, p2):
+def SignHash(hash, secKey):
     """
-    cipher__SHA256* p0, cipher__SecKey* p1, cipher__Sig* p2
-    """
-    
-    skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
-    
-    skylib.SKY_cipher_SignHash(byref(p0), byref(p1), byref(p2))
-    
-    print(p2)
-    
-    
-def GenerateDeterministicKeyPairsSeed(p0, p1):
-    """
-    GoSlice p0, GoInt p1, cipher__PubKeySlice* p2, cipher__PubKeySlice* p3
+    Sign the hash provided with the secKey, return the signed hash
     """
     
     skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
-    pubkey1 = GoSlice()
-    pubkey2 = GoSlice()
     
-    skylib.SKY_cipher_GenerateDeterministicKeyPairsSeed(p0, c_int(p1), byref(pubkey1), byref(pubkey2))
+    signedHash = cipher__Sig()
+    logging.debug(hash)
+    logging.debug(secKey)
+    skylib.SKY_cipher_SignHash(byref(cipher__SHA256(hash)), byref(cipher__SecKey(secKey)), byref(signedHash))
     
-    print(pubkey1.cap)
+    return bytearray(signedHash).hex()
     
     
 def GenerateDeterministicKeyPair(seed):
     """
-    GoSlice p0, cipher__PubKey* p1, cipher__SecKey* p2
+    Generate a deterministic public/private key pair based on seed
     """
     
     skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
@@ -196,9 +188,10 @@ def GenerateDeterministicKeyPair(seed):
     skylib.SKY_cipher_GenerateDeterministicKeyPair(slice, byref(pubkey), byref(seckey))
     
     return (pubkey.data, seckey.data)
+      
     
-
     
+#extern void SKY_cipher_SignHash(cipher__SHA256* p0, cipher__SecKey* p1, cipher__Sig* p2);
 #CreateRawTxFromAddress(40, "qwerrqwr", "dgdgdgdg", "hjhjhjhjh", GoSlice())
 
 #CreateRawTxFromWallet(40, "qwerrqwr", "dgdgdgdg", GoSlice())
