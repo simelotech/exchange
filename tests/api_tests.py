@@ -9,7 +9,7 @@ class APITestCase(unittest.TestCase):
         self.app = app.test_client()
 
     def test_address_valid(self):
-        data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
+        data = dict(address=r'oD9cLwyArH4mVV7rG8KfKbhi2fZQeTUeQN')
         response = self.app.get(
             '/api/v1/addresses/{}/isvalid'.format(data),
             data=json.dumps(data),
@@ -79,12 +79,12 @@ class APITestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
-        self.assertIn('privateKey', json_response)
+        self.assertIn('publicKey', json_response)
         self.assertIn('address', json_response)
 
     def test_wallets_cashout(self):
         # FIXME Gives 400?
-        data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
+        data = dict(address=r'oD9cLwyArH4mVV7rG8KfKbhi2fZQeTUeQN')
         response = self.app.post(
             '/api/v1/wallets/{}/cashout'.format(data),
             data=json.dumps(data),
