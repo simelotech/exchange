@@ -107,7 +107,7 @@ def get_version():
     Get blockchain version
     """
 
-    version = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "api/v1/version"))
+    version = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/version"))
 
     if not version.json:
         return {"status": 500, "error": "Unknown server error"}
