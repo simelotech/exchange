@@ -19,6 +19,7 @@ class Config(object):
     MONGO_DBNAME = 'LYKKE'
     MONGO_HOST = '127.0.0.1'
     MONGO_PORT = 27017
+    MONGO_URI = "mongodb://" + MONGO_HOST + ":" + str(MONGO_PORT) + "/" + MONGO_DBNAME
     #: Redis
     REDIS_HOST = '127.0.0.1'
     REDIS_PORT = 6379
