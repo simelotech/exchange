@@ -107,7 +107,7 @@ def get_version():
     Get blockchain version
     """
 
-    version = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/version"))
+    version = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "api/v1/version"))
 
     if not version.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -143,27 +143,27 @@ def get_balance_scan(address, start_block = 1):
     if start_block > block_count:
         return {"status": 400, "error": "Start block higher that block height", 'block': block_count}
 
-        
+
     blocks = get_block_range(start_block, block_count)
-    
+
     if 'error' in blocks:
         return blocks
-    
+
     balance = 0
     unspent_outputs = dict()
-    
+
     for block in blocks:   #Scan the block range
         for txn in block['body']['txns']:
-            
+
             inputs = txn['inputs']
             outputs = txn['outputs']
-            
+
             #Outgoing
             balance_out = 0
             for input in inputs:
                 if input in unspent_outputs:
                     balance_out += unspent_outputs.pop(input)
-                    
+
             #Incoming
             balance_in = 0
             for output in outputs:
@@ -171,13 +171,13 @@ def get_balance_scan(address, start_block = 1):
                     balance_in += float(output['coins'])
                     unspent_outputs[output['uxid']] = float(output['coins'])
 
-                    
+
             balance += balance_in
             balance -= balance_out
-    
+
     return {'balance': balance, 'block': block_count}
-    
-    
+
+
 def get_block_count():
     """
     Get the current block height of blockchain
@@ -191,39 +191,39 @@ def get_block_range(start_block, end_block):
     """
     returns the blocks from blockchain in the specified range
     """
-    
+
     values = {"start": start_block, "end": end_block}
     result = requests.get(form_url(base_url, "/blocks"), params=values)
-    
+
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
-        
+
     return result.json()['blocks']
-     
+
 
 def get_block_by_hash(hash):
     """
     returns the blocks from blockchain in the specified range
     """
-    
+
     values = {"hash": hash}
     result = requests.get(form_url(base_url, "/block"), params=values)
-    
+
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
-        
+
     return result.json()
-    
-    
+
+
 def get_block_by_seq(seqnum):
     """
     returns the blocks from blockchain in the specified range
     """
-    
+
     values = {"seq": seqnum}
     result = requests.get(form_url(base_url, "/block"), params=values)
-    
+
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
-        
+
     return result.json()
