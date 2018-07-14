@@ -2,6 +2,7 @@ import requests
 import logging
 from .. import app
 from ..settings import app_config
+import skycoin
 
 
 def form_url(base, path):
@@ -54,40 +55,32 @@ def create_wallet():
     """
     Create the wallet in blockchain
     """
-
-    # generate new seed
-    new_seed = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/newSeed")).json()
-
-    if not new_seed or "seed" not in new_seed:
-        return {"status": 500, "error": "Unknown server error"}
-
-    # generate CSRF token
-    CSRF_token = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/csrf")).json()
-
-    if not CSRF_token or "csrf_token" not in CSRF_token:
-        return {"status": 500, "error": "Unknown server error"}
-
-    # create the wallet from seed
-    # TODO: Where to get labels? How about scan?
-    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/create"),
-                         {"seed": new_seed["seed"],
-                             "label": "wallet123", "scan": "5"},
-                         headers={'X-CSRF-Token': CSRF_token['csrf_token']})
-
-    if not resp:
-        return {"status": 500, "error": "Unknown server error"}
-
-    if resp.status_code != 200:
-        return {"status": 500, "error": "Unknown server error"}
-
-    new_wallet = resp.json()
-
-    if not new_wallet or "entries" not in new_wallet:
-        return {"status": 500, "error": "Unknown server error"}
-
+    error, clientHandle = skycoin.SKY_api_NewClient(app_config.SKYCOIN_NODE_URL.encode())
+    if error != 0:
+        return {"status": 500, "error": "Unknown server error"}	
+    error, seed = skycoin.SKY_api_Client_NewSeed(clientHandle, 128)
+    if error != 0:
+        skycoin.SKY_handle_close(clientHandle)
+        return {"status": 500, "error": "Error creating new seed"}
+    error, responseHandle = skycoin.SKY_api_Client_CreateUnencryptedWallet(clientHandle, seed, b"wallet123", 5)
+    if error != 0:
+        skycoin.SKY_handle_close(clientHandle)
+        return {"status": 500, "error": "Error creating wallet"}
+    error, entries_count = skycoin.SKY_api_Handle_Client_GetWalletResponseEntriesCount(responseHandle)
+    if error != 0 or entries_count <= 0:
+        skycoin.SKY_handle_close(clientHandle)	    
+        skycoin.SKY_handle_close(responseHandle)
+        return {"status": 500, "error": "Error in response when creating wallet"}
+    error, address, pubkey = skycoin.SKY_api_Handle_WalletResponseGetEntry(responseHandle, 0)
+    if error != 0:
+        skycoin.SKY_handle_close(clientHandle)	    
+        skycoin.SKY_handle_close(responseHandle)
+        return {"status": 500, "error": "Error in response when creating wallet"}
+    skycoin.SKY_handle_close(responseHandle)
+    skycoin.SKY_handle_close(clientHandle)
     return {
-        "privateKey": new_wallet["entries"][0]["secret_key"],
-        "address": new_wallet["entries"][0]["address"]
+        "privateKey": str(pubkey),
+        "address": str(address)
     }
 
 def spend(values):

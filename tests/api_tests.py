@@ -19,6 +19,16 @@ class APITestCase(unittest.TestCase):
         self.assertIn('version', json_response)
         self.assertIn('env', json_response)
         self.assertIn('isDebug', json_response)
+        
+    def test_wallets(self):
+        response = self.app.post(
+            self.exchange_prefix + '/wallets',
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('privateKey', json_response)
+        self.assertIn('address', json_response)
 
 if __name__ == '__main__':
     unittest.main()
