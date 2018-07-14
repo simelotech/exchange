@@ -60,6 +60,9 @@ def create_wallet():
     """
     Create the wallet in blockchain
     """
+    #TODO: Check why docs say private key instead of public in return
+    #TODO: Check if it is ok to create a random label for wallets
+    #TODO: Check if unencrypted wallet is ok
     clientHandle = 0
     responseHandle = 0
     try:
