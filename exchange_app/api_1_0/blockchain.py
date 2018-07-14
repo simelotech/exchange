@@ -3,6 +3,8 @@ import logging
 from .. import app
 from ..settings import app_config
 import skycoin
+import random
+import string
 
 
 def form_url(base, path):
@@ -67,7 +69,8 @@ def create_wallet():
         error, seed = skycoin.SKY_api_Client_NewSeed(clientHandle, 128)
         if error != 0:
             return {"status": 500, "error": "Error creating new seed"}
-        error, responseHandle = skycoin.SKY_api_Client_CreateUnencryptedWallet(clientHandle, seed, b"wallet123", 5)
+        label = "wallet" + ''.join(random.choice(string.digits) for _ in range(10))
+        error, responseHandle = skycoin.SKY_api_Client_CreateUnencryptedWallet(clientHandle, seed, label.encode(), 5)
         if error != 0:
             return {"status": 500, "error": "Error creating wallet"}
         error, entries_count = skycoin.SKY_api_Handle_Client_GetWalletResponseEntriesCount(responseHandle)
