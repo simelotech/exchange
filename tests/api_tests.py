@@ -1,7 +1,7 @@
 import json
 import unittest
 from exchange_app import app
-
+import skycoin
 
 class APITestCase(unittest.TestCase):
 
@@ -29,6 +29,19 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('privateKey', json_response)
         self.assertIn('address', json_response)
+        addressb58 = json_response.get("address")    
+        pubkeyHex = json_response.get("privateKey") 
+        address = skycoin.cipher__Address()
+        error = skycoin.SKY_cipher_DecodeBase58Address(
+            addressb58.encode(), address)
+        self.assertEqual(error, 0)
+        pubkey = skycoin.cipher_PubKey()
+        error = skycoin.SKY_cipher_PubKeyFromHex(pubkeyHex.encode(), pubkey)
+        self.assertEqual(error, 0)
+        address2 = skycoin.cipher__Address()
+        error = skycoin.SKY_cipher_AddressFromPubKey(pubkey, address2)
+        self.assertEqual(error, 0)
+        self.assertEqual( address.isEqual(address2), True )
 
 if __name__ == '__main__':
     unittest.main()

@@ -50,6 +50,9 @@ def post_url(path, values=""):
 
     return response_data
 
+def _bytesToStr(data):
+	s = str(data)
+	return s[2:len(s)-1]
 
 def create_wallet():
     """
@@ -79,8 +82,8 @@ def create_wallet():
     skycoin.SKY_handle_close(responseHandle)
     skycoin.SKY_handle_close(clientHandle)
     return {
-        "privateKey": str(pubkey),
-        "address": str(address)
+        "privateKey": _bytesToStr(pubkey),
+        "address": _bytesToStr(address)
     }
 
 def spend(values):
