@@ -82,7 +82,7 @@ def create_wallet():
     skycoin.SKY_handle_close(responseHandle)
     skycoin.SKY_handle_close(clientHandle)
     return {
-        "privateKey": _bytesToStr(pubkey),
+        "publicKey": _bytesToStr(pubkey),
         "address": _bytesToStr(address)
     }
 

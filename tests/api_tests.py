@@ -27,10 +27,10 @@ class APITestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
-        self.assertIn('privateKey', json_response)
+        self.assertIn('publicKey', json_response)
         self.assertIn('address', json_response)
         addressb58 = json_response.get("address")    
-        pubkeyHex = json_response.get("privateKey") 
+        pubkeyHex = json_response.get("publicKey") 
         address = skycoin.cipher__Address()
         error = skycoin.SKY_cipher_DecodeBase58Address(
             addressb58.encode(), address)
