@@ -41,7 +41,7 @@ class APITestCase(unittest.TestCase):
         address2 = skycoin.cipher__Address()
         error = skycoin.SKY_cipher_AddressFromPubKey(pubkey, address2)
         self.assertEqual(error, 0)
-        self.assertEqual( address.isEqual(address2), True )
+        assert address.isEqual(address2)
 
 if __name__ == '__main__':
     unittest.main()
