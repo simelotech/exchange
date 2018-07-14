@@ -63,20 +63,26 @@ def create_wallet():
     clientHandle = 0
     responseHandle = 0
     try:
-        error, clientHandle = skycoin.SKY_api_NewClient(app_config.SKYCOIN_NODE_URL.encode())
+        error, clientHandle = skycoin.SKY_api_NewClient(
+            app_config.SKYCOIN_NODE_URL.encode())
         if error != 0:
             return {"status": 500, "error": "Unknown server error"}
         error, seed = skycoin.SKY_api_Client_NewSeed(clientHandle, 128)
         if error != 0:
             return {"status": 500, "error": "Error creating new seed"}
-        label = "wallet" + ''.join(random.choice(string.digits) for _ in range(10))
-        error, responseHandle = skycoin.SKY_api_Client_CreateUnencryptedWallet(clientHandle, seed, label.encode(), 5)
+        label = "wallet" + \
+            ''.join(random.choice(string.digits) for _ in range(10))
+        error, responseHandle = skycoin.SKY_api_Client_CreateUnencryptedWallet(
+                            clientHandle, seed, label.encode(), 5)
         if error != 0:
             return {"status": 500, "error": "Error creating wallet"}
-        error, entries_count = skycoin.SKY_api_Handle_Client_GetWalletResponseEntriesCount(responseHandle)
+        error, entries_count = \
+            skycoin.SKY_api_Handle_Client_GetWalletResponseEntriesCount(
+                responseHandle)
         if error != 0 or entries_count <= 0:
             return {"status": 500, "error": "Error in response when creating wallet"}
-        error, address, pubkey = skycoin.SKY_api_Handle_WalletResponseGetEntry(responseHandle, 0)
+        error, address, pubkey = \
+            skycoin.SKY_api_Handle_WalletResponseGetEntry(responseHandle, 0)
         if error != 0:
             return {"status": 500, "error": "Error in response when creating wallet"}
         return {
@@ -91,17 +97,28 @@ def create_wallet():
         if clientHandle > 0:
             skycoin.SKY_handle_close(clientHandle)
 
-def spend(values):
+def spend(wltId, dest, coins):
     """
     Transfer balance
     """
-    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/spend"), data=values)
-
-    if not resp.json:
+    clientHandle = 0
+    try:
+        error, clientHandle = skycoin.SKY_api_NewClient(
+            app_config.SKYCOIN_NODE_URL.encode())
+        if error != 0:
+            return {"status": 500, "error": "Unknown server error"}
+        spendResult = skycoin.api__SpendResult()
+        #TODO: Check why empty password
+        error = skycoin.SKY_api_Client_Spend(clientHandle, wltId, dest,
+            coins, "", spendResult)
+        if error != 0:
+            return {"status": 500, "error": "Error in spend"}
+        return {"status": 200, "error": ""}
+    except:
         return {"status": 500, "error": "Unknown server error"}
-
-    return {"status": resp.status_code, "error": resp.json()["error"]}
-
+    finally:
+        if clientHandle > 0:
+            skycoin.SKY_handle_close(clientHandle)
 
 def get_version():
     """
