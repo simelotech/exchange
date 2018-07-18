@@ -47,13 +47,8 @@ def wallets_cashout(address):
             400
         )
 
-    values = {}
-    values["id"] = address
-    values["dst"] = request.json["to"]
-    values["coins"] = request.json["amount"]
-
     # Call blockchain to spend
-    result = spend(values)
+    result = spend(address, request.json["to"], request.json["amount"])
 
     if result["status_code"] != 200 or result["error"] != "":
         return make_response(
