@@ -2,6 +2,9 @@ import requests
 import logging
 from .. import app
 from ..settings import app_config
+import skycoin
+import random
+import string
 
 
 def form_url(base, path):
@@ -49,58 +52,76 @@ def post_url(path, values=""):
 
     return response_data
 
+def _bytesToStr(data):
+	s = str(data)
+	return s[2:len(s)-1]
 
 def create_wallet():
     """
     Create the wallet in blockchain
     """
+    #TODO: Check why docs say private key instead of public in return
+    #TODO: Check if it is ok to create a random label for wallets
+    #TODO: Check if unencrypted wallet is ok
+    clientHandle = 0
+    responseHandle = 0
+    try:
+        error, clientHandle = skycoin.SKY_api_NewClient(
+            app_config.SKYCOIN_NODE_URL.encode())
+        if error != 0:
+            return {"status": 500, "error": "Unknown server error"}
+        error, seed = skycoin.SKY_api_Client_NewSeed(clientHandle, 128)
+        if error != 0:
+            return {"status": 500, "error": "Error creating new seed"}
+        label = "wallet" + \
+            ''.join(random.choice(string.digits) for _ in range(10))
+        error, responseHandle = skycoin.SKY_api_Client_CreateUnencryptedWallet(
+                            clientHandle, seed, label.encode(), 5)
+        if error != 0:
+            return {"status": 500, "error": "Error creating wallet"}
+        error, entries_count = \
+            skycoin.SKY_api_Handle_Client_GetWalletResponseEntriesCount(
+                responseHandle)
+        if error != 0 or entries_count <= 0:
+            return {"status": 500, "error": "Error in response when creating wallet"}
+        error, address, pubkey = \
+            skycoin.SKY_api_Handle_WalletResponseGetEntry(responseHandle, 0)
+        if error != 0:
+            return {"status": 500, "error": "Error in response when creating wallet"}
+        return {
+            "publicKey": _bytesToStr(pubkey),
+            "address": _bytesToStr(address)
+        }
+    except:
+        return {"status": 500, "error": "Unknown error"}
+    finally:
+        if responseHandle > 0:
+            skycoin.SKY_handle_close(responseHandle)
+        if clientHandle > 0:
+            skycoin.SKY_handle_close(clientHandle)
 
-    # generate new seed
-    new_seed = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/newSeed")).json()
-
-    if not new_seed or "seed" not in new_seed:
-        return {"status": 500, "error": "Unknown server error"}
-
-    # generate CSRF token
-    CSRF_token = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/csrf")).json()
-
-    if not CSRF_token or "csrf_token" not in CSRF_token:
-        return {"status": 500, "error": "Unknown server error"}
-
-    # create the wallet from seed
-    # TODO: Where to get labels? How about scan?
-    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/create"),
-                         {"seed": new_seed["seed"],
-                             "label": "wallet123", "scan": "5"},
-                         headers={'X-CSRF-Token': CSRF_token['csrf_token']})
-
-    if not resp:
-        return {"status": 500, "error": "Unknown server error"}
-
-    if resp.status_code != 200:
-        return {"status": 500, "error": "Unknown server error"}
-
-    new_wallet = resp.json()
-
-    if not new_wallet or "entries" not in new_wallet:
-        return {"status": 500, "error": "Unknown server error"}
-
-    return {
-        "privateKey": new_wallet["entries"][0]["secret_key"],
-        "address": new_wallet["entries"][0]["address"]
-    }
-
-def spend(values):
+def spend(wltId, dest, coins):
     """
     Transfer balance
     """
-    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/spend"), data=values)
-
-    if not resp.json:
+    clientHandle = 0
+    try:
+        error, clientHandle = skycoin.SKY_api_NewClient(
+            app_config.SKYCOIN_NODE_URL.encode())
+        if error != 0:
+            return {"status": 500, "error": "Unknown server error"}
+        spendResult = skycoin.api__SpendResult()
+        #TODO: Check why empty password
+        error = skycoin.SKY_api_Client_Spend(clientHandle, wltId, dest,
+            coins, "", spendResult)
+        if error != 0:
+            return {"status": 500, "error": "Error in spend"}
+        return {"status": 200, "error": ""}
+    except:
         return {"status": 500, "error": "Unknown server error"}
-
-    return {"status": resp.status_code, "error": resp.json()["error"]}
-
+    finally:
+        if clientHandle > 0:
+            skycoin.SKY_handle_close(clientHandle)
 
 def get_version():
     """
@@ -143,27 +164,27 @@ def get_balance_scan(address, start_block = 1):
     if start_block > block_count:
         return {"status": 400, "error": "Start block higher that block height", 'block': block_count}
 
-        
+
     blocks = get_block_range(start_block, block_count)
-    
+
     if 'error' in blocks:
         return blocks
-    
+
     balance = 0
     unspent_outputs = dict()
-    
+
     for block in blocks:   #Scan the block range
         for txn in block['body']['txns']:
-            
+
             inputs = txn['inputs']
             outputs = txn['outputs']
-            
+
             #Outgoing
             balance_out = 0
             for input in inputs:
                 if input in unspent_outputs:
                     balance_out += unspent_outputs.pop(input)
-                    
+
             #Incoming
             balance_in = 0
             for output in outputs:
@@ -171,13 +192,13 @@ def get_balance_scan(address, start_block = 1):
                     balance_in += float(output['coins'])
                     unspent_outputs[output['uxid']] = float(output['coins'])
 
-                    
+
             balance += balance_in
             balance -= balance_out
-    
+
     return {'balance': balance, 'block': block_count}
-    
-    
+
+
 def get_block_count():
     """
     Get the current block height of blockchain
@@ -191,39 +212,39 @@ def get_block_range(start_block, end_block):
     """
     returns the blocks from blockchain in the specified range
     """
-    
+
     values = {"start": start_block, "end": end_block}
     result = requests.get(form_url(base_url, "/blocks"), params=values)
-    
+
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
-        
+
     return result.json()['blocks']
-     
+
 
 def get_block_by_hash(hash):
     """
     returns the blocks from blockchain in the specified range
     """
-    
+
     values = {"hash": hash}
     result = requests.get(form_url(base_url, "/block"), params=values)
-    
+
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
-        
+
     return result.json()
-    
-    
+
+
 def get_block_by_seq(seqnum):
     """
     returns the blocks from blockchain in the specified range
     """
-    
+
     values = {"seq": seqnum}
     result = requests.get(form_url(base_url, "/block"), params=values)
-    
+
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
-        
+
     return result.json()
