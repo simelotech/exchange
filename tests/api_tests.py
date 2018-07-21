@@ -3,6 +3,7 @@ import unittest
 from exchange_app import app
 import skycoin
 
+
 class APITestCase(unittest.TestCase):
 
     exchange_prefix = "/v1/api"
@@ -19,7 +20,7 @@ class APITestCase(unittest.TestCase):
         self.assertIn('version', json_response)
         self.assertIn('env', json_response)
         self.assertIn('isDebug', json_response)
-        
+
     def test_wallets(self):
         response = self.app.post(
             self.exchange_prefix + '/wallets',
@@ -29,8 +30,8 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('publicKey', json_response)
         self.assertIn('address', json_response)
-        addressb58 = json_response.get("address")    
-        pubkeyHex = json_response.get("publicKey") 
+        addressb58 = json_response.get("address")
+        pubkeyHex = json_response.get("publicKey")
         address = skycoin.cipher__Address()
         error = skycoin.SKY_cipher_DecodeBase58Address(
             addressb58.encode(), address)
@@ -42,6 +43,17 @@ class APITestCase(unittest.TestCase):
         error = skycoin.SKY_cipher_AddressFromPubKey(pubkey, address2)
         self.assertEqual(error, 0)
         assert address.isEqual(address2)
+
+    def test_address(self):
+        address = r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
+        response = self.app.get(
+            self.exchange_prefix + '/addresses/' + address + '/validity',
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('isValid', json_response)
+
 
 if __name__ == '__main__':
     unittest.main()
