@@ -5,6 +5,7 @@
 import docker, docker.errors
 import logging
 import os
+import time
 import uuid
 import socket, errno
 
@@ -30,9 +31,11 @@ def setup():
         init_service('redis',           '3.0.7-alpine',  6379)
         log.info('Initializing service : skycoin')
         init_service('skycoin/skycoin', 'develop', 6420)
-        wait_for_all(services_started)
     except:
         log.error('Error found in test suite setup')
+        raise
+    finally:
+        wait_for_all(services_started)
 
 def teardown():
     """Unload launched services if no test suite is running.
@@ -117,7 +120,8 @@ def wait_for_all(services_started, max_retries=5):
                 if launched))
     step = max_retries
     pending = services_started.keys()
-    timeout = 0.01
+    timeout = 3.0
+    time.sleep(timeout)
     # FIXME: Signal instead of busy wait
     while step > 0 and len(pending) > 0:
         time.sleep(timeout)
