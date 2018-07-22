@@ -43,7 +43,7 @@ def wallets_cashout(address):
 
     if error_items != {}:  # Bad request
         return make_response(
-            jsonify(build_error("Input data error", error_items)),
+            jsonify(build_error("Input data error", failed_items=error_items)),
             400
         )
 

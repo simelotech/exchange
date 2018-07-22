@@ -56,7 +56,7 @@ def create_wallet():
     """
 
     # generate new seed
-    new_seed = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/newSeed")).json()
+    new_seed = requests.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/newSeed")).json()
 
     if not new_seed or "seed" not in new_seed:
         return {"status": 500, "error": "Unknown server error"}
