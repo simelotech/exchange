@@ -1,9 +1,10 @@
 import logging
 from exchange_app import mongo, app
 from bson.objectid import ObjectId
-from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq
+from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_hash, get_block_by_seq, get_address_transactions
 import requests
 from datetime import  datetime, timezone
+from time import perf_counter
 
 def add_address_observation(address):
     """
@@ -219,7 +220,7 @@ def update_index(new_addr = ''):
     Update the index keeping observation addresses and blocks in which they are referred
     If new_addr is specified, scan from start and update index for the address
     """
-
+    
     #Get the latest block procesed in index (block height of blockchain in last update)
     collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
     
@@ -241,7 +242,7 @@ def update_index(new_addr = ''):
     else:
         #Get current blockchain blockheight
         block_count = get_block_count()
-    
+   
     
     if start_block > block_count: #No new blocks since last update
         return {}
@@ -264,7 +265,7 @@ def update_index(new_addr = ''):
     step = 100   #How many blocks to retrieve in one batch
     for bn in range(start_block, block_count, step):
     
-        blocks = get_block_range(bn, bn + step - 1) #TODO:implement paging to read blocks        
+        blocks = get_block_range(bn, bn + step - 1)      
         if 'error' in blocks:
             return blocks
         
@@ -388,39 +389,26 @@ def get_hash_address(input_hash):
     return {'address': result['address'], 'balance': result['balance']}
     
         
-def get_transactions_from(address, afterhash = ''):
+def get_transactions_from(address, take, afterhash = ''):
     """
     return all transactions from address after the one specified by afterhash
-    """
+    """ 
     
-    #Convert afterhash to block sequence number
-    if afterhash == '':
-        seqno = 1
-    else:
-        blk = get_block_by_hash(afterhash)
-        if 'error' in blk:
-            return blk
-            
-        seqno = blk['header']['seq']
-    
-    # Get the blocks containing address higher than seqno
-    
-    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
-    
-    result = collection.find_one({'address': address})
+    # Get the blocks mentioning address    
+    collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list    
+    result = collection.find_one({'address': address})  
     
     if result is None: #index not created yet
         return {"status": 500, "error": "Address is not indexed"}
         
     mentioned_blocks = result['blocks']
-    
-    blocks = []  #Holds the mentioned blocks higher than seqno
-    
+
     items = []   # Hold the history output items from specified address
+    process_txn = False
+    taken = 0
+    finish = False
     
     for blockseq in mentioned_blocks:
-        if blockseq <= seqno:
-            continue
             
         #Read the block from blockchain
         block = get_block_by_seq(blockseq)
@@ -431,17 +419,32 @@ def get_transactions_from(address, afterhash = ''):
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         
         for txn in block['body']['txns']:
+            
+            #If afterhash is specified, return from that point only 
+            if afterhash == '' or txn['inner_hash'] == afterhash:
+                process_txn = True
+                
+            if not process_txn:
+                continue
+                
             inputs = txn['inputs']
             outputs = txn['outputs']   
 
-            operation_id = txn['txid']
             tx_hash = txn['inner_hash']
-            
-            
+            txn_type = txn['type']
             
             #Outgoing
+            
+            input_addresses = []
+            
             for input in inputs:
                 addr = get_hash_address(input)['address']
+                
+                if addr not in input_addresses: # count multiple inputs hashes from same address as one
+                    input_addresses.append(addr)
+                else: 
+                    continue
+                
                 if addr == address: # This is a transaction from specified address    
                     
                     for output in outputs: # Read destination addresses
@@ -449,19 +452,22 @@ def get_transactions_from(address, afterhash = ''):
                         if dst_addr != addr:  #Only record if dst is different from self. #TODO: Handle multiple outputs
                             #Record to history output
                             item = {}
-                            item['operationId'] =  operation_id
+                            item['transactionType'] =  txn_type
                             item['timestamp'] = timestamp
                             item['fromAddress'] = address
                             item['toAddress'] = dst_addr
                             item['assetId'] = 'SKY'
                             item['amount'] = output['coins']
                             item['hash'] = tx_hash                            
-                            items.append(item)
-                            
+                            items.append(item)                    
+                            taken += 1
+                            if taken >= take:
+                                return items            
+            
     return items    
     
     
-def get_transactions_to(address, afterhash = ''):
+def _get_transactions_to(address, take, afterhash = ''):
     """
     return all transactions to address after the one specified by afterhash
     """
@@ -527,3 +533,56 @@ def get_transactions_to(address, afterhash = ''):
                             
     return items    
     
+
+def get_transactions_to(address, take, afterhash = ''):
+    """
+    return 'take' transactions to address after the one specified by afterhash
+    """
+    
+    collection = mongo.db.trans_obs_to  #this colection will store the addresses in observation list
+    
+    result = collection.find_one({'address': address})
+    
+    if result is None: #index not created yet
+        return {"status": 500, "error": "Address is not observed"}
+   
+    txns = get_address_transactions(address)
+    
+    items = []   # Hold the history output items from specified address
+    process_txn = False
+    taken = 0
+
+    for txn in txns:
+        
+        #If afterhash is specified, return from that point only 
+        if afterhash == '' or txn['txn']['inner_hash'] == afterhash:
+            process_txn = True
+            
+        if not process_txn:
+            continue
+            
+                
+                
+        timestamp = txn['time']
+        timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+        txn_hash = txn['txn']['inner_hash']
+        txn_type = txn['txn']['type']
+        orig_addr = get_hash_address(txn['txn']['inputs'][0])['address']
+    
+        for output in txn['txn']['outputs']: # Read destination addresses
+            if output['dst'] == address and orig_addr != address:  
+                #Record to history output
+                item = {}
+                item['timestamp'] =  timestamp
+                item['fromAddress'] = orig_addr
+                item['toAddress'] = address  #TODO: Handle multiple inputs
+                item['assetId'] = 'SKY'
+                item['amount'] = output['coins']
+                item['hash'] = txn_hash
+                item['transactionType'] = txn_type                            
+                items.append(item)
+                taken += 1
+                if taken >= take:
+                    return items
+            
+    return items

@@ -6,6 +6,8 @@ class error_codes(Enum):
     unknown = 1
     amountIsTooSmall = 2
     notEnoughBalance = 3
+    missingParameter = 4
+    badFormat = 5
 
 
 def build_error(error_message="", error_code = error_codes.unknown, failed_items={}):

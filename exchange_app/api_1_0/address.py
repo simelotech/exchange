@@ -1,18 +1,9 @@
-import re
-from hashlib import sha256
 from flask import jsonify
 from . import api
+from .libskycoin_interface import DecodeBase58Address
 
 
-def __decode_base58(bc, length):
-    digits58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-    n = 0
-    for char in bc:
-        n = n * 58 + digits58.index(char)
-    return n.to_bytes(length, 'big')
-
-
-@api.route('/addresses/<string:address>/isvalid', methods=['GET'])
+@api.route('/addresses/<string:address>/validity', methods=['GET'])
 def address_valid(address):
     """
     Check if an address is valid
@@ -22,14 +13,15 @@ def address_valid(address):
     Read the first twenty-one bytes, compute the checksum, and 
     check that it corresponds to the last four bytes.
     """
-    if not address.startswith(u'1') and not address.startswith(u'3'):
-        result = False
-    if re.match(r"[a-zA-Z1-9]{27,35}$", address) is None:
-        result = False
-    try:
-        bcbytes = __decode_base58(address, 25)
-        result = bcbytes[-4:] == sha256(sha256(bcbytes[:-4]
-                                               ).digest()).digest()[:4]
+
+    
+    try: 
+        if DecodeBase58Address(address) == 0:
+            result = True
+        else:
+            result = False
+        
     except Exception:
         result = False
+        
     return jsonify({"isValid": result})

@@ -3,6 +3,7 @@ import os
 from flask import Flask
 from flask_redis import FlaskRedis
 from flask_pymongo import PyMongo
+import requests
 
 
 FLASK_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -22,6 +23,9 @@ logging.basicConfig(
            '[in %(pathname)s:%(lineno)d]',
     datefmt='%Y%m%d-%H:%M%p',
 )
+
+#Session
+app.lykke_session = requests.Session()  #Used for connection pooling requests to lykke api
 
 # Redis
 redis_store = FlaskRedis(app, strict=False)
