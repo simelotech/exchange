@@ -10,8 +10,8 @@ import logging
 class GoString(Structure):
     _fields_ = [("p", c_char_p), 
                 ("n", c_longlong)]    
-    def __init__(self, string):
-        self.p = c_char_p(string.encode(encoding = 'ansi'))
+    def __init__(self, string=None):
+        self.p = c_char_p(string.encode(encoding = 'ascii'))
         self.n = len(string)
         
 class GoSlice(Structure):
@@ -28,8 +28,10 @@ class cipher__PubKey(Structure):
 
 class cipher__SecKey(Structure):
     _fields_ = [("data", c_ubyte * 32)]    
-    def __init__(self, string):
-        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ansi'))
+    def __init__(self, string=None):
+        if string is None:
+            string = '\0' * 32
+        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ascii'))
     
 class cipher__Sig(Structure):
     _fields_ = [("data", c_ubyte * 65)]
@@ -37,7 +39,7 @@ class cipher__Sig(Structure):
 class cipher__SHA256(Structure):
     _fields_ = [("data", c_ubyte * 32)]    
     def __init__(self, string):
-        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ansi'))
+        self.data = (c_ubyte*32).from_buffer_copy('{:0>32}'.format(string[:32]).encode(encoding = 'ascii'))
   
 class coin__Transaction(Structure):
     _fields_ = [("Length", c_int32), 
@@ -174,7 +176,7 @@ def GenerateDeterministicKeyPair(seed):
     
     skylib = cdll.LoadLibrary(path.relpath(app.config['LIBSKYCOIN_PATH']))
     
-    string = c_char_p(seed.encode(encoding = 'ansi'))    
+    string = c_char_p(seed.encode(encoding = 'ascii'))    
     length = len(seed)
     
     slice = GoSlice()
@@ -210,7 +212,7 @@ def GenerateDeterministicKeyPair(seed):
 #for prv in private:
 #    print(hex(prv))
 #
-#print(private.decode(encoding = 'ansi'))
+#print(private.decode(encoding = 'ascii'))
 
 #GenerateDeterministicKeyPairsSeed(GoSlice(), 5)
 #{'_id': ObjectId('5a866b13cf105916e4180cb9'), 'meta': {'coin': 'skycoin', 'filename': '2018_02_16_3fe6.wlt', 'label': 'wallet123', 'lastSeed': '83281765eccf5efed260b261d4c7ac621b202e95b6593680ba5662f0c2c5a274', 'seed': 'pass cactus woman shop lunch city ankle menu affair conduct column trade', 'tm': '1518758675', 'type': 'deterministic', 'version': '0.1'}, 'entries': [{'address': 'xTaXPcDrZjBPqjJA7Y9eC5SLK3fyHh1cMw', 'public_key': '02a30c94c8f1152f71b7a4fc2ee5e5fcdc697689a32aab1a77b6c7423bdba976e1', 'secret_key': '6724e307f28cb05802ddaafca64e92ebc4aed02ffa9c756dbc4b8b735db3e288'}]}

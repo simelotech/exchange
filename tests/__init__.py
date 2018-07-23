@@ -26,11 +26,11 @@ def setup():
         log.info('Starting test run %s' % (testservice_name,))
         services_started[testservice_name] = (testsuite_id, False)
         log.info('Initializing service : mongo')
-        init_service('mongo',           '3.6.4-jessie',  27017)
+        init_service('mongo',           '3.6.4-jessie', 27017)
         log.info('Initializing service : redis')
-        init_service('redis',           '3.0.7-alpine',  6379)
+        init_service('redis',           '3.0.7-alpine', 6379)
         log.info('Initializing service : skycoin')
-        init_service('skycoin/skycoin', 'develop', 6420)
+        init_service('skycoin/skycoin', 'develop',      6420, command='-enable-wallet-api=true')
     except:
         log.error('Error found in test suite setup')
         raise
@@ -59,7 +59,7 @@ def testrun_id():
     """
     return services_started[testrun_service_name()][0]
 
-def init_service(service_name, version, default_port):
+def init_service(service_name, version, default_port, command=None):
     """Ensure service is running. If not available run it with Docker.
 
     service_name : The name of the official Docker image used to run
@@ -77,7 +77,8 @@ def init_service(service_name, version, default_port):
     if not is_listening_at(port):
         docker_run(service_name, tag=version,
                 name=service_id ,
-                ports={'%s/tcp' % (default_port,): port})
+                ports={'%s/tcp' % (default_port,): port},
+                command=command)
         launched = True
     services_started[service_id] = (port, launched)
 
@@ -98,8 +99,8 @@ def docker_run(service_name, name, **docker_options):
 #    except:
 #        log.warning('Image %s:%s not found locally ... pulling' % (service_name, image_tag))
 #        client.images.pull(service_name, image_tag)
-    client.containers.run('%s:%s' % (service_name, image_tag), detach=True,
-            name=name, ports=docker_options.get('ports', dict()))
+    client.containers.run('%s:%s' % (service_name, image_tag), detach=True, name=name,
+            ports=docker_options.get('ports', dict()), command=docker_options.get('command'))
     time.sleep(1.0)
 
 def docker_dispose(service_id):
