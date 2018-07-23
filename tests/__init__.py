@@ -100,6 +100,7 @@ def docker_run(service_name, name, **docker_options):
 #        client.images.pull(service_name, image_tag)
     client.containers.run('%s:%s' % (service_name, image_tag), detach=True,
             name=name, ports=docker_options.get('ports', dict()))
+    time.sleep(1.0)
 
 def docker_dispose(service_id):
     """Remove container used to run service
