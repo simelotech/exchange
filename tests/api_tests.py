@@ -11,7 +11,7 @@ class APITestCase(unittest.TestCase):
     def test_address_valid(self):
         data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
         response = self.app.get(
-            '/v1/api/addresses/{}/isvalid'.format(data),
+            '/v1/api/addresses/{}/validity'.format(data),
             data=json.dumps(data),
             content_type='application/json'
         )
@@ -22,7 +22,7 @@ class APITestCase(unittest.TestCase):
     def test_address_invalid(self):
         data = dict(address=r'12345678')
         response = self.app.get(
-            '/v1/api/addresses/{}/isvalid'.format(data),
+            '/v1/api/addresses/{}/validity'.format(data),
             data=json.dumps(data),
             content_type='application/json'
         )
