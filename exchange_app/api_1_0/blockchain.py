@@ -63,13 +63,13 @@ def create_wallet():
         return {"status": 500, "error": "Unknown server error"}
 
     # generate CSRF token
-    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/csrf")).json()
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
 
     if not CSRF_token or "csrf_token" not in CSRF_token:
         return {"status": 500, "error": "Unknown server error"}
 
     # create the wallet from seed
-    resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/create"),
+    resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/create"),
                          {"seed": new_seed["seed"],
                              "label": "wallet123", "scan": "5"},
                          headers={'X-CSRF-Token': CSRF_token['csrf_token']})
@@ -98,7 +98,7 @@ def spend(values):
     """
     Transfer balance
     """
-    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/wallet/spend"), data=values)
+    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/spend"), data=values)
 
     if not resp.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -111,7 +111,7 @@ def get_version():
     Get blockchain version
     """
 
-    version = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/version"))
+    version = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/version"))
 
     if not version.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -125,7 +125,7 @@ def get_balance(address):
     """
 
     values = {"addrs": address}
-    balances = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/balance"), params=values)
+    balances = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
     
     if not balances.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -187,7 +187,7 @@ def get_block_count():
     Get the current block height of blockchain
     """
 
-    progress = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/blockchain/progress"))
+    progress = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/blockchain/progress"))
 
     return progress.json()['current']
 
@@ -199,7 +199,7 @@ def get_block_range(start_block, end_block):
     
     values = {"start": start_block, "end": end_block}
     
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/blocks"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/blocks"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -214,7 +214,7 @@ def get_block_by_hash(hash):
     
     values = {"hash": hash}
     
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/block"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -229,7 +229,7 @@ def get_block_by_seq(seqnum):
     
     values = {"seq": seqnum}
     
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/block"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/block"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -244,7 +244,7 @@ def get_address_transactions(address):
     
     values = {'confirmed': 1, 'addrs': address}
     
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/transactions"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/transactions"), params=values)
     
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
