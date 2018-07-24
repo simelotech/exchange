@@ -1,4 +1,11 @@
-# exchange project
+
+# Lykke Blockchain integration for Skycoin
+
+### Requirements
+
+[Python](http://www.python.org) >= 3.4 , tested with versions `3.4` , `3.5` , `3.6`
+[MongoDB](https://www.mongodb.com/) tested with version `3.6.4`
+[Redis](https://redis.io/) tested with version `3.0.7`
 
 ### Installation
 
