@@ -11,7 +11,7 @@ def wallets():
 
     result = create_wallet()
 
-    if "address" in result:
+    if "publicAddress" in result:
         return jsonify(result)
 
     return make_response(
@@ -43,17 +43,12 @@ def wallets_cashout(address):
 
     if error_items != {}:  # Bad request
         return make_response(
-            jsonify(build_error("Input data error", error_items)),
+            jsonify(build_error("Input data error", failed_items=error_items)),
             400
         )
 
-    values = {}
-    values["id"] = address
-    values["dst"] = request.json["to"]
-    values["coins"] = request.json["amount"]
-
     # Call blockchain to spend
-    result = spend(values)
+    result = spend(address, request.json["to"], request.json["amount"])
 
     if result["status_code"] != 200 or result["error"] != "":
         return make_response(

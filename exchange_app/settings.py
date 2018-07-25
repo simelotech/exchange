@@ -1,6 +1,7 @@
 import logging
 
 import os
+import os.path
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -25,6 +26,7 @@ class Config(object):
     REDIS_PORT = 6379
     #: SKYCOIN
     SKYCOIN_NODE_URL = 'http://localhost:6420/'
+    LIBSKYCOIN_PATH = os.path.join(*('exchange_app/libskycoin.so'.split('/')))
 
 
 class ProductionConfig(Config):
