@@ -5,7 +5,6 @@ import logging
 from .. import app
 from ..settings import app_config
 from time import perf_counter
-#from .libskycoin_interface import GenerateDeterministicKeyPair
 import skycoin
 
 def form_url(base, path):
@@ -90,8 +89,6 @@ def create_wallet():
     if not new_wallet or "entries" not in new_wallet:
         return {"status": 500, "error": "Unknown server error"}
 
-    #Generate Private/Public key pairs from seed
-    #(pubkey, privkey) = GenerateDeterministicKeyPair(new_seed['seed'])
     seed = new_seed['seed']
     pubkey = skycoin.cipher_PubKey()
     seckey = skycoin.cipher_SecKey()
