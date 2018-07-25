@@ -1,3 +1,5 @@
+
+import binascii
 import requests
 import logging
 from .. import app
@@ -91,7 +93,7 @@ def create_wallet():
     (pubkey, privkey) = GenerateDeterministicKeyPair(new_seed['seed'])
 
     return {
-        "privateKey": bytearray(privkey).hex(),
+        "privateKey": binascii.hexlify(bytearray(privkey)),
         "publicAddress": new_wallet["entries"][0]["address"],
         "addressContext": new_wallet['meta']['filename']
     }
