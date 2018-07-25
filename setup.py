@@ -78,13 +78,15 @@ with open(path.join(script_dirname, 'README.md'), encoding='utf-8') as f:
 #extra_link_args.append(library_file)
 
 setup(
-    name='LykkeSkycoinServiceApi',
+    name='LykkeSkycoinService',
     version='0.0.1',
-    description='Python Library integrating Skycoin into Lykke',
+    description='Python library implementing Lykke API and sign services for Skycoin blockchain',
     long_description=long_description,
     url='https://github.com/exchangeproject/exchange',
     author='Olemis Lang',
     author_email='olemis@simelo.tech',
+    maintainer='The Skycoin community',
+    maintainer_email='contact@skycoin.net',
     setup_requires=["pytest-runner"],
     tests_require=["nose"],
     classifiers=[
