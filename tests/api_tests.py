@@ -67,7 +67,7 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-    '''
+
     def test_wallets(self):
         response = self.app.post(
             '/v1/api/wallets',
@@ -77,7 +77,6 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
-    '''
 
 #    def test_wallets_cashout(self):
 #        # FIXME Gives 400?
