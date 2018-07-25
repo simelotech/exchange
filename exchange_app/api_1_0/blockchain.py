@@ -93,7 +93,7 @@ def create_wallet():
     (pubkey, privkey) = GenerateDeterministicKeyPair(new_seed['seed'])
 
     return {
-        "privateKey": binascii.hexlify(bytearray(privkey)),
+        "privateKey": binascii.hexlify(bytearray(privkey)).encode('ascii'),
         "publicAddress": new_wallet["entries"][0]["address"],
         "addressContext": new_wallet['meta']['filename']
     }
