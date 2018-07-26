@@ -1,4 +1,4 @@
-
+[![Build Status](https://travis-ci.com/exchangeproject/exchange.svg?branch=develop)](https://travis-ci.com/exchangeproject/exchange)
 # Lykke Blockchain integration for Skycoin
 
 ### Requirements
