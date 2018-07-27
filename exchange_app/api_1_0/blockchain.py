@@ -259,3 +259,28 @@ def get_address_transactions(address):
         return {"status": 500, "error": "Unknown server error"}
 
     return result.json()
+
+def sign_hash(hashHex, seckeyHex):
+    seckey = skycoin.cipher_Sig()
+    error = skycoin.SKY_cipher_SecKeyFromHex(seckeyHex.encode(), seckey)
+    if error != 0:
+        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
+
+    sha256 = skycoin.cipher_SHA256()
+    error = skycoin.SKY_cipher_SHA256FromHex(hashHex.encode(), sha256)
+    if error != 0:
+        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
+
+    signedHash = skycoin.cipher__Sig()
+    error = skycoin.SKY_cipher_SignHash(hash, seckey, signedHash)
+    if error != 0:
+        return make_response(jsonify(build_error('Unknown Server Error', error_codes.unknown)), 500)
+
+    error, signedHashHex = SKY_cipher_Sig_Hex(signedHash)
+    if error != 0:
+        return make_response(jsonify(build_error('Unknown Server Error', error_codes.unknown)), 500)
+
+    retvalue = {
+        "signedTransaction": signedHashHex
+    }
+    return jsonify(retvalue)
