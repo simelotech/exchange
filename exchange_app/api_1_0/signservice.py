@@ -16,7 +16,8 @@ def post_sign():
     if "transactionContext" not in request.json:
         return make_response(jsonify(build_error('Invalid Input Parameters', error_codes.missingParameter)), 400)
 
-    seckeyHex = request.json['privateKeys'][0] #TODO: handle multiple keys in many inputs transactions scenario
-    hashHex = request.json['transactionContext']
-
-    return sign_hash(hashHex, seckeyHex)
+    private_keys = request.json['privateKeys']
+    signedHashHex = request.json['transactionContext']
+    for secKey in private_keys:
+        signedHashHex = sign_hash(signedHashHex, secKey)
+    return signedHashHex
