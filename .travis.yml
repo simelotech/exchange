@@ -40,7 +40,7 @@ install:
     - sudo pip install tox-travis
     - curl -sL -o exchange_app/libskycoin.so "${LIBSKYCOIN_URL}"
     - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
-	- eval "$(gimme 1.10)"
+    - eval "$(gimme 1.10)"
 after_failure:
     - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
 
