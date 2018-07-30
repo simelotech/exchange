@@ -2,6 +2,8 @@
 # help confirm pull requests to this project.
 
 sudo: required
+go:
+  - "1.10.x"
 
 services:
   - docker
