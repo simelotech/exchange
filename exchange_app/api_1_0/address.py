@@ -1,6 +1,6 @@
 from flask import jsonify
 from . import api
-import skycoin
+import Pyskycoin
 
 
 @api.route('/addresses/<string:address>/validity', methods=['GET'])

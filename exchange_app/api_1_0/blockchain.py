@@ -5,7 +5,7 @@ import logging
 from .. import app
 from ..settings import app_config
 from time import perf_counter
-import skycoin
+import Pyskycoin
 
 def form_url(base, path):
     """
