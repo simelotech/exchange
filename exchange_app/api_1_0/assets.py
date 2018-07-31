@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import request, jsonify, make_response
 from . import api
 from .blockchain import get_url
 
@@ -17,7 +17,7 @@ def get_assets():
             take = int(stake)
         except:
             return make_response(jsonify(build_error("Invalid format : take"),
-                500)
+                500))
     cont = request.args.get('continuation')
     if take <= 0 or cont is not None or cont != "" :
         return jsonify({
@@ -55,4 +55,4 @@ def get_asset(assetid):
         return make_response(
             jsonify(build_error("specified asset not foune"),
             204
-        )
+        ))
