@@ -19,13 +19,11 @@ def address_valid(address):
     A BTC address uses an alphanumeric base58 encoding, without 0, O, I or l.
     Important note: the last four bytes are a checksum check. They are the
     first four bytes of a double SHA-256 digest of the previous 21 bytes
-    Read the first twenty-one bytes, compute the checksum, and 
+    Read the first twenty-one bytes, compute the checksum, and
     check that it corresponds to the last four bytes.
     """
-    if not address.startswith(u'1') and not address.startswith(u'3'):
-        result = False
     if re.match(r"[a-zA-Z1-9]{27,35}$", address) is None:
-        result = False
+        result = True
     try:
         bcbytes = __decode_base58(address, 25)
         result = bcbytes[-4:] == sha256(sha256(bcbytes[:-4]
