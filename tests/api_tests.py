@@ -31,6 +31,7 @@ class APITestCase(unittest.TestCase):
             '/v1/api/assets', content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
+    '''
     def test_get_asset(self):
         data = dict(assetid=1)
         response = self.app.get(
@@ -39,6 +40,7 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
+    '''
 
     def test_pending_events_cashin(self):
         response = self.app.get(
