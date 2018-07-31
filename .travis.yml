@@ -40,7 +40,6 @@ install:
     - gimme -l
     - go version
     - which go
-    - pip install --index-url https://test.pypi.org/simple Pyskycoin
 after_failure:
     - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
 
