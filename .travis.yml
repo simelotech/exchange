@@ -37,9 +37,7 @@ install:
     - sudo pip install tox-travis
     - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
     - eval "$(gimme 1.10)"
-    - gimme -l
     - go version
-    - which go
 after_failure:
     - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
 
