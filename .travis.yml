@@ -39,6 +39,7 @@ install:
     - eval "$(gimme 1.10)"
     - gimme -l
     - go version
+    - which go
     - export PATH=$PATH:/usr/local/go
     - sudo pip install --index-url https://test.pypi.org/simple Pyskycoin
 after_failure:
