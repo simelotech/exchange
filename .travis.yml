@@ -32,16 +32,12 @@ matrix:
           packages: [python3.6]
 
 before_install:
-    # Setup environment variables
-    - export LIBSKYCOIN="0.24.1"
-    #
-    - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme; fi
-    - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then chmod +x ~/bin/gimme; fi
 
 install:
     - sudo pip install tox-travis
     - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
     - eval "$(gimme 1.10)"
+    - export PATH=$PATH:/usr/local/go/bin
     - sudo pip install --index-url https://test.pypi.org/simple Pyskycoin
 after_failure:
     - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
