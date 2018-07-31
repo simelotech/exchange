@@ -37,7 +37,8 @@ install:
     - sudo pip install tox-travis
     - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
     - eval "$(gimme 1.10)"
-    - export PATH=$PATH:/usr/local/go/bin
+    - gimme -l
+    - export PATH=$PATH:/usr/local/go
     - sudo pip install --index-url https://test.pypi.org/simple Pyskycoin
 after_failure:
     - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
