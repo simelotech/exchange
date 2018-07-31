@@ -5,54 +5,53 @@ from .blockchain import get_url
 
 @api.route('/assets', methods=['GET'])
 def get_assets():
-    """"""
-    # getting data from blockchain
-    # TODO: Must findout actual api call to get assets
-    path = "/assets"
-    # values = ""
+    """
+    Returns skycoin assets. Just sky for now.
+    """
+    take = request.args.get('take')
+    if take is None:
+        take = 0
+    else:
+        try:
+            take = int(take)
+        except:
+            return make_response(
+                jsonify(build_error("Invalid format : take"), 500)
+    cont = request.args.get('continuation')
+    if take <= 0 or cont is not None or cont != "" :
+        return jsonify({
+            "continuation" : "",
+            "assets": []
+        })
 
-    response_data = get_url(path)
-
-    # TODO: Get data items from response and generate output
-
-    retvaule = {
+    response_data = {
+        "continuation" : "",
         "assets": [
             {
-                "assetId": "1234",
-                "address": "some address",
-                "name": "asset name",
-                "accuracy": "asset accuracy"
-            },
-            {
-                "assetId": "5678",
-                "address": "some address",
-                "name": "asset name",
-                "accuracy": "asset accuracy"
+                "assetId": "sky",
+                "address": "",
+                "name": "Sky",
+                "accuracy": "6"
             }
         ]
     }
     return jsonify(response_data)
 
 
-@api.route('/assets/<int:assetid>', methods=['GET'])
+@api.route('/assets/<string:assetid>', methods=['GET'])
 def get_asset(assetid):
     """"""
+    if assetid == "sky":
+        retvalue = {
+            "assetId": assetid,
+            "address": "",
+            "name": "Sky",
+            "accuracy": "6"
+        }
 
-    # getting data from blockchain
-
-    # TODO: Must findout actual api call to get assets
-    path = "/assets"
-    values = {'id': assetid}
-
-    response_data = get_url(path, values)
-
-    # TODO: Get data items from response and generate output
-
-    retvalue = {
-        "assetId": assetid,
-        "address": "some address",
-        "name": "asset name",
-        "accuracy": "asset accuracy"
-    }
-
-    return jsonify(response_data)
+        return jsonify(response_data)
+    else:
+        return make_response(
+            jsonify(build_error("specified asset not foune"),
+            204
+        )
