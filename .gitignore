@@ -104,3 +104,5 @@ ENV/
 *.orig
 *.sw[op]
 
+#Pyskycoin repository
+pyskycoin
