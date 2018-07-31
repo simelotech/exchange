@@ -34,6 +34,9 @@ matrix:
 before_install:
     # Setup environment variables
     - export LIBSKYCOIN="0.24.1"
+    #
+    - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme; fi
+    - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then chmod +x ~/bin/gimme; fi
 
 install:
     - sudo pip install tox-travis
