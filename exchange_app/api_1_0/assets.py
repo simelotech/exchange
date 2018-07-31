@@ -8,15 +8,16 @@ def get_assets():
     """
     Returns skycoin assets. Just sky for now.
     """
-    take = request.args.get('take')
-    if take is None:
+    take = 0
+    stake = request.args.get('take')
+    if stake is None:
         take = 0
     else:
         try:
-            take = int(take)
+            take = int(stake)
         except:
-            return make_response(
-                jsonify(build_error("Invalid format : take"), 500)
+            return make_response(jsonify(build_error("Invalid format : take"),
+                500)
     cont = request.args.get('continuation')
     if take <= 0 or cont is not None or cont != "" :
         return jsonify({
