@@ -586,3 +586,20 @@ def get_transactions_to(address, take, afterhash = ''):
                     return items
             
     return items
+
+
+def add_many_outputs_tx(tx):
+    """
+    Add not signed transaction with many outputs
+    """
+    many_inputs = mongo.db.many_outputs_tx # this collection will store the tx with many outputs
+    result = many_inputs.find_one(tx['operationId'])
+    if not result:
+        pk = many_inputs.insert(tx)
+        if isinstance(pk, ObjectId):
+            return str(pk)
+        else:
+            return {"status": 500, "error": "Unknown server error"}
+    else:
+        return {"status": 409, "error": "Specified tx is already exists"}
+
