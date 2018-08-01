@@ -16,7 +16,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['isValid'], True)
-    '''
+
     def test_address_invalid(self):
         address = b'12345678'
         response = self.app.get(
