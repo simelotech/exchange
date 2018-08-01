@@ -53,6 +53,6 @@ def get_asset(assetid):
         return jsonify(response_data)
     else:
         return make_response(
-            jsonify(build_error("specified asset not foune"),
+            jsonify(build_error("specified asset not found"),
             204
         ))
