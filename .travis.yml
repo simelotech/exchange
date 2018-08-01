@@ -1,0 +1,48 @@
+# this file is *not* meant to cover or endorse the use of travis, but rather to
+# help confirm pull requests to this project.
+
+sudo: required
+
+services:
+  - docker
+
+matrix:
+  include:
+    - os: linux
+      language: python
+      python: 3.4
+      env:
+        - TOXENV=py34
+        - PYTHON=3.4
+    - os: linux
+      language: python
+      python: 3.5
+      env:
+        - TOXENV=py35
+        - PYTHON=3.5
+    - os: linux
+      language: python
+      python: 3.6
+      env:
+        - TOXENV=py36
+        - PYTHON=3.6
+      addons:
+        apt:
+          sources: [deadsnakes]
+          packages: [python3.6]
+
+before_install:
+
+install:
+    - sudo pip install tox-travis
+    - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
+    - eval "$(gimme 1.10)"
+    - go version
+after_failure:
+    - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
+
+script: tox
+
+notifications:
+  email: false
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
