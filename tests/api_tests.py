@@ -9,7 +9,7 @@ class APITestCase(unittest.TestCase):
         self.app = app.test_client()
 
     def test_address_valid(self):
-        address= b'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
+        address= r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
         response = self.app.get(
             '/v1/api/addresses/{}/validity'.format(address)
         )
@@ -18,7 +18,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(json_response['isValid'], True)
 
     def test_address_invalid(self):
-        address = b'12345678'
+        address = r'12345678'
         response = self.app.get(
             '/v1/api/addresses/{}/validity'.format(address)
         )
