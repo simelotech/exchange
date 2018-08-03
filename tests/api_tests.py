@@ -67,7 +67,7 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-
+    '''
     def test_wallets(self):
         response = self.app.post(
             '/v1/api/wallets',
@@ -77,7 +77,7 @@ class APITestCase(unittest.TestCase):
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
-
+     '''
 #    def test_wallets_cashout(self):
 #        # FIXME Gives 400?
 #        data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
@@ -106,6 +106,13 @@ class APITestCase(unittest.TestCase):
         self.assertIn('isTransactionsRebuildingSupported', json_response)
         self.assertIn('areManyInputsSupported', json_response)
         self.assertIn('areManyOutputsSupported', json_response)
+        
+    def test_sign(self):
+        pass
+        response = self.app.post(
+            '/v1/api/sign', content_type='application/json')
+        #test response code is 400 without parameters
+        self.assertEqual(response.status_code, 400)
 
 
 if __name__ == '__main__':

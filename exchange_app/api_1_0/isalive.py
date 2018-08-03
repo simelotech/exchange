@@ -2,7 +2,7 @@ from flask import jsonify, make_response
 from . import api
 from .blockchain import get_version
 from .. import app
-from .common import build_error
+from ..common import build_error
 
 
 @api.route('/isalive', methods=['GET'])

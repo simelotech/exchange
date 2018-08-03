@@ -3,7 +3,7 @@ from flask import request, jsonify, make_response
 
 from . import api
 from .blockchain import transaction_many_inputs, transaction_many_outputs
-from .common import build_error
+from ..common import build_error
 from ..models import add_many_outputs_tx
 from .. import app
 

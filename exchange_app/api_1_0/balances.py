@@ -1,6 +1,6 @@
 from flask import request, jsonify, make_response
 from . import api
-from .common import build_error, generate_hash_key
+from ..common import build_error, generate_hash_key
 from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, update_index, get_indexed_balance, get_indexed_blockheight
 import logging
 from .. import app
