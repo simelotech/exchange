@@ -1,6 +1,6 @@
 from flask import request, jsonify, make_response
 from . import api
-from .common import build_error
+from ..common import build_error
 from ..models import exists_address_transfer_observation_to, exists_address_transfer_observation_from
 from ..models import add_transaction_observation_to_address, add_transaction_observation_from_address
 from ..models import delete_transaction_observation_to_address, delete_transaction_observation_from_address

@@ -18,3 +18,4 @@ def address_valid(address):
     error = skycoin.SKY_cipher_DecodeBase58Address(
             address.encode(), addressObj)
     return jsonify({"isValid": error == 0})
+    

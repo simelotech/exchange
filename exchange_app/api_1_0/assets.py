@@ -1,6 +1,7 @@
 from flask import request, jsonify, make_response
 from . import api
 from .blockchain import get_url
+from ..common import build_error
 
 
 @api.route('/assets', methods=['GET'])
@@ -56,3 +57,4 @@ def get_asset(assetid):
             jsonify(build_error("specified asset not found"),
             204
         ))
+ 

@@ -1,7 +1,7 @@
 from flask import request, jsonify, make_response
 from . import api
 from .blockchain import spend, create_wallet
-from .common import build_error
+from ..common import build_error
 
 
 @api.route('/wallets', methods=['POST'])
