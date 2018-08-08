@@ -143,7 +143,10 @@ def get_balance(address):
         logging.debug("Got balance for address")
         logging.debug(balances.json())
 
-    return balances.json()['confirmed']['coins']
+    try:
+        return {'balance' : int(balances.json()['confirmed']['coins'])}
+    except:
+        return {"status": 500, "error": "Unknown server error"}
 
 
 def get_balance_scan(address, start_block = 1):

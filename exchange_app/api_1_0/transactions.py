@@ -3,9 +3,37 @@ from flask import request, jsonify, make_response
 
 from . import api
 from .blockchain import transaction_many_inputs, transaction_many_outputs
+from .blockchain import get_balance
 from ..common import build_error
-from ..models import add_many_outputs_tx
+from ..models import add_transaction, add_many_outputs_tx
 from .. import app
+
+@api.route('/api/transactions/single', methods=['POST'])
+def transactions_single():
+    if not request.json:
+        return make_response(jsonify(build_error("Input format error")), 400)
+    params = {'operationID', 'fromAddress', 'fromAddressContext',
+            'toAddress', 'assetId', 'amount', 'includeFee'}
+    if all(x not in params for x in request.json):
+        return make_response(jsonify(build_error("Input data error")), 400)
+    try:
+        amount = int(request.json['amount'])
+    except:
+        return make_response(jsonify(build_error("Amount is not an integer")), 400)
+    if request.json['assetId'] != 'sky':
+        return make_response(jsonify(build_error("Only coin asset is sky")), 400)
+    #TODO: Get csrf_token
+    result = get_balance(request.json['fromAddress'])
+    if 'error' in result:
+        return make_response("Unknown server error", 500)
+    balance = result['balance']
+    if balance < amount:
+        return make_response("Not enough balance", 400)
+    tx = request.json
+    tx = add_transaction(tx)
+    if not tx or not '_id' in tx:
+        return make_response("Unknown server error", 500)
+    return str(tx['_id'])
 
 
 @api.route('/api/transactions/many-inputs', methods=['POST'])
