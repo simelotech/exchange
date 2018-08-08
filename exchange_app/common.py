@@ -1,6 +1,9 @@
 import os
 import hashlib
 from enum import Enum
+from flask import Blueprint
+
+api = Blueprint('api', __name__)
 
 class error_codes(Enum):
     unknown = 1
