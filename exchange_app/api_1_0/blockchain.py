@@ -6,6 +6,7 @@ from ..settings import app_config
 from time import perf_counter
 from ..common import form_url, get_url, post_url
 import skycoin
+from flask import jsonify
 
 def get_version():
     """
@@ -180,6 +181,9 @@ def sign_hash(hashHex, seckeyHex):
     }
     return jsonify(retvalue)
 
+def get_transaction_context(tx):
+	#TODO: Find a more ellegant way to create the context
+	return jsonify(tx)
 
 def transaction_many_inputs(values):
     """

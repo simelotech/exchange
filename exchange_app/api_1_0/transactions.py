@@ -2,8 +2,7 @@ import logging
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import transaction_many_inputs, transaction_many_outputs
-from .blockchain import get_balance
+from .blockchain import get_balance, get_transaction_context
 from ..common import build_error
 from ..models import add_transaction
 from .. import app
@@ -22,7 +21,6 @@ def transactions_single():
         return make_response(jsonify(build_error("Amount is not an integer")), 400)
     if request.json['assetId'] != 'sky':
         return make_response(jsonify(build_error("Only coin asset is sky")), 400)
-    #TODO: Get csrf_token
     result = get_balance(request.json['fromAddress'])
     if 'error' in result:
         return make_response("Unknown server error", 500)
@@ -31,9 +29,12 @@ def transactions_single():
         return make_response("Not enough balance", 400)
     tx = request.json
     tx = add_transaction(tx)
-    if not tx or not '_id' in tx:
+    if not tx:
         return make_response("Unknown server error", 500)
-    return str(tx['_id'])
+    elif tx['broadcasted']:
+    	return make_response("Conflict. Transaction already broadcasted", 409)
+    transaction_context = get_transaction_context(tx)
+    return jsonify({"transactionContext" : transaction_context})
 
 '''
 @api.route('/api/transactions/many-inputs', methods=['POST'])

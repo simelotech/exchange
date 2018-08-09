@@ -599,6 +599,5 @@ def add_transaction(tx):
         tx['broadcasted'] = False
         pk = transactions.insert(tx)
         if isinstance(pk, ObjectId):
-            tx['_id'] = pk.inserted_id
             return tx
     return False
