@@ -181,10 +181,6 @@ def sign_hash(hashHex, seckeyHex):
     }
     return jsonify(retvalue)
 
-def get_transaction_context(tx):
-	#TODO: Find a more ellegant way to create the context
-	return jsonify(tx)
-
 def transaction_many_inputs(values):
     """
     build a transaction with many inputs

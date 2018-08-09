@@ -2,8 +2,8 @@ import logging
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import get_balance, get_transaction_context
-from ..common import build_error
+from .blockchain import get_balance
+from ..common import build_error, get_transaction_context
 from ..models import add_transaction
 from .. import app
 
@@ -20,7 +20,7 @@ def transactions_single():
     except:
         return make_response(jsonify(build_error("Amount is not an integer")), 400)
     if request.json['assetId'] != 'sky':
-        return make_response(jsonify(build_error("Only coin asset is sky")), 400)
+        return make_response(jsonify(build_error("Only coin is sky")), 400)
     result = get_balance(request.json['fromAddress'])
     if 'error' in result:
         return make_response("Unknown server error", 500)

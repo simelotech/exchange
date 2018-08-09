@@ -32,6 +32,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_get_asset(self):
+    	#TODO: Fix, this is wrong, asset id is passed as parameter
         data = dict(assetid=1)
         response = self.app.get(
             '/v1/api/assets',

@@ -1,9 +1,10 @@
 import os
 import hashlib
 from enum import Enum
-from flask import Blueprint
+from flask import Blueprint, jsonify
 import requests
 from .settings import app_config
+import json
 
 api = Blueprint('api', __name__)
 
@@ -80,3 +81,9 @@ def post_url(path, values=""):
 
     return response_data
 
+def get_transaction_context(tx):
+	#TODO: Find a more ellegant way to create the context
+	return json.dumps(tx)
+	
+def get_transaction_from_context(context):
+	return json.loads(context)
