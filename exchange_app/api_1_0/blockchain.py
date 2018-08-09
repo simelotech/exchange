@@ -1,56 +1,11 @@
 
 import binascii
-import requests
 import logging
 from .. import app
 from ..settings import app_config
 from time import perf_counter
+from ..common import form_url, get_url, post_url
 import skycoin
-
-def form_url(base, path):
-    """
-    Conform the full URL from base URL and path
-    """
-
-    if path[0] != '/':
-        path = '/' + path
-
-    if base[len(base) - 1] == '/':
-        base = base[0:len(base) - 1]
-
-    url = base + path
-
-    return url
-
-
-def get_url(path, values=""):
-    """
-    General GET function for blockchain
-    """
-
-    url = form_url(app_config.SKYCOIN_NODE_URL, path)
-
-    # resp = requests.get(url, params = values)
-    # response_data = resp.json()
-
-    response_data = {"Called": "get_url()", "url": url, "values:": values}
-
-    return response_data
-
-
-def post_url(path, values=""):
-    """
-    General POST function for blockchain
-    """
-
-    url = form_url(app_config.SKYCOIN_NODE_URL, path)
-
-    # resp = requests.post(url, data = values)
-    # response_data = resp.json()
-
-    response_data = {"Called": "post_url()", "url": url, "values:": values}
-
-    return response_data
 
 
 def create_wallet():
