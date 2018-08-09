@@ -5,7 +5,7 @@ from . import api
 from .blockchain import transaction_many_inputs, transaction_many_outputs
 from .blockchain import get_balance
 from ..common import build_error
-from ..models import add_transaction, add_many_outputs_tx
+from ..models import add_transaction
 from .. import app
 
 @api.route('/api/transactions/single', methods=['POST'])
@@ -35,7 +35,7 @@ def transactions_single():
         return make_response("Unknown server error", 500)
     return str(tx['_id'])
 
-
+'''
 @api.route('/api/transactions/many-inputs', methods=['POST'])
 def transactions_many_inputs():
     if not request.json:
@@ -64,3 +64,4 @@ def transactions_many_outputs():
         if app.config['DEBUG']:
             logging.debug("Transaction: %s", request.args.get('operationId'))
     return jsonify({"status": 500, "error": "Invalid response"})
+'''
