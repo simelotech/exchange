@@ -8,7 +8,8 @@ def wallets():
     """
     result = create_wallet()
 
-    if "publicAddress" in result:
+    if "publicAddress" in result and "privateKey" in result and \
+    		"addressContext" in result:
         return jsonify(result)
 
     return make_response(
