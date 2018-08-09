@@ -14,6 +14,11 @@ def sign_transaction(tx):
     if not new_seed or "seed" not in new_seed:
         logging.debug('sign_transaction - Error creating seed')
         return {"status": 500, "error": "Unknown server error"}
+    # generate CSRF token
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+    if not CSRF_token or "csrf_token" not in CSRF_token:
+        logging.debug('sign_transaction - Error trying to get CSRF token')
+        return {"status": 500, "error": "Unknown server error"}
     data = {
     	"hours_selection": {
         	"type": "auto",
@@ -32,6 +37,7 @@ def sign_transaction(tx):
     response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
             '/api/v1/wallet/transaction'),
             data=json.dumps(data),
+            headers={'X-CSRF-Token': CSRF_token['csrf_token']},
             content_type='application/json')
     if response.status_code == 200:
         json_response = json.loads(response.get_data(as_text=True))

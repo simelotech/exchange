@@ -601,3 +601,13 @@ def add_transaction(tx):
         if isinstance(pk, ObjectId):
             return tx
     return False
+
+def get_transaction(operationId):
+    """
+    Find transaction by operation id
+    """
+    transactions = mongo.db.transactions #Collection to store transactions
+    result = transactions.find_one(operationId)
+    if result:
+        return result
+    return False

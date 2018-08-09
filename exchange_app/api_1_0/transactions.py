@@ -17,6 +17,7 @@ def transactions_single():
     if 'error' in result:
         logging.debug('/api/transactions/single - Error ' + result['error'])
         return make_response("Unknown server error", 500)
+    amount = int(request.json['amount'])
     balance = result['balance']
     if balance < amount:
         logging.debug('/api/transactions/single - Not enough balance')

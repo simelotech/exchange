@@ -217,3 +217,20 @@ def transaction_many_outputs(values):
     if resp.status_code != 200:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+def transaction_broadcast(signedTransaction):
+    # generate CSRF token
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+    if not CSRF_token or "csrf_token" not in CSRF_token:
+        logging.debug('transaction_broadcast - Error trying to get CSRF token')
+        return {"status": 500, "error": "Unknown server error"}
+    #broadcast transaction
+    resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/injectTransaction"),
+         {"rawtx": signedTransaction},
+         headers={'X-CSRF-Token': CSRF_token['csrf_token']})
+    if not resp:
+        return {"status": 500, "error": "Unknown server error"}
+    if resp.status_code != 200:
+        return {"status": 500, "error": "Unknown server error"}
+    result = response.get_data(as_text=True)
+    return {"result" : result}

@@ -8,12 +8,13 @@ def post_sign():
     Sign transaction with private key
     """
     if not request.json:
+        logging.debug('/api/sign - No json data')
         return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
-
     if "privateKeys" not in request.json:
+        logging.debug('/api/sign - Missing parameters')
         return make_response(jsonify(build_error('Invalid Input Parameters', error_codes.missingParameter)), 400)
-
     if "transactionContext" not in request.json:
+        logging.debug('/api/sign - Missing parameters')
         return make_response(jsonify(build_error('Invalid Input Parameters', error_codes.missingParameter)), 400)
 
 	#Private keys are ignore because they are inside wallet (which should be encrypted
