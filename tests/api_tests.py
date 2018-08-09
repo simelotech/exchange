@@ -78,16 +78,6 @@ class APITestCase(unittest.TestCase):
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
         self.assertIn('addressContext', json_response)
-     
-#    def test_wallets_cashout(self):
-#        # FIXME Gives 400?
-#        data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
-#        response = self.app.post(
-#            '/v1/api/wallets/{}/cashout'.format(data),
-#            data=json.dumps(data),
-#            content_type='application/json'
-#        )
-#        self.assertEqual(response.status_code, 200)
 
     def test_is_alive(self):
         response = self.app.get(
