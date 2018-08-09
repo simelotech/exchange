@@ -6,25 +6,13 @@ from .blockchain import get_balance
 from ..common import build_error, get_transaction_context
 from ..models import add_transaction
 from .. import app
+from ..validate import validate_transaction_single
 
 @api.route('/api/transactions/single', methods=['POST'])
 def transactions_single():
-    if not request.json:
-        logging.debug('/api/transactions/single - No json data')
-        return make_response(jsonify(build_error("Input format error")), 400)
-    params = {'operationID', 'fromAddress', 'fromAddressContext',
-            'toAddress', 'assetId', 'amount', 'includeFee'}
-    if all(x not in params for x in request.json):
-        logging.debug('/api/transactions/single - Missing parameters')
-        return make_response(jsonify(build_error("Input data error")), 400)
-    try:
-        amount = int(request.json['amount'])
-    except:
-        logging.debug('/api/transactions/single - Error while parsing amount')
-        return make_response(jsonify(build_error("Amount is not an integer")), 400)
-    if request.json['assetId'] != 'sky':
-        logging.debug('/api/transactions/single - Asset id must be sky')
-        return make_response(jsonify(build_error("Only coin is sky")), 400)
+    ok, errormsg = validate_transaction_single(request.json)
+    if not ok:
+        return make_response(jsonify(build_error(errormsg)), 400)
     result = get_balance(request.json['fromAddress'])
     if 'error' in result:
         logging.debug('/api/transactions/single - Error ' + result['error'])
@@ -41,7 +29,7 @@ def transactions_single():
         return make_response("Unknown server error", 500)
     elif tx['broadcasted']:
         logging.debug('/api/transactions/single - Transaction already broadcasted')
-    	return make_response("Conflict. Transaction already broadcasted", 409)
+        return make_response("Conflict. Transaction already broadcasted", 409)
     transaction_context = get_transaction_context(tx)
     return jsonify({"transactionContext" : transaction_context})
 

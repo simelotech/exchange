@@ -2,23 +2,18 @@ from .. import app
 from ..settings import app_config
 from ..common import form_url, get_url, post_url
 import json
+from ..validate import validate_sign_transaction_single
 
 def sign_transaction(tx):
+    ok, errormsg = validate_sign_transaction_single(request.json)
+    if not ok:
+        return make_response(jsonify(build_error(errormsg)), 400)
 	# generate new seed
     new_seed = app.lykke_session.get(
         form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/newSeed?entropy=128")).json()
-
     if not new_seed or "seed" not in new_seed:
         logging.debug('sign_transaction - Error creating seed')
         return {"status": 500, "error": "Unknown server error"}
-    params = {'operationID', 'fromAddress', 'fromAddressContext',
-            'toAddress', 'assetId', 'amount', 'includeFee'}
-    if all(x not in params for x in tx):
-        logging.debug('sign_transaction - Invalid transaction context')
-        return {"status": 400, "error": "Invalid transaction context"}
-    if request.json['assetId'] != 'sky':
-        logging.debug('sign_transaction - Only coin is sky')
-        return {"status": 400, "error": "Only coin is sky"}
     data = {
     	"hours_selection": {
         	"type": "auto",
