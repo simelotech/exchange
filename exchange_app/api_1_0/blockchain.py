@@ -7,6 +7,7 @@ from time import perf_counter
 from ..common import form_url, get_url, post_url
 import skycoin
 from flask import jsonify
+import json
 
 def get_version():
     """
@@ -156,31 +157,6 @@ def get_address_transactions(address):
 
     return result.json()
 
-def sign_hash(hashHex, seckeyHex):
-    seckey = skycoin.cipher_Sig()
-    error = skycoin.SKY_cipher_SecKeyFromHex(seckeyHex.encode(), seckey)
-    if error != 0:
-        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
-
-    sha256 = skycoin.cipher_SHA256()
-    error = skycoin.SKY_cipher_SHA256FromHex(hashHex.encode(), sha256)
-    if error != 0:
-        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
-
-    signedHash = skycoin.cipher__Sig()
-    error = skycoin.SKY_cipher_SignHash(hash, seckey, signedHash)
-    if error != 0:
-        return make_response(jsonify(build_error('Unknown Server Error', error_codes.unknown)), 500)
-
-    error, signedHashHex = SKY_cipher_Sig_Hex(signedHash)
-    if error != 0:
-        return make_response(jsonify(build_error('Unknown Server Error', error_codes.unknown)), 500)
-
-    retvalue = {
-        "signedTransaction": signedHashHex
-    }
-    return jsonify(retvalue)
-
 def transaction_many_inputs(values):
     """
     build a transaction with many inputs
@@ -226,7 +202,7 @@ def transaction_broadcast(signedTransaction):
         return {"status": 500, "error": "Unknown server error"}
     #broadcast transaction
     resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/injectTransaction"),
-         {"rawtx": signedTransaction},
+         json.dumps({"rawtx": signedTransaction}),
          headers={'X-CSRF-Token': CSRF_token['csrf_token']})
     if not resp:
         return {"status": 500, "error": "Unknown server error"}

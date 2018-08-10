@@ -79,19 +79,20 @@ class APITestCase(unittest.TestCase):
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
         self.assertIn('addressContext', json_response)
+        data = {
+            'operationID' : '43244324',
+            'fromAddress' : json_response['publicAddress'],
+            'fromAddressContext' : json_response['addressContext'],
+            'toAddress' : 'anyaddressthisshouldfail',
+            'assetId' : 'sky',
+            'amount' : '1',
+            'includeFee' : False
+        }
         #Now tests creating a transaction
         #Result should be not enough balance
         response = self.app.post(
             '/v1/api/transactions/single',
-            data = {
-                'operationID' : '43244324',
-                'fromAddress' : json_response['publicAddress'],
-                'fromAddressContext' : json_response['addressContext'],
-                'toAddress' : 'anyaddressthisshouldfail',
-                'assetId' : 'sky',
-                'amount' : '1',
-                'includeFee' : False
-            },
+            data = json.dumps(data),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)

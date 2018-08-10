@@ -33,7 +33,6 @@ def transactions_single():
         return make_response("Conflict. Transaction already broadcasted", 409)
     transaction_context = get_transaction_context(tx)
     return jsonify({"transactionContext" : transaction_context})
-
 '''
 @api.route('/api/transactions/many-inputs', methods=['POST'])
 def transactions_many_inputs():
