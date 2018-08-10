@@ -611,3 +611,10 @@ def get_transaction(operationId):
     if result:
         return result
     return False
+
+def set_transaction_as_broadcasted(id):
+    """
+    Sets the given transaction as broadcasted
+    """
+    transactions = mongo.db.transactions #Collection to store transactions
+    transactions.update({'_id': id}, {'$set': {'broadcasted': True}})

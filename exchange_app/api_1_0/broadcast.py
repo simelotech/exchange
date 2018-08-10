@@ -3,7 +3,7 @@ from flask import request, jsonify, make_response
 from . import api
 from .. import app
 from ..validate import validate_transaction_broadcast
-from ..models import get_transaction
+from ..models import get_transaction, set_transaction_as_broadcasted
 from .blockchain import transaction_broadcast
 from ..common import build_error
 
@@ -25,4 +25,5 @@ def transactions_broadcast():
     result = transaction_broadcast(signedTransaction)
     if 'error' in result:
         return make_response(jsonify(build_error(result['error'])), 400)
+    set_transaction_as_broadcasted(tx['_id'])
     return jsonify(result)
