@@ -84,7 +84,7 @@ class APITestCase(unittest.TestCase):
             'fromAddress' : json_response['publicAddress'],
             'fromAddressContext' : json_response['addressContext'],
             'toAddress' : 'anyaddressthisshouldfail',
-            'assetId' : 'sky',
+            'assetId' : 'SKY',
             'amount' : '1',
             'includeFee' : False
         }

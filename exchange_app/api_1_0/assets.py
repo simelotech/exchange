@@ -30,9 +30,9 @@ def get_assets():
         "continuation" : "",
         "assets": [
             {
-                "assetId": "sky",
+                "assetId": "SKY",
                 "address": "",
-                "name": "Sky",
+                "name": "SKY",
                 "accuracy": "6"
             }
         ]
@@ -43,11 +43,11 @@ def get_assets():
 @api.route('/assets/<string:assetid>', methods=['GET'])
 def get_asset(assetid):
     """"""
-    if assetid == "sky":
+    if assetid == "SKY":
         retvalue = {
             "assetId": assetid,
             "address": "",
-            "name": "Sky",
+            "name": "SKY",
             "accuracy": "6"
         }
 
@@ -57,4 +57,3 @@ def get_asset(assetid):
             jsonify(build_error("specified asset not found"),
             204
         ))
- 

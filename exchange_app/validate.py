@@ -17,7 +17,7 @@ def validate_transaction_single(json):
     if amount <= 0:
         logging.debug('/api/transactions/single - Amount is zero')
         return False, "Amount is zero"
-    if json['assetId'] != 'sky':
+    if json['assetId'] != 'SKY':
         logging.debug('/api/transactions/single - Asset id must be sky')
         return False, "Only coin is sky"
     return True, ""
@@ -31,7 +31,7 @@ def validate_sign_transaction_single(json):
     if all(x not in params for x in json):
         logging.debug('sign_transaction - Missing parameters')
         return False, "Input format error"
-    if json['assetId'] != 'sky':
+    if json['assetId'] != 'SKY':
         logging.debug('sign_transaction - Asset id must be sky')
         return False, "Only coin is sky"
     return True, ""
