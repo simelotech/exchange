@@ -79,8 +79,8 @@ class APITestCase(unittest.TestCase):
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
         self.assertIn('addressContext', json_response)
-        data = {
-            'operationID' : '43244324',
+        fakeTx = {
+            'operationID' : '43244324', #fake
             'fromAddress' : json_response['publicAddress'],
             'fromAddressContext' : json_response['addressContext'],
             'toAddress' : 'anyaddressthisshouldfail',
@@ -92,6 +92,30 @@ class APITestCase(unittest.TestCase):
         #Result should be not enough balance
         response = self.app.post(
             '/v1/api/transactions/single',
+            data = json.dumps(fakeTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        #Test fake sign
+        data = {
+            "privateKeys" : ["3434"],
+            "transactionContext" : json.dumps(fakeTx)
+        }
+        response = self.app.post(
+            '/v1/api/sign',
+            data = json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 500)
+        #Test fake sign
+        #Test broadcasting fake transactions
+        #Result should be operationID not found
+        data = {
+            "operationId" : '43244324',
+            "signedTransaction" : 'faketrans',
+        }
+        response = self.app.post(
+            '/v1/api/transactions/broadcast',
             data = json.dumps(data),
             content_type='application/json'
         )

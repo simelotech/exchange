@@ -24,10 +24,10 @@ def build_error(error_message="", error_code = error_codes.unknown, failed_items
                  "errorCode": error_code.name,
                  "modelErrors": failed_items
     }
-    
+
     return error_obj
-   
-   
+
+
 def generate_hash_key():
     """
     Generate new random hash to be used as key
@@ -35,7 +35,7 @@ def generate_hash_key():
     m = hashlib.sha256()
     m.update(os.urandom(64))
     return m.hexdigest()
-    
+
 def form_url(base, path):
     """
     Conform the full URL from base URL and path
@@ -84,6 +84,9 @@ def post_url(path, values=""):
 def get_transaction_context(tx):
 	#TODO: Find a more ellegant way to create the context
 	return json.dumps(tx)
-	
+
 def get_transaction_from_context(context):
-	return json.loads(context)
+    try:
+        return json.loads(context)
+    except:
+        return False

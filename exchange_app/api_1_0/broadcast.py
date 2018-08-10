@@ -5,6 +5,7 @@ from .. import app
 from ..validate import validate_transaction_broadcast
 from ..models import get_transaction
 from .blockchain import transaction_broadcast
+from ..common import build_error
 
 @api.route('/transactions/broadcast', methods=['POST'])
 def transactions_broadcast():

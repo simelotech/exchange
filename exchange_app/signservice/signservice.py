@@ -1,5 +1,5 @@
-from flask import jsonify, request
-from ..common import api, error_codes, get_transaction_from_context
+from flask import jsonify, request, make_response
+from ..common import api, build_error, error_codes, get_transaction_from_context
 from .sign_transaction import sign_transaction
 
 @api.route('/sign', methods=['POST'])
