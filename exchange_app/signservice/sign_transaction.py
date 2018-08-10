@@ -2,12 +2,12 @@ from .. import app
 from ..settings import app_config
 from ..common import build_error, form_url, get_url, post_url
 import json
-from ..validate import validate_sign_transaction_single
+from ..validate import validate_sign_transaction
 from flask import jsonify, request, make_response
 import logging
 
 def sign_transaction(tx):
-    ok, errormsg = validate_sign_transaction_single(tx)
+    ok, errormsg = validate_sign_transaction(tx)
     if not ok:
         return {"status": 400, "error": errormsg}
     # generate CSRF token
@@ -15,6 +15,13 @@ def sign_transaction(tx):
     if not CSRF_token or "csrf_token" not in CSRF_token:
         logging.debug('sign_transaction - Error trying to get CSRF token')
         return {"status": 500, "error": "Unknown server error"}
+    outputs = []
+    for output in tx['outputs']:
+        dest = {
+        	"address": output['toAddress'],
+        	"coins": output['amount']
+        }
+        outputs.append(dest)
     data = {
     	"hours_selection": {
         	"type": "auto",
@@ -25,10 +32,7 @@ def sign_transaction(tx):
         	"id": tx['fromAddressContext'],
         	"addresses": [tx['fromAddress']],
     	},
-    	"to": [{
-        	"address": tx['toAddress'],
-        	"coins": tx['amount']
-         }]
+    	"to": outputs
     }
     response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
             '/api/v1/wallet/transaction'),

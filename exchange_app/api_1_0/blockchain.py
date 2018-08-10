@@ -210,3 +210,18 @@ def transaction_broadcast(signedTransaction):
         return {"status": 500, "error": "Unknown server error"}
     result = response.get_data(as_text=True)
     return {"result" : result}
+
+#Check balances for a transaction
+def check_balance_from_transaction(tx):
+    result = get_balance(tx['fromAddress'])
+    if 'error' in result:
+        logging.debug('check_balance_from_transaction - Error ' + result['error'])
+        return False, 500, "Unknown server error"
+    balance = result['balance']
+    amount = 0
+    for output in tx['outputs']:
+        amount += output['amount']
+    if balance < amount:
+        logging.debug('check_balance_from_transaction - Not enough balance')
+        return False, 400, "Not enough balance"
+    return True, 0, ""

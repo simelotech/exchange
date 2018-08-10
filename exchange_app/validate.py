@@ -18,16 +18,36 @@ def validate_transaction_single(json):
         logging.debug('/api/transactions/single - Amount is zero')
         return False, "Amount is zero"
     if json['assetId'] != 'SKY':
-        logging.debug('/api/transactions/single - Asset id must be sky')
-        return False, "Only coin is sky"
+        logging.debug('/api/transactions/single - Asset id must be SKY')
+        return False, "Only coin is SKY"
+    tx = {'operationId' : json['operationID'],
+            'fromAddress' : json['fromAddress'],
+            'fromAddressContext' : json['fromAddressContext'],
+            'outputs': [{
+                'amount' : amount,
+                'toAddress' : json['toAddress']
+            }],
+            'assetId' : json['assetId'],
+            'includeFee' : json['includeFee']}
+    return tx, ""
+
+def validate_transaction(json):
+    if not json:
+        logging.debug('/api/transactions - No json data')
+        return False, "Input format error"
+    if not 'operationId' in json or not 'assetId' in json:
+        return False, "Input format error"
+    if json['assetId'] != 'SKY':
+        logging.debug('/api/transactions - Asset id must be SKY')
+        return False, "Only coin is SKY"
     return True, ""
 
-def validate_sign_transaction_single(json):
+def validate_sign_transaction(json):
     if not json:
         logging.debug('sign_transaction - No json data')
         return False, "Input format error"
     params = {'operationID', 'fromAddress', 'fromAddressContext',
-            'toAddress', 'assetId', 'amount', 'includeFee'}
+            'outputs', 'assetId', 'includeFee'}
     if all(x not in params for x in json):
         logging.debug('sign_transaction - Missing parameters')
         return False, "Input format error"

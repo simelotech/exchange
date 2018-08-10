@@ -80,7 +80,7 @@ class APITestCase(unittest.TestCase):
         self.assertIn('publicAddress', json_response)
         self.assertIn('addressContext', json_response)
         fakeTx = {
-            'operationID' : '43244324', #fake
+            'operationID' : '4324432444332', #fake
             'fromAddress' : json_response['publicAddress'],
             'fromAddressContext' : json_response['addressContext'],
             'toAddress' : 'anyaddressthisshouldfail',
@@ -96,6 +96,10 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
+        fakeTx['outputs'] = [{
+            'amount' : fakeTx['amount'],
+            'toAddress' : fakeTx['toAddress']
+        }]
         #Test fake sign
         data = {
             "privateKeys" : ["3434"],
@@ -111,7 +115,7 @@ class APITestCase(unittest.TestCase):
         #Test broadcasting fake transactions
         #Result should be operationID not found
         data = {
-            "operationId" : '43244324',
+            "operationId" : '4324432444332',
             "signedTransaction" : 'faketrans',
         }
         response = self.app.post(
