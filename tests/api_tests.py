@@ -68,7 +68,7 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-    
+
     def test_wallets(self):
         response = self.app.post(
             '/v1/api/wallets',
@@ -79,6 +79,22 @@ class APITestCase(unittest.TestCase):
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
         self.assertIn('addressContext', json_response)
+        #Now tests creating a transaction
+        #Result should be not enough balance
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = {
+                'operationID' : '43244324',
+                'fromAddress' : json_response['publicAddress'],
+                'fromAddressContext' : json_response['addressContext'],
+                'toAddress' : 'anyaddressthisshouldfail',
+                'assetId' : 'sky',
+                'amount' : '1',
+                'includeFee' : False
+            },
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
 
     def test_is_alive(self):
         response = self.app.get(
@@ -98,7 +114,7 @@ class APITestCase(unittest.TestCase):
         self.assertIn('isTransactionsRebuildingSupported', json_response)
         self.assertIn('areManyInputsSupported', json_response)
         self.assertIn('areManyOutputsSupported', json_response)
-        
+
     def test_sign(self):
         pass
         response = self.app.post(

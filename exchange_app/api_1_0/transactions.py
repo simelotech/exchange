@@ -8,7 +8,7 @@ from ..models import add_transaction
 from .. import app
 from ..validate import validate_transaction_single
 
-@api.route('/api/transactions/single', methods=['POST'])
+@api.route('/transactions/single', methods=['POST'])
 def transactions_single():
     ok, errormsg = validate_transaction_single(request.json)
     if not ok:

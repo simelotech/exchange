@@ -6,7 +6,7 @@ from ..validate import validate_transaction_broadcast
 from ..models import get_transaction
 from .blockchain import transaction_broadcast
 
-@api.route('/api/transactions/broadcast', methods=['POST'])
+@api.route('/transactions/broadcast', methods=['POST'])
 def transactions_broadcast():
     """
     Broadcast transaction
