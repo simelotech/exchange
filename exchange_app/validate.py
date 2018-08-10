@@ -31,16 +31,36 @@ def validate_transaction_single(json):
             'includeFee' : json['includeFee']}
     return tx, ""
 
-def validate_transaction(json):
+def validate_transaction_many_outputs(json):
     if not json:
-        logging.debug('/api/transactions - No json data')
+        logging.debug('/api/transactions/many-outputs - No json data')
         return False, "Input format error"
     if not 'operationId' in json or not 'assetId' in json:
         return False, "Input format error"
     if json['assetId'] != 'SKY':
-        logging.debug('/api/transactions - Asset id must be SKY')
+        logging.debug('/api/transactions/many-outputs - Asset id must be SKY')
         return False, "Only coin is SKY"
-    return True, ""
+    if not 'outputs' in json:
+        return False, "Input format error"
+    outputs = json['outputs']
+    if not isinstance(outputs, list) or len(outputs) <= 0:
+        return False, "Input format error"
+        tos = []
+    for output in outputs:
+        if not 'toAddress' in output or not 'amount' in output:
+            return False, "Input format error"
+        to = {
+            'to' : output['toAddress'],
+            'amount' : output['amount']
+        }
+        tos.append(to)
+    tx = {'operationId' : json['operationID'],
+            'fromAddress' : json['fromAddress'],
+            'fromAddressContext' : json['fromAddressContext'],
+            'outputs': tos,
+            'assetId' : json['assetId'],
+            'includeFee' : json['includeFee']}
+    return tx, ""
 
 def validate_sign_transaction(json):
     if not json:

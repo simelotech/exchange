@@ -27,6 +27,27 @@ def transactions_single():
 
     transaction_context = get_transaction_context(tx)
     return jsonify({"transactionContext" : transaction_context})
+
+@api.route('/transactions/many-outputs', methods=['POST'])
+def transactions_many_outputs():
+    tx, errormsg = validate_transaction_many_outputs(request.json)
+    if not tx:
+        return make_response(jsonify(build_error(errormsg)), 400)
+    balance_ok, errorcode, errormsgg = check_balance_from_transaction(tx)
+    if not balance_ok:
+        return make_response(errormsg, errorcode)
+    logging.debug('/api/transactions/many-outputs - Transaction: ' + jsonify(tx))
+    tx = add_transaction(tx)
+    if not tx:
+        logging.debug('/api/transactions/many-outputs - Error while adding transaction')
+        return make_response("Unknown server error", 500)
+    elif tx['broadcasted']:
+        logging.debug('/api/transactions/many-outputs - Transaction already broadcasted')
+        return make_response("Conflict. Transaction already broadcasted", 409)
+
+    transaction_context = get_transaction_context(tx)
+    return jsonify({"transactionContext" : transaction_context})
+
 '''
 @api.route('/api/transactions/many-inputs', methods=['POST'])
 def transactions_many_inputs():
