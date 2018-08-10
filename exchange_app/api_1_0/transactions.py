@@ -6,7 +6,7 @@ from .blockchain import check_balance_from_transaction
 from ..common import build_error, get_transaction_context
 from ..models import add_transaction
 from .. import app
-from ..validate import validate_transaction_single
+from ..validate import validate_transaction_single, validate_transaction_many_outputs
 
 @api.route('/transactions/single', methods=['POST'])
 def transactions_single():

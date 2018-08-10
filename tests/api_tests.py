@@ -100,6 +100,14 @@ class APITestCase(unittest.TestCase):
             'amount' : fakeTx['amount'],
             'toAddress' : fakeTx['toAddress']
         }]
+        #Now tests creating a transaction with many outputs
+        #Result should be not enough balance
+        response = self.app.post(
+            '/v1/api/transactions/many-outputs',
+            data = json.dumps(fakeTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
         #Test fake sign
         data = {
             "privateKeys" : ["3434"],
