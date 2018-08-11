@@ -1,0 +1,14 @@
+{
+  "BlockchainIntegration": "Skycoin",
+  "AssetId": "SKY",
+  "BlockchainApi": "http://127.0.0.1:5000",
+  "BlockchainSign": "http://127.0.0.1:5000",
+  "DepositWalletAddress": "{deposit_wallet_address}",
+  "DepositWalletKey": "{deposit_wallet_key}",
+  "HotWallet": "{hot_wallet_address}",
+  "HotWalletKey": "{hot_wallet_key}",
+  "ExternalWalletAddress": "{external_wallet_address}",
+  "ExternalWalletKey": "{external_wallet_key}",
+  "ExternalWalletAddressContext": "{external_wallet_ctx}",
+  "BlockchainMiningTime": 2
+}

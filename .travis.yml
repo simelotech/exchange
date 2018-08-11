@@ -9,18 +9,24 @@ services:
 matrix:
   include:
     - os: linux
+      dist: trusty
+      sudo: required
       language: python
       python: 3.4
       env:
         - TOXENV=py34
         - PYTHON=3.4
     - os: linux
+      dist: trusty
+      sudo: required
       language: python
       python: 3.5
       env:
         - TOXENV=py35
         - PYTHON=3.5
     - os: linux
+      dist: trusty
+      sudo: required
       language: python
       python: 3.6
       env:
@@ -28,21 +34,43 @@ matrix:
         - PYTHON=3.6
       addons:
         apt:
-          sources: [deadsnakes]
-          packages: [python3.6]
+          sources:
+            - deadsnakes
+          packages:
+            - python3.6
 
 before_install:
+  - mkdir -p build/lyyke_tests
+  - git clone https://github.com/LykkeCity/Lykke.Automation.Tests build/lykke_tests
+  - cat 'tests/data/lykke_tests/properties.json' | python -c 'import sys, json; sys.stdin.read().format(json.load("./tests/data/lykke_tests/vars.json"))' > build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/properties.json
 
 install:
+    # Python tools
     - sudo pip install tox-travis
+    # PySkycoin deps
     - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
     - eval "$(gimme 1.10)"
     - go version
+    # Lykke test suite
+    - wget -q https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb
+    - sudo dpkg -i packages-microsoft-prod.deb
+    - sudo apt-get install apt-transport-https
+    - sudo apt-get update
+    - sudo apt-get install dotnet-runtime-2.0.7
+
+script:
+  - tox
+  # Lykke reference test suite
+  - python manage.py runserver & && echo "$!" > app.id.txt
+  - cd build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/ && dotnet test AFTests.csproj --filter "TestCategory=BlockchainIntegration"
+  - kill -s KILL `cat app.id.txt`
+
 after_failure:
     - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
-
-script: tox
+    - XUnitTestCommon\Reports\allure-cli\bin\allure generate
+    - curl --upload-file AFTests\bin\Debug\netcoreapp2.0\allure-results\index.html https://transfer.sh/lykke.sky.${TRAVIS_JOB_ID}-${TRAVIS_JOB_NUMBER}.html
 
 notifications:
   email: false
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
