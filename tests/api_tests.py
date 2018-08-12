@@ -34,7 +34,6 @@ class APITestCase(unittest.TestCase):
         self.assertIn('continuation', json_response)
         self.assertIn('items', json_response)
 
-        print(json_response)
         asset_record = json_response['items'][0]
         self.assertEqual(asset_record['assetId'],  'SKY')
         self.assertEqual(asset_record['address'],  '')
@@ -47,17 +46,13 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-        response = self.app.get(
-            '/v1/api/assets', content_type='application/json')
-        self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
 
         asset_record = json_response
-        print(asset_record)
         self.assertEqual(asset_record['assetId'],  'SKY')
         self.assertEqual(asset_record['address'],  '')
         self.assertEqual(asset_record['name'],     'Skycoin')
-        self.assertEqual(asset_record['accuracy'], 6)
+        self.assertEqual(asset_record['accuracy'], '6')
 
     def test_get_asset_wrong_id(self):
         response = self.app.get(
