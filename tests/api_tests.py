@@ -1,5 +1,9 @@
+import binascii
 import json
 import unittest
+
+import skycoin
+
 from exchange_app import app
 
 # Removed endpoints
@@ -72,6 +76,15 @@ class ApiTestCase(BaseApiTestCase):
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
+        seckey = skycoin.cipher_SecKey()
+        err = skycoin.SKY_cipher_NewSecKey(binascii.unhexlify(json_response['privateKey']), seckey)
+        self.assertEqual(err, 0)
+        address = skycoin.cipher__Address()
+        err = skycoin.SKY_cipher_AddressFromSecKey(seckey, address)
+        self.assertEqual(err, 0)
+        err, addressStr = skycoin.SKY_cipher_Address_String(address)
+        self.assertEqual(err, 0)
+        self.assertEqual(addressStr.decode('ascii'), json_response['publicAddress'])
 
     def test_is_alive(self):
         response = self.app.get(
