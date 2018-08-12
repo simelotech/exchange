@@ -13,6 +13,8 @@ URL_ADDRESS_VALIDITY = '/v1/api/addresses/{address}/validity'
 URL_BALANCE_ADDRESS  = '/v1/api/balances/{address}/observation'
 URL_ASSETS           = '/v1/api/assets'
 URL_ASSET            = '/v1/api/assets/{id}'
+URL_WALLET_NEW       = '/v1/api/wallets'
+
 
 class BaseApiTestCase(unittest.TestCase):
 
@@ -64,17 +66,12 @@ class ApiTestCase(BaseApiTestCase):
         response = self.app.get(URL_ASSET.format(id='UNKCOIN'), content_type='application/json')
         self.assertEqual(response.status_code, 204)
 
-    '''
     def test_wallets(self):
-        response = self.app.post(
-            '/v1/api/wallets',
-            content_type='application/json'
-        )
+        response = self.app.post(URL_WALLET_NEW, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
-     '''
 
     def test_is_alive(self):
         response = self.app.get(
