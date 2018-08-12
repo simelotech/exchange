@@ -23,8 +23,8 @@ logging.basicConfig(
     datefmt='%Y%m%d-%H:%M%p',
 )
 
-#Session
-app.lykke_session = requests.Session()  #Used for connection pooling requests to lykke api
+#: Session
+app.lykke_session = requests.Session()  #: Used for connection pooling requests to lykke api
 
 # Redis
 redis_store = FlaskRedis(app, strict=False)
@@ -36,4 +36,3 @@ mongo = PyMongo(app)
 from . import signservice
 from .api_1_0 import api as api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/v1/api')
-
