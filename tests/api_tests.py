@@ -2,33 +2,42 @@ import json
 import unittest
 from exchange_app import app
 
+# Removed endpoints
+URL_PENDING_EVENTS_CASHIN            = '/v1/api/pending-events/cashin'
+URL_PENDING_EVENTS_CASHOUT_START     = '/v1/api/pending-events/cashout-started'
+URL_PENDING_EVENTS_CASHOUT_COMPLETED = '/v1/api/pending-events/cashout-completed'
+URL_PENDING_EVENTS_CASHOUT_FAILED    = '/v1/api/pending-events/cashout-failed'
+URL_WALLET_CASHOUT                   = '/v1/api/wallets/{address}/cashout'
+# Current API
+URL_ADDRESS_VALIDITY = '/v1/api/addresses/{address}/validity'
+URL_BALANCE_ADDRESS  = '/v1/api/balances/{address}/observation'
+URL_ASSETS           = '/v1/api/assets'
+URL_ASSET            = '/v1/api/assets/{id}'
 
-class APITestCase(unittest.TestCase):
+class BaseApiTestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = app.test_client()
 
+
+class ApiTestCase(BaseApiTestCase):
     def test_address_valid(self):
         address= r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
-        response = self.app.get(
-            '/v1/api/addresses/{}/validity'.format(address)
-        )
+        response = self.app.get(URL_ADDRESS_VALIDITY.format(address=address))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['isValid'], True)
 
     def test_address_invalid(self):
         address = r'12345678'
-        response = self.app.get(
-            '/v1/api/addresses/{}/validity'.format(address)
-        )
+        response = self.app.get(URL_ADDRESS_VALIDITY.format(address=address))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['isValid'], False)
 
     def test_get_assets(self):
-        response = self.app.get(
-            '/v1/api/assets', content_type='application/json')
+        response = self.app.get(URL_ASSETS, content_type='application/json')
+            
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('continuation', json_response)
@@ -41,10 +50,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(asset_record['accuracy'], '6')
 
     def test_get_asset(self):
-        response = self.app.get(
-            '/v1/api/assets/SKY',
-            content_type='application/json'
-        )
+        response = self.app.get(URL_ASSET.format(id='SKY'), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
 
@@ -55,39 +61,9 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(asset_record['accuracy'], '6')
 
     def test_get_asset_wrong_id(self):
-        response = self.app.get(
-            '/v1/api/assets/001',
-            content_type='application/json'
-        )
+        response = self.app.get(URL_ASSET.format(id='UNKCOIN'), content_type='application/json')
         self.assertEqual(response.status_code, 204)
 
-    def test_pending_events_cashin(self):
-        response = self.app.get(
-            '/v1/api/pending-events/cashin',
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_pending_events_cashout_started(self):
-        response = self.app.get(
-            '/v1/api/pending-events/cashout-started',
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_pending_events_cashout_completed(self):
-        response = self.app.get(
-            '/v1/api/pending-events/cashout-completed',
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_pending_events_cashout_failed(self):
-        response = self.app.get(
-            '/v1/api/pending-events/cashout-failed',
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
     '''
     def test_wallets(self):
         response = self.app.post(
@@ -99,15 +75,6 @@ class APITestCase(unittest.TestCase):
         self.assertIn('privateKey', json_response)
         self.assertIn('publicAddress', json_response)
      '''
-#    def test_wallets_cashout(self):
-#        # FIXME Gives 400?
-#        data = dict(address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
-#        response = self.app.post(
-#            '/v1/api/wallets/{}/cashout'.format(data),
-#            data=json.dumps(data),
-#            content_type='application/json'
-#        )
-#        self.assertEqual(response.status_code, 200)
 
     def test_is_alive(self):
         response = self.app.get(
@@ -128,12 +95,35 @@ class APITestCase(unittest.TestCase):
         self.assertIn('areManyInputsSupported', json_response)
         self.assertIn('areManyOutputsSupported', json_response)
         
-    def test_sign(self):
-        pass
+    def test_sign_noparams(self):
         response = self.app.post(
             '/v1/api/sign', content_type='application/json')
         #test response code is 400 without parameters
         self.assertEqual(response.status_code, 400)
+
+
+
+class DeprecatedApiTests(BaseApiTestCase):
+
+    def assert_get_not_found(self, template, **args):
+        url = template.format(**args)
+        response = self.app.get(url, content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_pending_events_cashin(self):
+        self.assert_get_not_found(URL_PENDING_EVENTS_CASHIN)
+
+    def test_pending_events_cashout_started(self):
+        self.assert_get_not_found(URL_PENDING_EVENTS_CASHOUT_START)
+
+    def test_pending_events_cashout_completed(self):
+        self.assert_get_not_found(URL_PENDING_EVENTS_CASHOUT_COMPLETED)
+
+    def test_pending_events_cashout_failed(self):
+        self.assert_get_not_found(URL_PENDING_EVENTS_CASHOUT_FAILED)
+
+    def test_wallets_cashout(self):
+        self.assert_get_not_found(URL_WALLET_CASHOUT,address=r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv')
 
 
 if __name__ == '__main__':
