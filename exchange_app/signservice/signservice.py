@@ -20,10 +20,7 @@ def post_sign():
 	#Private keys are ignore because they are inside wallet (which should be encrypted
     private_keys = request.json['privateKeys']
     transactionContext = request.json['transactionContext']
-    transaction = get_transaction_from_context(transactionContext)
-    if not transaction:
-    	return make_response(jsonify(build_error('Invalid transaction context', error_codes.missingParameter)), 400)
-    result = sign_transaction(transaction)
+    result = sign_transaction(transactionContext, private_keys)
     if 'error' in result:
         return make_response(jsonify(build_error(result['error'], error_codes.unknown)), result['status'])
     return jsonify(result)

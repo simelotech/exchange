@@ -2,9 +2,9 @@ import logging
 from flask import request, jsonify, make_response
 
 from . import api
-from .blockchain import check_balance_from_transaction
-from ..common import build_error, get_transaction_context
-from ..models import add_transaction
+from .blockchain import create_transaction
+from ..common import build_error
+from ..models import add_transaction, get_transaction
 from .. import app
 from ..validate import validate_transaction_single, validate_transaction_many_outputs
 
@@ -13,19 +13,23 @@ def transactions_single():
     tx, errormsg = validate_transaction_single(request.json)
     if not tx:
         return make_response(jsonify(build_error(errormsg)), 400)
-    balance_ok, errorcode, errormsgg = check_balance_from_transaction(tx)
-    if not balance_ok:
-        return make_response(errormsg, errorcode)
-    logging.debug('/api/transactions/single - Transaction: ' + jsonify(tx))
-    tx = add_transaction(tx)
-    if not tx:
-        logging.debug('/api/transactions/single - Error while adding transaction')
-        return make_response("Unknown server error", 500)
-    elif tx['broadcasted']:
-        logging.debug('/api/transactions/single - Transaction already broadcasted')
-        return make_response("Conflict. Transaction already broadcasted", 409)
-
-    transaction_context = get_transaction_context(tx)
+    logging.debug('/api/transactions/single - Transaction: ' + str(tx))
+    savedtx = get_transaction(tx['operationId'])
+    transaction_context = False
+    if savedtx:
+        if 'broadcasted' in savedtx and savedtx['broadcasted']:
+            logging.debug('/api/transactions/single - Transaction already broadcasted')
+            return make_response("Conflict. Transaction already broadcasted", 409)
+        else:
+            if 'encoded_transaction' in savedtx:
+                transaction_context = savedtx['encoded_transaction']
+    if not transaction_context:
+        result = create_transaction(tx)
+        if 'error' in result:
+            status = result.get('status', 500)
+            return make_response(result['error'], status)
+        transaction_context = result['encoded_transaction']
+        add_transaction(tx['operationId'], transaction_context)
     return jsonify({"transactionContext" : transaction_context})
 
 @api.route('/transactions/many-outputs', methods=['POST'])
@@ -36,45 +40,19 @@ def transactions_many_outputs():
     balance_ok, errorcode, errormsgg = check_balance_from_transaction(tx)
     if not balance_ok:
         return make_response(errormsg, errorcode)
-    logging.debug('/api/transactions/many-outputs - Transaction: ' + jsonify(tx))
-    tx = add_transaction(tx)
-    if not tx:
-        logging.debug('/api/transactions/many-outputs - Error while adding transaction')
-        return make_response("Unknown server error", 500)
-    elif tx['broadcasted']:
-        logging.debug('/api/transactions/many-outputs - Transaction already broadcasted')
-        return make_response("Conflict. Transaction already broadcasted", 409)
-
-    transaction_context = get_transaction_context(tx)
+    logging.debug('/api/transactions/many-outputs - Transaction: ' + str(tx))
+    savedtx = get_transaction(tx['operationId'])
+    transaction_context = False
+    if savedtx:
+        if 'broadcasted' in savedtx and savedtx['broadcasted']:
+            logging.debug('/api/transactions/many-outputs - Transaction already broadcasted')
+            return make_response("Conflict. Transaction already broadcasted", 409)
+        else:
+            if 'encoded_transaction' in savedtx:
+                transaction_context = savedtx['encoded_transaction']
+    if not transaction_context:
+        result = create_transaction(tx)
+        if 'error' in result:
+            return make_response(result['error'], 500)
+        transaction_context = result['encoded_transaction']
     return jsonify({"transactionContext" : transaction_context})
-
-'''
-@api.route('/api/transactions/many-inputs', methods=['POST'])
-def transactions_many_inputs():
-    if not request.json:
-        return make_response(jsonify(build_error("Input format error")), 400)
-    params = {'operationID', 'inputs', 'toAddress', 'assetId'}
-    if all(x not in params for x in request.json):
-        return make_response(jsonify(build_error("Input data error")), 400)
-    result = transaction_many_inputs(request.json)
-    if "transactionContext" in result:
-        return jsonify(result)
-    return jsonify({"status": 500, "error": "Invalid response"})
-
-
-@api.route('/api/transactions/many-outputs', methods=['POST'])
-def transactions_many_outputs():
-    if not request.json:
-        return make_response(jsonify(build_error("Input format error")), 400)
-    params = {'operationId', 'fromAddress', 'fromAddressContext', 'outputs', 'assetId'}
-    if all(x not in params for x in request.json):
-        return make_response(jsonify(build_error("Input data error")), 400)
-    tx = add_many_outputs_tx(request.json)
-    if tx:
-        result = transaction_many_outputs(request.json)
-        if "transactionContext" in result:
-            return jsonify(result)
-        if app.config['DEBUG']:
-            logging.debug("Transaction: %s", request.args.get('operationId'))
-    return jsonify({"status": 500, "error": "Invalid response"})
-'''

@@ -95,7 +95,7 @@ class APITestCase(unittest.TestCase):
             data = json.dumps(fakeTx),
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertNotEqual(response.status_code, 200)
         fakeTx['outputs'] = [{
             'amount' : fakeTx['amount'],
             'toAddress' : fakeTx['toAddress']
@@ -107,7 +107,7 @@ class APITestCase(unittest.TestCase):
             data = json.dumps(fakeTx),
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertNotEqual(response.status_code, 200)
         #Test fake sign
         data = {
             "privateKeys" : ["3434"],

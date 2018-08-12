@@ -587,19 +587,19 @@ def get_transactions_to(address, take, afterhash = ''):
 
     return items
 
-def add_transaction(tx):
+def add_transaction(operationId, encodedTransaction):
     """
     Add a transaction to db
     """
     transactions = mongo.db.transactions #Collection to store transactions
-    result = transactions.find_one({'operationId' : tx['operationId']})
-    if result:
-        return result
-    else:
-        tx['broadcasted'] = False
-        pk = transactions.insert(tx)
-        if isinstance(pk, ObjectId):
-            return tx
+    tx = {
+        'operationId' : operationId,
+        'encoded_transaction' : encodedTransaction,
+        'broadcasted' : False
+    }
+    pk = transactions.insert(tx)
+    if isinstance(pk, ObjectId):
+        return tx
     return False
 
 def get_transaction(operationId):
@@ -607,7 +607,7 @@ def get_transaction(operationId):
     Find transaction by operation id
     """
     transactions = mongo.db.transactions #Collection to store transactions
-    result = transactions.find_one(operationId)
+    result = transactions.find_one({'operationId' : operationId})
     if result:
         return result
     return False
