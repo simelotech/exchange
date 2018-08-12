@@ -2,59 +2,60 @@ from flask import request, jsonify, make_response
 from . import api
 from .blockchain import get_url
 from ..common import build_error
+from ..settings import app_config
 
 
 @api.route('/assets', methods=['GET'])
 def get_assets():
     """
-    Returns skycoin assets. Just sky for now.
+    Returns configured Skycoin fiber asset name.
     """
     take = 0
     stake = request.args.get('take')
     if stake is None:
-        take = 0
+        take = app_config.DEFAULT_LIST_LENGTH
     else:
         try:
             take = int(stake)
         except:
             return make_response(jsonify(build_error("Invalid format : take"),
-                500))
+                400))
     cont = request.args.get('continuation')
-    if take <= 0 or cont is not None or cont != "" :
-        return jsonify({
+    if take <= 0 or cont not in (None, "") :
+        response_data = {
             "continuation" : "",
-            "assets": []
-        })
-
-    response_data = {
-        "continuation" : "",
-        "assets": [
-            {
-                "assetId": "sky",
-                "address": "",
-                "name": "Sky",
-                "accuracy": "6"
-            }
-        ]
-    }
+            "items": []
+        }
+    else:
+        response_data = {
+            "continuation" : "",
+            "items": [
+                {
+                    "assetId": app_config.SKYCOIN_FIBER_ASSET,
+                    "address": "",
+                    "name": app_config.SKYCOIN_FIBER_NAME,
+                    "accuracy": "6"
+                }
+            ]
+        }
     return jsonify(response_data)
 
 
 @api.route('/assets/<string:assetid>', methods=['GET'])
 def get_asset(assetid):
     """"""
-    if assetid == "sky":
-        retvalue = {
-            "assetId": assetid,
+    if assetid == app_config.SKYCOIN_FIBER_ASSET:
+        response_data = {
+            "assetId": app_config.SKYCOIN_FIBER_ASSET,
             "address": "",
-            "name": "Sky",
+            "name": app_config.SKYCOIN_FIBER_NAME,
             "accuracy": "6"
         }
 
         return jsonify(response_data)
-    else:
-        return make_response(
-            jsonify(build_error("specified asset not found"),
-            204
-        ))
+
+    return make_response(
+        jsonify(build_error("specified asset not found"),
+        204
+    ))
  

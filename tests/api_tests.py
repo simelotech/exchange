@@ -30,15 +30,41 @@ class APITestCase(unittest.TestCase):
         response = self.app.get(
             '/v1/api/assets', content_type='application/json')
         self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('continuation', json_response)
+        self.assertIn('items', json_response)
+
+        print(json_response)
+        asset_record = json_response['items'][0]
+        self.assertEqual(asset_record['assetId'],  'SKY')
+        self.assertEqual(asset_record['address'],  '')
+        self.assertEqual(asset_record['name'],     'Skycoin')
+        self.assertEqual(asset_record['accuracy'], '6')
 
     def test_get_asset(self):
-        data = dict(assetid=1)
         response = self.app.get(
-            '/v1/api/assets',
-            data=json.dumps(data),
+            '/v1/api/assets/SKY',
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
+        response = self.app.get(
+            '/v1/api/assets', content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+
+        asset_record = json_response
+        print(asset_record)
+        self.assertEqual(asset_record['assetId'],  'SKY')
+        self.assertEqual(asset_record['address'],  '')
+        self.assertEqual(asset_record['name'],     'Skycoin')
+        self.assertEqual(asset_record['accuracy'], 6)
+
+    def test_get_asset_wrong_id(self):
+        response = self.app.get(
+            '/v1/api/assets/001',
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 204)
 
     def test_pending_events_cashin(self):
         response = self.app.get(
