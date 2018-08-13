@@ -26,13 +26,13 @@ def setup():
         os.makedirs(tmp)
         current_path = os.path.dirname(os.path.realpath(__file__))
         skycoin_params = "-enable-wallet-api=true"
-        #skycoin_params += " -db-path=./data/.skycoin/data/skycoin/blockchain-180.db"
+        skycoin_params += " -db-path=./data/.skycoin/data/skycoin/blockchain-180.db"
         skycoin_params += " -download-peerlist=false"
         skycoin_params += " -rpc-interface=true"
-        #skycoin_params += " -db-read-only=true"
+        skycoin_params += " -db-read-only=true"
         skycoin_params += " -disable-networking=true"
-        skycoin_params += " -data-dir=" + tmp
-        skycoin_params += " -wallet-dir=" + tmp + "/wallets"
+        skycoin_params += " -data-dir=./data/.skycoin/data/skycoin/data-dir"
+        skycoin_params += " -wallet-dir=./data/.skycoin/data/skycoin/data-dir/wallets"
         skycoin_params += " -web-interface-port=6420"
         
         testservice_name = testrun_service_name()
@@ -46,7 +46,6 @@ def setup():
         log.info('Initializing service : skycoin')
         init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params, 
             volumes={current_path: {'bind':'/data/.skycoin', 'mode' : 'rw'}})
-        #init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params)
     except:
         log.error('Error found in test suite setup')
         raise
