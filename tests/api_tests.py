@@ -22,7 +22,11 @@ URL_WALLET_NEW       = '/v1/api/wallets'
 URL_ISALIVE          = '/v1/api/isalive'
 URL_CAPABILITIES     = '/v1/api/capabilities'
 URL_SIGN             = '/v1/api/sign'
-URL_CONSTANTS        = '/vi/api/constants'
+URL_CONSTANTS        = '/v1/api/constants'
+URL_EXPLORER         = '/v1/api/addresses/{address}/explorer-url'
+
+ADDRESS_VALID = r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
+ADDRESS_INVALID = r'12345678'
 
 
 class BaseApiTestCase(unittest.TestCase):
@@ -33,14 +37,14 @@ class BaseApiTestCase(unittest.TestCase):
 
 class ApiTestCase(BaseApiTestCase):
     def test_address_valid(self):
-        address= r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
+        address = ADDRESS_VALID
         response = self.app.get(URL_ADDRESS_VALIDITY.format(address=address))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['isValid'], True)
 
     def test_address_invalid(self):
-        address = r'12345678'
+        address = ADDRESS_INVALID
         response = self.app.get(URL_ADDRESS_VALIDITY.format(address=address))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
@@ -125,9 +129,24 @@ class ApiTestCase(BaseApiTestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_constants(self):
-        response = self.app.post(URL_CONSTANTS, content_type='application/json')
+        response = self.app.get(URL_CONSTANTS, content_type='application/json')
         #test constants not implemented
         self.assertEqual(response.status_code, 501)
+
+    def test_explorer_url(self):
+        response = self.app.get(URL_EXPLORER.format(address=ADDRESS_VALID), content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertListEqual(json_response,
+                ['https://explorer.skycoin.net/app/address/2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'])
+
+    def test_explorer_url_noaddr(self):
+        response = self.app.get(URL_EXPLORER.format(address=''), content_type='application/json')
+        self.assertEqual(response.status_code, 404)
+
+    def test_explorer_url_invalid(self):
+        response = self.app.get(URL_EXPLORER.format(address=ADDRESS_INVALID), content_type='application/json')
+        self.assertEqual(response.status_code, 204)
 
 
 class DeprecatedApiTests(BaseApiTestCase):
