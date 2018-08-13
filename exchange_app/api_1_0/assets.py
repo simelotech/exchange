@@ -5,10 +5,27 @@ from ..common import build_error
 from ..settings import app_config
 
 
-@api.route('/assets', methods=['GET'])
-def get_assets():
+@api.route('/assets/<string:assetid>', methods=['GET'])
+def get_asset(assetid):
     """
-    Returns configured Skycoin fiber asset name.
+    Retrieve fiber coin asset details.
+    """
+    if assetid == app_config.SKYCOIN_FIBER_ASSET:
+        response_data = {
+            "assetId": app_config.SKYCOIN_FIBER_ASSET,
+            "address": "",
+            "name": app_config.SKYCOIN_FIBER_NAME,
+            "accuracy": "6"
+        }
+        return jsonify(response_data)
+
+    return make_response(jsonify(build_error("Specified asset not found")), 204)
+ 
+
+@api.route('/assets', methods=['GET'])
+def get_assets_list():
+    """
+    Return asset list with details of configured Skycoin fiber asset.
     """
     take = 0
     stake = request.args.get('take')
@@ -40,22 +57,3 @@ def get_assets():
         }
     return jsonify(response_data)
 
-
-@api.route('/assets/<string:assetid>', methods=['GET'])
-def get_asset(assetid):
-    """"""
-    if assetid == app_config.SKYCOIN_FIBER_ASSET:
-        response_data = {
-            "assetId": app_config.SKYCOIN_FIBER_ASSET,
-            "address": "",
-            "name": app_config.SKYCOIN_FIBER_NAME,
-            "accuracy": "6"
-        }
-
-        return jsonify(response_data)
-
-    return make_response(
-        jsonify(build_error("specified asset not found"),
-        204
-    ))
- 
