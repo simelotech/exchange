@@ -22,6 +22,7 @@ URL_WALLET_NEW       = '/v1/api/wallets'
 URL_ISALIVE          = '/v1/api/isalive'
 URL_CAPABILITIES     = '/v1/api/capabilities'
 URL_SIGN             = '/v1/api/sign'
+URL_CONSTANTS        = '/vi/api/constants'
 
 
 class BaseApiTestCase(unittest.TestCase):
@@ -123,6 +124,10 @@ class ApiTestCase(BaseApiTestCase):
         #test response code is 400 without parameters
         self.assertEqual(response.status_code, 400)
 
+    def test_constants(self):
+        response = self.app.post(URL_CONSTANTS, content_type='application/json')
+        #test constants not implemented
+        self.assertEqual(response.status_code, 501)
 
 
 class DeprecatedApiTests(BaseApiTestCase):
