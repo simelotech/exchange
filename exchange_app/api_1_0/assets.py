@@ -17,13 +17,9 @@ def get_asset(assetid):
             "name": app_config.SKYCOIN_FIBER_NAME,
             "accuracy": "6"
         }
-
         return jsonify(response_data)
 
-    return make_response(
-        jsonify(build_error("specified asset not found"),
-        204
-    ))
+    return make_response(jsonify(build_error("Specified asset not found")), 204)
  
 
 @api.route('/assets', methods=['GET'])
