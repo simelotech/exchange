@@ -1,5 +1,5 @@
 import logging
-
+import uuid
 import os
 import os.path
 
@@ -10,12 +10,39 @@ class Config(object):
     DEBUG = True
     TESTING = False
     PRODUCTION = False
-
     SITE_NAME = ''
     LOG_LEVEL = logging.DEBUG
     SERVER_NAME = 'localhost:5000'
     #: REST API
     DEFAULT_LIST_LENGTH = 10
+
+
+class ProductionConfig(Config):
+    ENVIRONMENT = 'Production'
+    PRODUCTION = True
+    LOG_LEVEL = logging.INFO
+    SERVER_NAME = ''
+    #: Database
+    MONGO_DBNAME = ''
+    MONGO_HOST = ''
+    MONGO_PORT = 27017
+    MONGO_URI = ''
+    #: Redis
+    REDIS_HOST = ''
+    REDIS_PORT = 6379
+    #: SKYCOIN
+    SECRET_KEY = ''
+    WTF_CSRF_SECRET_KEY = ''
+    SKYCOIN_NODE_URL = ''
+    SKYCOIN_WALLET_SHARED = False
+    SKYCOIN_FIBER_ASSET = ''
+    SKYCOIN_FIBER_NAME = ''
+
+
+class DevelopmentConfig(Config):
+    ENVIRONMENT = 'Dev'
+    DEBUG = True
+    TESTING = False
     #: Database
     MONGO_DBNAME = 'LYKKE'
     MONGO_HOST = '127.0.0.1'
@@ -28,29 +55,30 @@ class Config(object):
     SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
     WTF_CSRF_SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
     SKYCOIN_NODE_URL = 'http://localhost:6420/'
-    LIBSKYCOIN_PATH = os.path.join(*('exchange_app/libskycoin.so'.split('/')))
     SKYCOIN_WALLET_SHARED = False
     SKYCOIN_FIBER_ASSET = "SKY"
     SKYCOIN_FIBER_NAME = "Skycoin"
-
-
-class ProductionConfig(Config):
-    ENVIRONMENT = 'Production'
-    PRODUCTION = True
-    LOG_LEVEL = logging.INFO
-    SERVER_NAME = ''
-
-
-class DevelopmentConfig(Config):
-    ENVIRONMENT = 'Dev'
-    DEBUG = True
-    TESTING = False
 
 
 class TestingConfig(Config):
     ENVIRONMENT = 'Testing'
     DEBUG = False
     TESTING = True
+    #: Database
+    MONGO_DBNAME = 'LYKKE_TEST_{0}'.format(str(uuid.uuid1()).replace('-', ''))
+    MONGO_HOST = '127.0.0.1'
+    MONGO_PORT = 27017
+    MONGO_URI = "mongodb://" + MONGO_HOST + ":" + str(MONGO_PORT) + "/" + MONGO_DBNAME
+    #: Redis
+    REDIS_HOST = '127.0.0.1'
+    REDIS_PORT = 6379
+    #: SKYCOIN
+    SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
+    WTF_CSRF_SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
+    SKYCOIN_NODE_URL = 'http://localhost:6420/'
+    SKYCOIN_WALLET_SHARED = False
+    SKYCOIN_FIBER_ASSET = "SKY"
+    SKYCOIN_FIBER_NAME = "Skycoin"
 
 
 environment = os.getenv('ENVIRONMENT', 'DEVELOPMENT').lower()
