@@ -5,6 +5,7 @@ import unittest
 import skycoin
 
 from exchange_app import app
+from exchange_app.settings import app_config
 
 # Removed endpoints
 URL_PENDING_EVENTS_CASHIN            = '/v1/api/pending-events/cashin'
@@ -18,6 +19,9 @@ URL_BALANCE_ADDRESS  = '/v1/api/balances/{address}/observation'
 URL_ASSETS           = '/v1/api/assets'
 URL_ASSET            = '/v1/api/assets/{id}'
 URL_WALLET_NEW       = '/v1/api/wallets'
+URL_ISALIVE          = '/v1/api/isalive'
+URL_CAPABILITIES     = '/v1/api/capabilities'
+URL_SIGN             = '/v1/api/sign'
 
 
 class BaseApiTestCase(unittest.TestCase):
@@ -87,8 +91,7 @@ class ApiTestCase(BaseApiTestCase):
         self.assertEqual(addressStr.decode('ascii'), json_response['publicAddress'])
 
     def test_is_alive(self):
-        response = self.app.get(
-            '/v1/api/isalive', content_type='application/json')
+        response = self.app.get(URL_ISALIVE, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('name', json_response)
@@ -97,17 +100,26 @@ class ApiTestCase(BaseApiTestCase):
         self.assertIn('isDebug', json_response)
 
     def test_api_capabilities(self):
-        response = self.app.get(
-            '/v1/api/capabilities', content_type='application/json')
+        response = self.app.get(URL_CAPABILITIES, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('isTransactionsRebuildingSupported', json_response)
         self.assertIn('areManyInputsSupported', json_response)
         self.assertIn('areManyOutputsSupported', json_response)
+        self.assertIn("isTestingTransfersSupported", json_response)
+        self.assertIn("isPublicAddressExtensionRequired", json_response)
+        self.assertIn("isReceiveTransactionRequired", json_response)
+        self.assertIn("canReturnExplorerUrl", json_response)
+        self.assertEqual(json_response['isTransactionsRebuildingSupported'], False)
+        self.assertEqual(json_response['areManyInputsSupported'], not app_config.SKYCOIN_WALLET_SHARED)
+        self.assertEqual(json_response['areManyOutputsSupported'], True)
+        self.assertEqual(json_response['isTestingTransfersSupported'], False)
+        self.assertEqual(json_response['isPublicAddressExtensionRequired'], False)
+        self.assertEqual(json_response['isReceiveTransactionRequired'], False)
+        self.assertEqual(json_response['canReturnExplorerUrl'], True)
         
     def test_sign_noparams(self):
-        response = self.app.post(
-            '/v1/api/sign', content_type='application/json')
+        response = self.app.post(URL_SIGN, content_type='application/json')
         #test response code is 400 without parameters
         self.assertEqual(response.status_code, 400)
 
