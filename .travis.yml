@@ -28,9 +28,8 @@ matrix:
         packages:
         - python3.6
 before_install:
-- openssl aes-256-cbc -K $encrypted_2c77414c66d3_key -iv $encrypted_2c77414c66d3_iv
+- openssl aes-256-cbc -K $encrypted_2c77414c66d3_key
   -in seeds.json.enc -out tests/data/skycoin/seeds.json -d
-- mkdir -p tests/data/skycoin
 install:
 - sudo pip install tox-travis
 - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
