@@ -37,9 +37,6 @@ def transactions_many_outputs():
     tx, errormsg = validate_transaction_many_outputs(request.json)
     if not tx:
         return make_response(jsonify(build_error(errormsg)), 400)
-    balance_ok, errorcode, errormsgg = check_balance_from_transaction(tx)
-    if not balance_ok:
-        return make_response(errormsg, errorcode)
     logging.debug('/api/transactions/many-outputs - Transaction: ' + str(tx))
     savedtx = get_transaction(tx['operationId'])
     transaction_context = False
@@ -56,3 +53,4 @@ def transactions_many_outputs():
             return make_response(result['error'], 500)
         transaction_context = result['encoded_transaction']
     return jsonify({"transactionContext" : transaction_context})
+

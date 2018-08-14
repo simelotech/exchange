@@ -69,7 +69,6 @@ class APITestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    '''
     def test_wallets(self):
         response = self.app.post(
             '/v1/api/wallets',
@@ -133,7 +132,6 @@ class APITestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
-    '''    
 
     def test_is_alive(self):
         response = self.app.get(

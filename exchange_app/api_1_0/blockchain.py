@@ -36,7 +36,7 @@ def get_balance(address):
 
     if app.config['DEBUG']:
         logging.debug("Got balance for address")
-        logging.debug(balances.json())
+        logging.debug(str(balances))
 
     try:
         return {'balance' : int(balances.json()['confirmed']['coins'])}
@@ -296,3 +296,4 @@ def _removeSigningFromTransaction(hexencoded_transaction):
     finally:
         if transaction_handle != 0:
             skycoin.SKY_handle_close(handle)
+            
