@@ -9,6 +9,8 @@ __pycache__/
 #skycoin data
 peers.txt
 *.wlt
+seeds.json
+tests/data/skycoin/data.db
 
 # Distribution / packaging
 .Python
