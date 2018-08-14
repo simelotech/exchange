@@ -30,6 +30,7 @@ URL_BALANCES_PAGE    = '/v1/api/balances?take={limit}&continuation={offset}'
 
 ADDRESS_VALID = r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
 ADDRESS_INVALID = r'12345678'
+ADDRESSES_WITH_COINS = [r'2THDupTBEo7UqB6dsVizkYUvkKq82Qn4gjf', r'qxmeHkwgAMfwXyaQrwv9jq3qt228xMuoT5']
 
 
 class BaseApiTestCase(unittest.TestCase):
@@ -161,7 +162,7 @@ class ApiTestCase(BaseApiTestCase):
                 content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
-    def test_observe_address(self):
+    def test_observe_address_nocoins(self):
         # Address not in observation list
         response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
                 content_type='application/json')
@@ -188,12 +189,83 @@ class ApiTestCase(BaseApiTestCase):
         resultset = [item for item in json_response['items']
                 if 'address' in item and item['address'] == ADDRESS_VALID]
         self.assertEqual(0, len(resultset))
-#        item = resultset[0]
-#        self.assertIn('assetId', item)
-#        self.assertIn('balance', item)
-#        self.assertIn('block', item)
-#        self.assertEqual(item['assetId'], app_config.SKYCOIN_FIBER_ASSET)
-#        self.assertEqual(item['balance'], 1)
+
+    def test_observe_address(self):
+            address1, address2 = ADDRESSES_WITH_COINS
+            # Addresses not in observation list
+            response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertIn('items', json_response)
+            resultset = [item for item in json_response['items']
+                    if 'address' in item and item['address'] in ADDRESSES_WITH_COINS]
+            self.assertListEqual([], resultset)
+
+            # Observe first address
+            response = self.app.post(URL_ADDRESS_OBSERVE.format(address=address1),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            # First address in observation list.
+            response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertIn('items', json_response)
+            self.assertTrue(len(json_response['items']) > 0)
+            resultset = [item for item in json_response['items']
+                    if 'address' in item and item['address'] in ADDRESSES_WITH_COINS]
+            self.assertEqual(1, len(resultset))
+            item = resultset[0]
+            self.assertIn('address', item)
+            self.assertIn('assetId', item)
+            self.assertIn('balance', item)
+            self.assertIn('block', item)
+            self.assertEqual(item['address'], address1)
+            self.assertEqual(item['assetId'], app_config.SKYCOIN_FIBER_ASSET)
+            self.assertEqual(item['balance'], '1000000.0')
+
+            # Observe second address
+            response = self.app.post(URL_ADDRESS_OBSERVE.format(address=address2),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            # Second address in observation list.
+            response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertIn('items', json_response)
+            resultset = [item for item in json_response['items']
+                    if 'address' in item and item['address'] in ADDRESSES_WITH_COINS]
+            self.assertEqual(2, len(resultset))
+            # Assertions for 1st item
+            item = resultset[0]
+            self.assertIn('address', item)
+            self.assertIn('assetId', item)
+            self.assertIn('balance', item)
+            self.assertIn('block', item)
+            self.assertIn(item['address'], ADDRESSES_WITH_COINS)
+            self.assertEqual(item['assetId'], app_config.SKYCOIN_FIBER_ASSET)
+            self.assertEqual(item['block'], 180)
+            # Assertions for first item
+            item = resultset[1]
+            self.assertIn('address', item)
+            self.assertIn('assetId', item)
+            self.assertIn('balance', item)
+            self.assertIn('block', item)
+            self.assertIn(item['address'], ADDRESSES_WITH_COINS)
+            self.assertEqual(item['assetId'], app_config.SKYCOIN_FIBER_ASSET)
+            self.assertEqual(item['block'], 180)
+            # Ensure there are records for both addresses
+            self.assertNotEqual(resultset[0]['address'], resultset[1]['address'])
+            # Assertions on balances
+            balances = {item['address'] : item['balance'] for item in resultset}
+            self.assertDictEqual(balances, {address1: '1000000.0', address2: '22100.0'})
+
+            # Repeat observation and get conflict
+            response = self.app.post(URL_ADDRESS_OBSERVE.format(address=address1),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 409)
 
 
 class DeprecatedApiTests(BaseApiTestCase):
