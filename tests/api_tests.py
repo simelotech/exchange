@@ -267,6 +267,43 @@ class ApiTestCase(BaseApiTestCase):
                     content_type='application/json')
             self.assertEqual(response.status_code, 409)
 
+            # Delete observations
+            response = self.app.delete(URL_ADDRESS_OBSERVE.format(address=ADDRESS_INVALID),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 204)
+            response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertIn('items', json_response)
+            resultset = set(item['address'] for item in json_response['items']
+                    if 'address' in item and item['address'] in ADDRESSES_WITH_COINS)
+            self.assertSetEqual(resultset, set(ADDRESSES_WITH_COINS))
+
+            response = self.app.delete(URL_ADDRESS_OBSERVE.format(address=address1),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertIn('items', json_response)
+            resultset = set(item['address'] for item in json_response['items']
+                    if 'address' in item and item['address'] in ADDRESSES_WITH_COINS)
+            self.assertSetEqual(resultset, set([address2]))
+
+            response = self.app.delete(URL_ADDRESS_OBSERVE.format(address=address1),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 204)
+            response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                    content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            json_response = json.loads(response.get_data(as_text=True))
+            self.assertIn('items', json_response)
+            resultset = set(item['address'] for item in json_response['items']
+                    if 'address' in item and item['address'] in ADDRESSES_WITH_COINS)
+            self.assertSetEqual(resultset, set([address2]))
+
 
 class DeprecatedApiTests(BaseApiTestCase):
 
