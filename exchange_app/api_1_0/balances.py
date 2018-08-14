@@ -5,6 +5,7 @@ from time import perf_counter
 from .. import app
 from ..common import build_error, generate_hash_key
 from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, update_index, get_indexed_balance, get_indexed_blockheight
+from ..settings import app_config
 
 from . import api
 from .address import isValidAddress
@@ -53,7 +54,7 @@ def get_balances():
     
     take = request.args.get('take')
     if take is None:
-        take = 0
+        take = app_config.DEFAULT_LIST_LENGTH
     else:
         take = int(take)
     
@@ -85,7 +86,7 @@ def get_balances():
      
         #Generate output response
         item['address'] = addresses[start_index]
-        item['assetId'] = 'SKY'
+        item['assetId'] = app_config.SKYCOIN_FIBER_ASSET
         item['balance'] = str(balance['balance'])  #TODO: Asset accuracy
         item['block'] = blockheight
         if balance['balance'] != 0:

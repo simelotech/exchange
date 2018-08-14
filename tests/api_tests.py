@@ -161,6 +161,40 @@ class ApiTestCase(BaseApiTestCase):
                 content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
+    def test_observe_address(self):
+        # Address not in observation list
+        response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('items', json_response)
+        resultset = [item for item in json_response['items']
+                if 'address' in item and item['address'] == ADDRESS_VALID]
+        self.assertListEqual([], resultset)
+        # Observe address
+        response = self.app.post(URL_ADDRESS_OBSERVE.format(address=ADDRESS_VALID),
+                content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        # Repeat and get conflict
+        response = self.app.post(URL_ADDRESS_OBSERVE.format(address=ADDRESS_VALID),
+                content_type='application/json')
+        self.assertEqual(response.status_code, 409)
+        # Address not in observation list. No balance
+        response = self.app.get(URL_BALANCES_FIRST.format(limit=100),
+                content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('items', json_response)
+        resultset = [item for item in json_response['items']
+                if 'address' in item and item['address'] == ADDRESS_VALID]
+        self.assertEqual(0, len(resultset))
+#        item = resultset[0]
+#        self.assertIn('assetId', item)
+#        self.assertIn('balance', item)
+#        self.assertIn('block', item)
+#        self.assertEqual(item['assetId'], app_config.SKYCOIN_FIBER_ASSET)
+#        self.assertEqual(item['balance'], 1)
+
 
 class DeprecatedApiTests(BaseApiTestCase):
 
