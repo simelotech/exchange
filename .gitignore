@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+#skycoin data
+peers.txt
+*.wlt
+
 # Distribution / packaging
 .Python
 env/
