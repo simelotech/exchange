@@ -1,12 +1,15 @@
 from flask import request, jsonify, make_response
-from . import api
-from ..common import build_error, generate_hash_key
-from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, update_index, get_indexed_balance, get_indexed_blockheight
 import logging
-from .. import app
-from .blockchain import get_balance, get_balance_scan
 from time import perf_counter
 
+from .. import app
+from ..common import build_error, generate_hash_key
+from ..models import add_address_observation, delete_address_observation, get_addresses_balance_observation, update_index, get_indexed_balance, get_indexed_blockheight
+from ..settings import app_config
+
+from . import api
+from .address import isValidAddress
+from .blockchain import get_balance, get_balance_scan
 
 @api.route('/balances/<string:address>/observation', methods=['POST'])
 def add_observation(address):
@@ -14,7 +17,10 @@ def add_observation(address):
     Add the specified address to observation list
     """
 
-    result = add_address_observation(address)
+    if isValidAddress(address):
+        result = add_address_observation(address)
+    else:
+        result = dict(error='Invalid address', status=422)
 
     # if successfully stored in observation list, return a plain 200
     if "error" in result:
@@ -48,7 +54,7 @@ def get_balances():
     
     take = request.args.get('take')
     if take is None:
-        take = 0
+        take = app_config.DEFAULT_LIST_LENGTH
     else:
         take = int(take)
     
@@ -80,9 +86,9 @@ def get_balances():
      
         #Generate output response
         item['address'] = addresses[start_index]
-        item['assetId'] = 'SKY'
+        item['assetId'] = app_config.SKYCOIN_FIBER_ASSET
         item['balance'] = str(balance['balance'])  #TODO: Asset accuracy
-        item['block'] = blockheight
+        item['block'] = blockheight['blockheight']
         if balance['balance'] != 0:
             items.append(item)
         

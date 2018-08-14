@@ -4,10 +4,11 @@
 
 import docker, docker.errors
 import logging
-import os
+import os.path
 import time
 import uuid
 import socket, errno
+from tempfile import gettempdir
 
 service_prefix = 'lykke_sky'
 services_started = dict()
@@ -21,6 +22,17 @@ def setup():
     """Setup integration tests
     """
     try:
+        skycoin_data_path = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                *('data/skycoin'.split('/')))
+        skycoin_params = " -enable-wallet-api=true" \
+                         " -db-path=/data/test/blockchain-180.db" \
+                         " -download-peerlist=false" \
+                         " -rpc-interface=true" \
+                         " -db-read-only=true" \
+                         " -disable-networking=true" \
+                         " -web-interface-port=6420"
+        
         testservice_name = testrun_service_name()
         testsuite_id = str(uuid.uuid1()).replace('-', '')
         log.info('Starting test run %s' % (testservice_name,))
@@ -30,12 +42,14 @@ def setup():
         log.info('Initializing service : redis')
         init_service('redis',           '3.0.7-alpine', 6379)
         log.info('Initializing service : skycoin')
-        init_service('skycoin/skycoin', 'develop',      6420, command='-enable-wallet-api=true')
+        init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params, 
+            volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
     except:
         log.error('Error found in test suite setup')
         raise
     finally:
         wait_for_all(services_started)
+
 
 def teardown():
     """Unload launched services if no test suite is running.
@@ -59,7 +73,7 @@ def testrun_id():
     """
     return services_started[testrun_service_name()][0]
 
-def init_service(service_name, version, default_port, command=None):
+def init_service(service_name, version, default_port, command=None, volumes = None):
     """Ensure service is running. If not available run it with Docker.
 
     service_name : The name of the official Docker image used to run
@@ -78,7 +92,8 @@ def init_service(service_name, version, default_port, command=None):
         docker_run(service_name, tag=version,
                 name=service_id ,
                 ports={'%s/tcp' % (default_port,): port},
-                command=command)
+                command=command,
+                volumes=volumes)
         launched = True
     services_started[service_id] = (port, launched)
 
@@ -93,6 +108,7 @@ def docker_run(service_name, name, **docker_options):
     client = docker.from_env()
 
     image_tag = docker_options.get('tag', 'latest')
+    volumes = docker_options.get('volumes', {})
 #    try:
 #        image = client.images.get(service_name)
 #        log.info('Image %s:%s available locally' % (service_name, image_tag))
@@ -100,7 +116,8 @@ def docker_run(service_name, name, **docker_options):
 #        log.warning('Image %s:%s not found locally ... pulling' % (service_name, image_tag))
 #        client.images.pull(service_name, image_tag)
     client.containers.run('%s:%s' % (service_name, image_tag), detach=True, name=name,
-            ports=docker_options.get('ports', dict()), command=docker_options.get('command'))
+            ports=docker_options.get('ports', dict()), command=docker_options.get('command'),
+            volumes=volumes)
     time.sleep(1.0)
 
 def docker_dispose(service_id):
