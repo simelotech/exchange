@@ -4,7 +4,7 @@
 
 import docker, docker.errors
 import logging
-import os
+import os.path
 import time
 import uuid
 import socket, errno
@@ -22,19 +22,17 @@ def setup():
     """Setup integration tests
     """
     try:
-        tmp = os.path.join(gettempdir(), '.{}'.format(hash(os.times())))
-        os.makedirs(tmp)
-        current_path = os.path.dirname(os.path.realpath(__file__))
-        skycoin_params = "-enable-wallet-api=true"
-        skycoin_params += " -db-path=./data/.skycoin/data/skycoin/blockchain-180.db"
-        skycoin_params += " -download-peerlist=false"
-        skycoin_params += " -rpc-interface=true"
-        skycoin_params += " -db-read-only=true"
-        skycoin_params += " -disable-networking=true"
-        skycoin_params += " -data-dir=./data/.skycoin/data/skycoin/data-dir"
-        skycoin_params += " -wallet-dir=./data/.skycoin/data/skycoin/data-dir/wallets"
-        skycoin_params += " -web-interface-port=6420"
-        
+        skycoin_data_path = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                *('data/skycoin'.split('/')))
+        skycoin_params = " -enable-wallet-api=true" \
+                         " -db-path=/data/test/blockchain-180.db" \
+                         " -download-peerlist=false" \
+                         " -rpc-interface=true" \
+                         " -db-read-only=true" \
+                         " -disable-networking=true" \
+                         " -web-interface-port=6420"
+
         testservice_name = testrun_service_name()
         testsuite_id = str(uuid.uuid1()).replace('-', '')
         log.info('Starting test run %s' % (testservice_name,))
@@ -44,13 +42,14 @@ def setup():
         log.info('Initializing service : redis')
         init_service('redis',           '3.0.7-alpine', 6379)
         log.info('Initializing service : skycoin')
-        init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params, 
-            volumes={current_path: {'bind':'/data/.skycoin', 'mode' : 'rw'}})
+        init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params,
+            volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
     except:
         log.error('Error found in test suite setup')
         raise
     finally:
         wait_for_all(services_started)
+
 
 def teardown():
     """Unload launched services if no test suite is running.
@@ -64,7 +63,7 @@ def teardown():
 
 def testrun_service_name():
     """Name to register this test run as a service.
-    
+
     Depends on operating-system process ID.
     """
     return '%s_%d' % (service_prefix, os.getpid())
@@ -170,5 +169,3 @@ def is_listening_at(port):
             # something else raised the socket.error exception
             print(e)
     s.close()
-
-

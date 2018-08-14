@@ -11,11 +11,11 @@ class Config(object):
     TESTING = False
     PRODUCTION = False
 
-    SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
-    WTF_CSRF_SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
     SITE_NAME = ''
     LOG_LEVEL = logging.DEBUG
     SERVER_NAME = 'localhost:5000'
+    #: REST API
+    DEFAULT_LIST_LENGTH = 10
     #: Database
     MONGO_DBNAME = 'LYKKE'
     MONGO_HOST = '127.0.0.1'
@@ -25,8 +25,13 @@ class Config(object):
     REDIS_HOST = '127.0.0.1'
     REDIS_PORT = 6379
     #: SKYCOIN
+    SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
+    WTF_CSRF_SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
     SKYCOIN_NODE_URL = 'http://localhost:6420/'
     LIBSKYCOIN_PATH = os.path.join(*('exchange_app/libskycoin.so'.split('/')))
+    SKYCOIN_WALLET_SHARED = False
+    SKYCOIN_FIBER_ASSET = "SKY"
+    SKYCOIN_FIBER_NAME = "Skycoin"
 
 
 class ProductionConfig(Config):
