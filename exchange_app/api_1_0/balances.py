@@ -88,7 +88,7 @@ def get_balances():
         item['address'] = addresses[start_index]
         item['assetId'] = app_config.SKYCOIN_FIBER_ASSET
         item['balance'] = str(balance['balance'])  #TODO: Asset accuracy
-        item['block'] = blockheight
+        item['block'] = blockheight['blockheight']
         if balance['balance'] != 0:
             items.append(item)
         
