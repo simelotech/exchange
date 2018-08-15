@@ -9,9 +9,6 @@ class LiveTestCase(unittest.TestCase):
         self.app = app.test_client()
 
     def test_test(self):
-        secret = os.environ['MY_SECRET_ENV']
-        assert secret == "super_secret"
-        '''
         seeds_path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 *('data/skycoin/seeds.json'.split('/')))
@@ -19,7 +16,6 @@ class LiveTestCase(unittest.TestCase):
         text = file.read()
         seeds = json.loads(text)
         file.close()
-        '''
 
     def test_wallets(self):
         response = self.app.post(
