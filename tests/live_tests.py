@@ -3,6 +3,8 @@ import os
 from exchange_app import app
 from exchange_app.settings import app_config
 import json
+import skycoin
+import binascii
 
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://localhost:6421/"
 
@@ -12,7 +14,7 @@ class LiveTestCase(unittest.TestCase):
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
-        self._createTestWallets()
+        self.wallets = self._createTestWallets()
 
     def tearDown(self):
         app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
@@ -89,8 +91,61 @@ class LiveTestCase(unittest.TestCase):
         text = file.read()
         r = json.loads(text)
         file.close()
+        wallets = []
         for seed in r["seeds"]:
-            self._createWalletFromSeed(seed)
+            wallet = self._createWalletFromSeed(seed)
+            wallets.append(wallet)
+        return wallets
+
 
     def _createWalletFromSeed(self, seed):
-        pass
+        # generate CSRF token
+        CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+
+        if not CSRF_token or "csrf_token" not in CSRF_token:
+            assert False
+            #return {"status": 500, "error": "Unknown server error"}
+        # create the wallet from seed
+        resp = app.lykke_session.post(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/create"),
+                             {"seed": seed,
+                                 "label": "wallet123", "scan": "5"},
+                             headers={'X-CSRF-Token': CSRF_token['csrf_token']})
+
+        if not resp:
+            return {"status": 500, "error": "Unknown server error"}
+
+        if resp.status_code != 200:
+            return {"status": 500, "error": "Unknown server error"}
+        new_wallet = resp.json()
+
+        if not new_wallet or "entries" not in new_wallet:
+            return {"status": 500, "error": "Unknown server error"}
+
+        pubkey = skycoin.cipher_PubKey()
+        seckey = skycoin.cipher_SecKey()
+        error = skycoin.SKY_cipher_GenerateDeterministicKeyPair(
+                seed.encode(), pubkey, seckey)
+        if error != 0:
+            return {"status": 500, "error": "Unknown server error"}
+
+        return {
+            "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
+            "publicAddress": new_wallet["entries"][0]["address"],
+            "addressContext": new_wallet['meta']['filename']
+        }
+
+
+    def form_url(self, base, path):
+        """
+        Conform the full URL from base URL and path
+        """
+
+        if path[0] != '/':
+            path = '/' + path
+
+        if base[len(base) - 1] == '/':
+            base = base[0:len(base) - 1]
+
+        url = base + path
+
+        return url
