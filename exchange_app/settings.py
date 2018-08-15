@@ -54,7 +54,9 @@ class TestingConfig(Config):
 
 
 environment = os.getenv('ENVIRONMENT', 'DEVELOPMENT').lower()
-
+print("*******************")
+print(environment)
+print("*******************")
 if environment == 'testing':
     app_config = TestingConfig()
 elif environment == 'production':
