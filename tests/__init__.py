@@ -1,13 +1,16 @@
 
-"""Default test suite for the Skycoin Lykke integration.
+"""
+Default test suite for the Skycoin Lykke integration.
 """
 
-import docker, docker.errors
+import docker
+import docker.errors
 import logging
 import os
 import time
 import uuid
-import socket, errno
+import socket
+import errno
 
 service_prefix = 'lykke_sky'
 services_started = dict()
@@ -17,8 +20,10 @@ log = logging.getLogger(service_prefix)
 
 TestSetupError = RuntimeError
 
+
 def setup():
-    """Setup integration tests
+    """
+    etup integration tests
     """
     try:
         testservice_name = testrun_service_name()
@@ -26,16 +31,22 @@ def setup():
         log.info('Starting test run %s' % (testservice_name,))
         services_started[testservice_name] = (testsuite_id, False)
         log.info('Initializing service : mongo')
-        init_service('mongo',           '3.6.4-jessie', 27017)
+        init_service('mongo', '3.6.4-jessie', 27017)
         log.info('Initializing service : redis')
-        init_service('redis',           '3.0.7-alpine', 6379)
+        init_service('redis', '3.0.7-alpine', 6379)
         log.info('Initializing service : skycoin')
-        init_service('skycoin/skycoin', 'develop',      6420, command='-enable-wallet-api=true')
+        init_service(
+            'skycoin/skycoin',
+            'develop',
+            6420,
+            command='-enable-wallet-api=true'
+        )
     except:
         log.error('Error found in test suite setup')
         raise
     finally:
         wait_for_all(services_started)
+
 
 def teardown():
     """Unload launched services if no test suite is running.
@@ -47,21 +58,25 @@ def teardown():
             docker_dispose(service_id)
     del services_started[testservice_name]
 
+
 def testrun_service_name():
-    """Name to register this test run as a service.
-    
+    """
+    Name to register this test run as a service.
     Depends on operating-system process ID.
     """
     return '%s_%d' % (service_prefix, os.getpid())
 
+
 def testrun_id():
-    """Global identifier of this test run.
+    """
+    Global identifier of this test run.
     """
     return services_started[testrun_service_name()][0]
 
-def init_service(service_name, version, default_port, command=None):
-    """Ensure service is running. If not available run it with Docker.
 
+def init_service(service_name, version, default_port, command=None):
+    """
+    Ensure service is running. If not available run it with Docker.
     service_name : The name of the official Docker image used to run
                    the target service.
     default_port : Default service port. Usually matches the value
@@ -75,20 +90,33 @@ def init_service(service_name, version, default_port, command=None):
     launched = False
     service_id = docker_service_name(service_name)
     if not is_listening_at(port):
-        docker_run(service_name, tag=version,
-                name=service_id ,
-                ports={'%s/tcp' % (default_port,): port},
-                command=command)
+        docker_run(
+            service_name,
+            tag=version,
+            name=service_id,
+            ports={'%s/tcp' % (default_port,): port},
+            command=command
+        )
         launched = True
     services_started[service_id] = (port, launched)
 
+
 def docker_service_name(service_name):
-    """Name of the container running a service used by this test run, if any.
     """
-    return '_'.join((service_prefix, testrun_id(), service_name.replace('/', '_')))
+    Name of the container running a service used by this test run, if any.
+    """
+    return '_'.join(
+        (
+            service_prefix,
+            testrun_id(),
+            service_name.replace('/', '_')
+        )
+    )
+
 
 def docker_run(service_name, name, **docker_options):
-    """Run service in a Docker container.
+    """
+    Run service in a Docker container.
     """
     client = docker.from_env()
 
@@ -99,9 +127,15 @@ def docker_run(service_name, name, **docker_options):
 #    except:
 #        log.warning('Image %s:%s not found locally ... pulling' % (service_name, image_tag))
 #        client.images.pull(service_name, image_tag)
-    client.containers.run('%s:%s' % (service_name, image_tag), detach=True, name=name,
-            ports=docker_options.get('ports', dict()), command=docker_options.get('command'))
+    client.containers.run(
+        '%s:%s' % (service_name, image_tag),
+        detach=True,
+        name=name,
+        ports=docker_options.get('ports', dict()),
+        command=docker_options.get('command')
+    )
     time.sleep(1.0)
+
 
 def docker_dispose(service_id):
     """Remove container used to run service
@@ -113,13 +147,18 @@ def docker_dispose(service_id):
     container.wait()
     container.remove()
 
+
 def wait_for_all(services_started, max_retries=5):
-    """Wait for all services to be available.
     """
-    log.info('Waiting for services started: %s',
-            ', '.join(key
-                for key, (_, launched) in services_started.items()
-                if launched))
+    Wait for all services to be available.
+    """
+    log.info(
+        'Waiting for services started: %s',
+        ', '.join(
+            key for key,
+            (_, launched) in services_started.items() if launched
+        )
+    )
     step = max_retries
     pending = services_started.keys()
     timeout = 3.0
@@ -127,20 +166,22 @@ def wait_for_all(services_started, max_retries=5):
     # FIXME: Signal instead of busy wait
     while step > 0 and len(pending) > 0:
         time.sleep(timeout)
-        pending = [(service_name, port)
-                for service_name, (port, launched) in services_started.items()
-                if launched and not is_listening_at(port)]
+        pending = [(service_name, port) for service_name, (port, launched) in services_started.items() if launched and not is_listening_at(port)]
         timeout = 3
         step -= 1
     if len(pending) > 0:
-        log.warning('Some services could not be started: %s',
-                ', '.join('%s at %s' % entry for entry in pending))
+        log.warning(
+            'Some services could not be started: %s',
+            ', '.join('%s at %s' % entry for entry in pending)
+        )
         return False
     log.info('All services started')
     return True
 
+
 def is_listening_at(port):
-    """Check whether there's a service listening at given port.
+    """
+    Check whether there's a service listening at given port.
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -152,5 +193,3 @@ def is_listening_at(port):
             # something else raised the socket.error exception
             print(e)
     s.close()
-
-
