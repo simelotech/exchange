@@ -15,9 +15,32 @@ class LiveTestCase(unittest.TestCase):
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
         self.wallets = self._createTestWallets()
+        self.addressWithBalance = ""
+        self.findAddressWithBalance()
 
     def tearDown(self):
         app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
+
+    def findAddressWithBalance(self):
+        addresses = []
+        for wallet in self.wallets:
+            addresses.append(wallet["publicAddress"])
+        values = {"addrs": ",".join(addresses)}
+        balances = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
+        if not balances.json:
+            raise Exception("Error when getting wallet balances")
+
+        response = balances.json()
+        if "error" in response:
+            raise Exception(response["error"]["message"])
+        keys = response["addresses"].keys()
+        self.addressWithBalance = ""
+        for key in keys:
+            coins = response["addresses"][key]["confirmed"]["coins"]
+            if coins > 0:
+                self.addressWithBalance = key
+        assert self.addressWithBalance != "", "No wallet with balance"
+
 
     def test_wallets(self):
         response = self.app.post(
@@ -112,21 +135,22 @@ class LiveTestCase(unittest.TestCase):
                              headers={'X-CSRF-Token': CSRF_token['csrf_token']})
 
         if not resp:
-            return {"status": 500, "error": "Unknown server error"}
+            raise Exception("No response when creating wallet")
 
         if resp.status_code != 200:
-            return {"status": 500, "error": "Unknown server error"}
+            raise Exception("Error {0} when creating wallet".format(resp.status_code))
+
         new_wallet = resp.json()
 
         if not new_wallet or "entries" not in new_wallet:
-            return {"status": 500, "error": "Unknown server error"}
+            raise Exception("Error when creating wallet")
 
         pubkey = skycoin.cipher_PubKey()
         seckey = skycoin.cipher_SecKey()
         error = skycoin.SKY_cipher_GenerateDeterministicKeyPair(
                 seed.encode(), pubkey, seckey)
         if error != 0:
-            return {"status": 500, "error": "Unknown server error"}
+            raise Exception("No response when creating private and public keys for wallet")
 
         return {
             "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
