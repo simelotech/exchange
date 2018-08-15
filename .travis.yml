@@ -33,7 +33,7 @@ before_install:
 - wget https://transfer.sh/duNid/skycoin.data.50994.db
 - ls *.db
 - pwd
-- mv skycoin.data.50994.db ./test/data/skycoin/data.db
+- mv skycoin.data.50994.db ./tests/data/skycoin/data.db
 install:
 - sudo pip install tox-travis
 - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
