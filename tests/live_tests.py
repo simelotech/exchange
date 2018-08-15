@@ -20,6 +20,8 @@ class LiveTestCase(unittest.TestCase):
         time.sleep(10)
         self.wallets = self._createTestWallets()
         self.addressWithBalance = ""
+        self.walletWithBalance = ""
+
         self.findAddressWithBalance()
 
     def tearDown(self):
@@ -46,7 +48,12 @@ class LiveTestCase(unittest.TestCase):
         assert self.addressWithBalance != "", "No wallet with balance " + str(response)
 
     def test_transaction(self):
-        pass
+        sourceAddress = self.addressWithBalance
+        destAddress = ""
+        for wallet in self.wallets:
+            if self.addressWithBalance != wallet["publicAddress"]:
+                destAddress = wallet["publicAddress"]
+
 
     '''
     def test_wallets(self):
