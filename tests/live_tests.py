@@ -1,12 +1,20 @@
 import unittest
 import os
 from exchange_app import app
+from exchange_app.settings import app_config
 import json
+
+LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://localhost:6421/"
 
 class LiveTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
+        app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
+
+    def tearDown(self):
+        app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
 
     def test_test(self):
         seeds_path = os.path.join(
