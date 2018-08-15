@@ -37,7 +37,7 @@ def setup():
         init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params,
             volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
         skycoin_params = " -enable-wallet-api=true" \
-                         " -db-path=/data/test/blockchain-180.db" \
+                         " -db-path=/data/test/data.db" \
                          " -download-peerlist=false" \
                          " -rpc-interface=true" \
                          " -db-read-only=true" \

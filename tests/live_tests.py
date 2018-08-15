@@ -39,9 +39,12 @@ class LiveTestCase(unittest.TestCase):
             coins = response["addresses"][key]["confirmed"]["coins"]
             if coins > 0:
                 self.addressWithBalance = key
-        assert self.addressWithBalance != "", "No wallet with balance"
+        assert self.addressWithBalance != "", "No wallet with balance " + str(response)
 
+    def test_transaction(self):
+        pass
 
+    '''
     def test_wallets(self):
         response = self.app.post(
             '/v1/api/wallets',
@@ -105,6 +108,7 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
+    '''
 
     def _createTestWallets(self):
         seeds_path = os.path.join(
