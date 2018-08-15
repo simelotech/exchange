@@ -12,18 +12,10 @@ class LiveTestCase(unittest.TestCase):
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
+        self._createTestWallets()
 
     def tearDown(self):
         app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
-
-    def test_test(self):
-        seeds_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                *('data/skycoin/seeds.json'.split('/')))
-        file = open(seeds_path, "r")
-        text = file.read()
-        seeds = json.loads(text)
-        file.close()
 
     def test_wallets(self):
         response = self.app.post(
@@ -88,3 +80,17 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400)
+
+    def _createTestWallets(self):
+        seeds_path = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                *('data/skycoin/seeds.json'.split('/')))
+        file = open(seeds_path, "r")
+        text = file.read()
+        r = json.loads(text)
+        file.close()
+        for seed in r["seeds"]:
+            self._createWalletFromSeed(seed)
+
+    def _createWalletFromSeed(self, seed):
+        pass
