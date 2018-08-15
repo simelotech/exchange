@@ -5,6 +5,8 @@ from exchange_app.settings import app_config
 import json
 import skycoin
 import binascii
+import urllib.request
+import time
 
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://localhost:6421/"
 
@@ -14,6 +16,8 @@ class LiveTestCase(unittest.TestCase):
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
+        #Wait for service to finish checking database (too big)
+        time.sleep(10)
         self.wallets = self._createTestWallets()
         self.addressWithBalance = ""
         self.findAddressWithBalance()
@@ -130,7 +134,7 @@ class LiveTestCase(unittest.TestCase):
         CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
 
         if not CSRF_token or "csrf_token" not in CSRF_token:
-            assert False
+            assert False, "Error requesting token from"
             #return {"status": 500, "error": "Unknown server error"}
         # create the wallet from seed
         resp = app.lykke_session.post(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/create"),
