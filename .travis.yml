@@ -33,45 +33,48 @@ matrix:
         - deadsnakes
         packages:
         - python3.6
+
 before_install:
-  - mkdir -p build/lyyke_tests
-  - git clone https://github.com/LykkeCity/Lykke.Automation.Tests build/lykke_tests
-  - cat 'tests/data/lykke_tests/properties.json' | python -c 'import sys, json; sys.stdin.read().format(json.load("./tests/data/lykke_tests/vars.json"))' > build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/properties.json
+- mkdir -p build/lyyke_tests
+- git clone https://github.com/LykkeCity/Lykke.Automation.Tests build/lykke_tests
+- cat 'tests/data/lykke_tests/properties.json' | python -c 'import sys, json; sys.stdin.read().format(json.load("./tests/data/lykke_tests/vars.json"))' > build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/properties.json
 - openssl aes-256-cbc -K $encrypted_2c77414c66d3_key -iv $encrypted_2c77414c66d3_iv
   -in seeds.json.enc -out tests/data/skycoin/seeds.json -d
 - wget https://transfer.sh/duNid/skycoin.data.50994.db
 - ls *.db
 - pwd
 - mv skycoin.data.50994.db ./tests/data/skycoin/data.db
+
 install:
-    # Python tools
+# Python tools
 - sudo pip install tox-travis
-    # PySkycoin deps
-    - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
-    - eval "$(gimme 1.10)"
-    - go version
-    # Lykke test suite
-    - wget -q https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb
-    - sudo dpkg -i packages-microsoft-prod.deb
-    - sudo apt-get install apt-transport-https
-    - sudo apt-get update
-    - sudo apt-get install dotnet-runtime-2.0.7
+# PySkycoin deps
+- mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz && tar -zxf swig-3.0.12.tar.gz && cd swig-3.0.12 && sudo ./configure --prefix=/usr && sudo make && sudo make install && cd ../../ && sudo rm -rf swig_build
+- eval "$(gimme 1.10)"
+- go version
+# Lykke test suite
+- wget -q https://packages.microsoft.com/config/ubuntu/14.04/packages-microsoft-prod.deb
+- sudo dpkg -i packages-microsoft-prod.deb
+- sudo apt-get install apt-transport-https
+- sudo apt-get update
+- sudo apt-get install dotnet-runtime-2.0.7
 
 script:
-  # Tests for Skycoin Blockchain API
-  - tox
-  # Lykke acceptance test suite
-  - docker run -p 27017:27017 mongo:3.6.4-jessie
-  - docker run -p  6379:6379  redis:3.0.7-alpine
-  - docker run -p  6420:6420 -p 6000:6000 -v ./tests/data/skycoin:/data/test skycoin/skycoin:develop -enable-wallet-api=true -db-path=/data/test/blockchain-180.db -download-peerlist=false -rpc-interface=true -db-read-only=true -disable-networking=true -web-interface-port=6420
-  - python manage.py runserver & && echo "$!" > app.id.txt
-  - cd build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/ && dotnet test AFTests.csproj --filter "TestCategory=BlockchainIntegration"
-  - kill -s KILL `cat app.id.txt`
+# Tests for Skycoin Blockchain API
+- tox
+# Lykke acceptance test suite
+- docker run -p 27017:27017 mongo:3.6.4-jessie
+- docker run -p  6379:6379  redis:3.0.7-alpine
+- docker run -p  6420:6420 -p 6000:6000 -v ./tests/data/skycoin:/data/test skycoin/skycoin:develop -enable-wallet-api=true -db-path=/data/test/blockchain-180.db -download-peerlist=false -rpc-interface=true -db-read-only=true -disable-networking=true -web-interface-port=6420
+- python manage.py runserver & && echo "$!" > app.id.txt
+- cd build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/ && dotnet test AFTests.csproj --filter "TestCategory=BlockchainIntegration"
+- kill -s KILL `cat app.id.txt`
 
 after_failure:
 - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
-    - XUnitTestCommon\Reports\allure-cli\bin\allure generate
-    - curl --upload-file AFTests\bin\Debug\netcoreapp2.0\allure-results\index.html https://transfer.sh/lykke.sky.${TRAVIS_JOB_ID}-${TRAVIS_JOB_NUMBER}.html
+- XUnitTestCommon\Reports\allure-cli\bin\allure generate
+- curl --upload-file AFTests\bin\Debug\netcoreapp2.0\allure-results\index.html https://transfer.sh/lykke.sky.${TRAVIS_JOB_ID}-${TRAVIS_JOB_NUMBER}.html
+
 notifications:
   email: false
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
