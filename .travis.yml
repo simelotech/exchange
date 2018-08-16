@@ -59,8 +59,12 @@ install:
     - sudo apt-get install dotnet-runtime-2.0.7
 
 script:
+  # Tests for Skycoin Blockchain API
   - tox
-  # Lykke reference test suite
+  # Lykke acceptance test suite
+  - docker run -p 27017:27017 mongo:3.6.4-jessie
+  - docker run -p  6379:6379  redis:3.0.7-alpine
+  - docker run -p  6420:6420 -p 6000:6000 -v ./tests/data/skycoin:/data/test skycoin/skycoin:develop -enable-wallet-api=true -db-path=/data/test/blockchain-180.db -download-peerlist=false -rpc-interface=true -db-read-only=true -disable-networking=true -web-interface-port=6420
   - python manage.py runserver & && echo "$!" > app.id.txt
   - cd build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/ && dotnet test AFTests.csproj --filter "TestCategory=BlockchainIntegration"
   - kill -s KILL `cat app.id.txt`
