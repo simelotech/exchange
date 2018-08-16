@@ -32,13 +32,18 @@ def sign_transaction(txContext, privateKeys):
         if error != 0:
             logging.debug('sign_transaction - Error serializing transaction')
             return {"status": 500, "error": "Error serializing transaction"}
-        newContext = codecs.encode(serialized, 'hex')
+        logging.debug('Serialized Transaction: {}'.format(serialized))
+        newContext = str(codecs.encode(serialized, 'hex'))
+        if newContext.startswith("b\'"):
+            newContext = newContext[2:len(newContext)-1]
+        logging.debug('Signed Transaction Context: {}'.format(newContext))
         return {"signedTransaction" : newContext}
-    except:
+    except Exception as e:
+        logging.debug("Error signing transaction. Error: {}".format(str(e)))
         return {"status": 500, "error": "Unknown Error"}
     finally:
         if transaction_handle != 0:
-            skycoin.SKY_handle_close(handle)
+            skycoin.SKY_handle_close(transaction_handle)
 
 '''
 def sign_transaction(tx):

@@ -8,6 +8,7 @@ import binascii
 import urllib.request
 import time
 import logging
+import codecs
 
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://localhost:6421/"
 
@@ -22,18 +23,14 @@ class LiveTestCase(unittest.TestCase):
         self.serverUp = False
         self.wallets = self._createTestWallets()
         self.addressWithBalance = ""
-        self.walletWithBalance = ""
-
-        self.findAddressWithBalance()
+        self.addressWithoutBalance = ""
+        self.pickAddresses()
 
     def tearDown(self):
         app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
 
-    def findAddressWithBalance(self):
-        addresses = []
-        for wallet in self.wallets:
-            addresses.append(wallet["publicAddress"])
-        values = {"addrs": ",".join(addresses)}
+    def pickAddresses(self):
+        values = {"addrs": ",".join(self.wallets.keys())}
         balances = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
         if not balances.json:
             raise Exception("Error when getting wallet balances")
@@ -43,19 +40,58 @@ class LiveTestCase(unittest.TestCase):
             raise Exception(response["error"]["message"])
         keys = response["addresses"].keys()
         self.addressWithBalance = ""
+        self.addressWithoutBalance = ""
         for key in keys:
             coins = response["addresses"][key]["confirmed"]["coins"]
             if coins > 0:
                 self.addressWithBalance = key
-        assert self.addressWithBalance != "", "No wallet with balance " + str(response)
+            else:
+                self.addressWithoutBalance = key
+        assert self.addressWithBalance != "", "No wallet with balance"
+        assert self.addressWithoutBalance != "", "No wallet with 0 balance"
 
-    def test_transaction(self):
+    def test_transaction_single(self):
         sourceAddress = self.addressWithBalance
-        destAddress = ""
-        for wallet in self.wallets:
-            if self.addressWithBalance != wallet["publicAddress"]:
-                destAddress = wallet["publicAddress"]
-
+        sourceWallet = self.wallets[sourceAddress]["addressContext"]
+        privateKey = self.wallets[sourceAddress]["privateKey"]
+        destAddress = self.addressWithoutBalance
+        testTx = {
+            'operationID' : '4324432444332', #just some operation id
+            'fromAddress' : sourceAddress,
+            'fromAddressContext' : sourceWallet,
+            'toAddress' : destAddress,
+            'assetId' : 'SKY',
+            'amount' : '1',
+            'includeFee' : False
+        }
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('transactionContext', json_response)
+        transaction_context = json_response['transactionContext']
+        #Test transaction sign
+        data = {
+            "privateKeys" : [privateKey],
+            "transactionContext" : transaction_context
+        }
+        response = self.app.post(
+            '/v1/api/sign',
+            data = json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn('signedTransaction', json_response)
+        #Test deserializing back the signed transaction
+        serialized = codecs.decode(json_response['signedTransaction'], 'hex')
+        error, transaction_handle = skycoin.SKY_coin_TransactionDeserialize(serialized)
+        assert error == 0, "Error deserializing signed transaction"
+        assert transaction_handle != 0, "Invalid handle returned from SKY_coin_TransactionDeserialize"
+        skycoin.SKY_handle_close(transaction_handle)
 
     '''
     def test_wallets(self):
@@ -131,10 +167,10 @@ class LiveTestCase(unittest.TestCase):
         text = file.read()
         r = json.loads(text)
         file.close()
-        wallets = []
+        wallets = {}
         for seed in r["seeds"]:
             wallet = self._createWalletFromSeed(seed)
-            wallets.append(wallet)
+            wallets[wallet["publicAddress"]] = wallet
         return wallets
 
     def _getCSRFToken(self):

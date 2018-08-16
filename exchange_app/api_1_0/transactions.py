@@ -28,7 +28,9 @@ def transactions_single():
         if 'error' in result:
             status = result.get('status', 500)
             return make_response(result['error'], status)
-        transaction_context = result['encoded_transaction']
+        transaction_context = str(result['encoded_transaction'])
+        if transaction_context.startswith("b\'"):
+            transaction_context = transaction_context[2:len(transaction_context)-1]
         add_transaction(tx['operationId'], transaction_context)
     return jsonify({"transactionContext" : transaction_context})
 
@@ -53,4 +55,3 @@ def transactions_many_outputs():
             return make_response(result['error'], 500)
         transaction_context = result['encoded_transaction']
     return jsonify({"transactionContext" : transaction_context})
-
