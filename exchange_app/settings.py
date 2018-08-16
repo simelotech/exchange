@@ -18,7 +18,7 @@ class Config(object):
 
 
 class ProductionConfig(Config):
-    ENVIRONMENT = 'Production'
+    ENVIRONMENT = 'production'
     PRODUCTION = True
     LOG_LEVEL = logging.INFO
     SERVER_NAME = ''
@@ -40,7 +40,7 @@ class ProductionConfig(Config):
 
 
 class DevelopmentConfig(Config):
-    ENVIRONMENT = 'Dev'
+    ENVIRONMENT = 'development'
     DEBUG = True
     TESTING = False
     #: Database
@@ -63,7 +63,7 @@ class DevelopmentConfig(Config):
 
 
 class TestingConfig(Config):
-    ENVIRONMENT = 'Testing'
+    ENVIRONMENT = 'testing'
     DEBUG = False
     TESTING = True
     #: Database
@@ -83,11 +83,14 @@ class TestingConfig(Config):
     SKYCOIN_FIBER_NAME = "Skycoin"
 
 
+class TravisAcceptance(TestingConfig):
+    ENVIRONMENT = 'travis_accept'
+    SKYCOIN_NODE_URL = 'http://localhost:6423/'
+
+
 environment = os.getenv('ENVIRONMENT', 'DEVELOPMENT').lower()
 
-if environment == 'testing':
-    app_config = TestingConfig()
-elif environment == 'production':
-    app_config = ProductionConfig()
-else:
-    app_config = DevelopmentConfig()
+for cls in (TestingConfig, ProductionConfig, DevelopmentConfig, TravisAcceptance):
+  if environment == cls.ENVIRONMENT:
+    app_config = cls()
+
