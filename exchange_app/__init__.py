@@ -5,7 +5,6 @@ from flask_redis import FlaskRedis
 from flask_pymongo import PyMongo
 import requests
 
-
 FLASK_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(
@@ -34,5 +33,7 @@ redis_store = FlaskRedis(app, strict=False)
 mongo = PyMongo(app)
 
 # Business Logic
+from . import signservice
 from .api_1_0 import api as api_blueprint
 app.register_blueprint(api_blueprint, url_prefix='/v1/api')
+

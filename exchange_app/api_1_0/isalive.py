@@ -2,8 +2,7 @@ from flask import jsonify, make_response
 from . import api
 from .blockchain import get_version
 from .. import app
-from .common import build_error
-
+from ..common import build_error
 
 @api.route('/isalive', methods=['GET'])
 def isalive():
@@ -20,10 +19,11 @@ def isalive():
         )
 
     result = {
-        "name": "Skycoin",
-        "version": version,  # TODO: Return skycoin version or this API version?
+        "name": app.config['SKYCOIN_FIBER_NAME'],
+        "version": version,
         "env": app.config["ENVIRONMENT"],
-        "isDebug": app.config["DEBUG"]
+        "isDebug": app.config["DEBUG"],
+        "contractVersion": app.config['LYKKE_API_VERSION']
     }
 
     return jsonify(result)

@@ -1,6 +1,6 @@
 from flask import jsonify, request
-from . import api
-from .common import error_codes
+from ..api_1_0 import api
+from ..common import error_codes
 
 @api.route('/sign', methods=['POST'])
 def post_sign():
