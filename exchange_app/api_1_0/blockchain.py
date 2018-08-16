@@ -210,8 +210,8 @@ def transaction_broadcast(signedTransaction):
         return {"status": 500, "error": "Unknown server error"}
     if resp.status_code != 200:
         return {"status": 500, "error": "Unknown server error"}
-    result = resp.get_data(as_text=True)
-    return {"result" : result}
+    result = resp.json()
+    return result
 
 #Check balances for a transaction
 def check_balance_from_transaction(tx):
@@ -242,7 +242,7 @@ def create_transaction(tx):
     for output in tx['outputs']:
         dest = {
         	"address": output['toAddress'],
-        	"coins": str(output['amount'])
+        	"coins": "{:f}".format(output['amount'])
         }
         outputs.append(dest)
     data = {

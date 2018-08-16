@@ -10,6 +10,8 @@ from .service_manager import *
 
 TestSetupError = RuntimeError
 
+stopServices = True
+
 def setup():
     """Setup integration tests
     """
@@ -40,8 +42,8 @@ def setup():
                          " -db-path=/data/test/data.db" \
                          " -download-peerlist=false" \
                          " -rpc-interface=true" \
-                         " -db-read-only=true" \
-                         " -disable-networking=true" \
+                         " -db-read-only=false" \
+                         " -disable-networking=false" \
                          " -web-interface-port=6421"
         init_service('skycoin/skycoin', 'develop',      6421, command=skycoin_params,
             volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
@@ -55,9 +57,10 @@ def setup():
 def teardown():
     """Unload launched services if no test suite is running.
     """
-    testservice_name = testrun_service_name()
-    log.info('Clean up after test run %s' % (testservice_name,))
-    for service_id, (_, launched) in services_started.items():
-        if service_id.startswith('_'.join((service_prefix, testrun_id()))) and launched:
-            docker_dispose(service_id)
-    del services_started[testservice_name]
+    if stopServices:
+        testservice_name = testrun_service_name()
+        log.info('Clean up after test run %s' % (testservice_name,))
+        for service_id, (_, launched) in services_started.items():
+            if service_id.startswith('_'.join((service_prefix, testrun_id()))) and launched:
+                docker_dispose(service_id)
+        del services_started[testservice_name]

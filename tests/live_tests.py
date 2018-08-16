@@ -23,7 +23,7 @@ class LiveTestCase(unittest.TestCase):
         self.serverUp = False
         self.wallets = self._createTestWallets()
         self.addressWithBalance = ""
-        self.addressWithoutBalance = ""
+        self.destinationAddress = ""
         self.pickAddresses()
 
     def tearDown(self):
@@ -45,23 +45,25 @@ class LiveTestCase(unittest.TestCase):
             coins = response["addresses"][key]["confirmed"]["coins"]
             if coins > 0:
                 self.addressWithBalance = key
-            else:
-                self.addressWithoutBalance = key
+            self.wallets[key]['balance'] = coins
         assert self.addressWithBalance != "", "No wallet with balance"
-        assert self.addressWithoutBalance != "", "No wallet with 0 balance"
+        for key in keys:
+            if key != self.addressWithBalance:
+                self.destinationAddress = key
+        assert self.destinationAddress != "", "Couldn't find a destination address"
 
-    def test_transaction_single(self):
-        sourceAddress = self.addressWithBalance
+
+    def _transferSKY(self, sourceAddress, destAddress, operationId):
         sourceWallet = self.wallets[sourceAddress]["addressContext"]
         privateKey = self.wallets[sourceAddress]["privateKey"]
-        destAddress = self.addressWithoutBalance
+
         testTx = {
-            'operationID' : '4324432444332', #just some operation id
+            'operationID' : operationId,
             'fromAddress' : sourceAddress,
             'fromAddressContext' : sourceWallet,
             'toAddress' : destAddress,
             'assetId' : 'SKY',
-            'amount' : '1',
+            'amount' : '1000', #1000 droplet
             'includeFee' : False
         }
         response = self.app.post(
@@ -73,6 +75,7 @@ class LiveTestCase(unittest.TestCase):
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('transactionContext', json_response)
         transaction_context = json_response['transactionContext']
+
         #Test transaction sign
         data = {
             "privateKeys" : [privateKey],
@@ -86,12 +89,66 @@ class LiveTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('signedTransaction', json_response)
+        signedTransaction = json_response['signedTransaction']
         #Test deserializing back the signed transaction
         serialized = codecs.decode(json_response['signedTransaction'], 'hex')
         error, transaction_handle = skycoin.SKY_coin_TransactionDeserialize(serialized)
-        assert error == 0, "Error deserializing signed transaction"
-        assert transaction_handle != 0, "Invalid handle returned from SKY_coin_TransactionDeserialize"
+        self.assertEqual( error, 0, "Error deserializing signed transaction")
+        self.assertNotEqual(transaction_handle, 0, "Invalid handle returned from SKY_coin_TransactionDeserialize")
+        hash = skycoin.cipher_SHA256()
+        error = skycoin.SKY_coin_Transaction_Hash(transaction_handle, hash)
         skycoin.SKY_handle_close(transaction_handle)
+        self.assertEqual(error, 0, "Error getting transaction hash")
+
+        #Get transaction hash to check for confirmation
+        error, hashHex = skycoin.SKY_cipher_SHA256_Hex(hash)
+        self.assertEqual(error, 0, "Error converting hash to hex")
+
+        #Test transaction broadcast
+        data = {
+            "operationId" : operationId,
+            "signedTransaction" : signedTransaction,
+        }
+        response = self.app.post(
+            '/v1/api/transactions/broadcast',
+            data = json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+
+        timeOut = 5
+        tries = 10
+        confirmed = False
+        while tries > 10 and not confirmed:
+            try:
+                response = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL,
+                    "/api/v1/transaction"),
+                    params={"txid": hashHex})
+                if response.status_code == 200:
+                    json_response = json.loads(response.get_data(as_text=True))
+                    if not json_response:
+                        raise Exception("Invalid response from /api/v1/transaction. No response")
+                    logging.debug("Response from /api/v1/transaction: {}".format(json_response))
+                    if lower(json_response['txn']['txid']) != lower(hashHex):
+                        raise Exception("Received transaction info for the wrong transaction." + \
+                            " {} != {}".format(json_response['txn']['txid'], hashHex))
+                    confirmed = json_response["status"]["confirmed"]
+                    loggin.debug("Confirmed result: {}".format(confirmed))
+                if not confirmed:
+                    time.sleep(timeOut)
+                    tries -= 1
+            except Exception as e:
+                loggin.debug("Error when checking transaction status. Error: {}".format(str(e)) )
+
+
+    def test_transaction_single(self):
+        sourceAddress = self.addressWithBalance
+        #save previous balance to check after transaction is confirmed
+        previous_balance = self.wallets[sourceAddress]['balance']
+        destAddress = self.destinationAddress
+        self._transferSKY(sourceAddress, destAddress, '4324432444332') #just some operation id
+        self._transferSKY(destAddress, sourceAddress, '4324432444333')
 
     '''
     def test_wallets(self):
@@ -178,11 +235,13 @@ class LiveTestCase(unittest.TestCase):
         tries = 1
         if not self.serverUp:
             tries = 10
-        timeOut = 10
+        timeOut = 7
         CSRF_token = False
         while tries > 0:
             try:
                 CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+                if CSRF_token and "csrf_token" in CSRF_token:
+                    break
             except:
                 logging.debug("Error requesting csrf token")
                 time.sleep(timeOut)
@@ -220,6 +279,7 @@ class LiveTestCase(unittest.TestCase):
 
         return {
             "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
+            "publicKey": binascii.hexlify(bytearray(pubkey.toStr())).decode('ascii'),
             "publicAddress": new_wallet["entries"][0]["address"],
             "addressContext": new_wallet['meta']['filename']
         }
