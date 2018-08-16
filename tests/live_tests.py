@@ -22,9 +22,9 @@ class LiveTestCase(unittest.TestCase):
         time.sleep(10)
         self.serverUp = False
         self.wallets = self._createTestWallets()
-        self.addressWithBalance = ""
-        self.destinationAddress = ""
-        self.pickAddresses()
+        self.addressWithBalance = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
+        self.destinationAddress = "22TdufeUbAehE7ZnLuBUaTkacQHAFtCVnw2"
+        #self.pickAddresses()
 
     def tearDown(self):
         app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
@@ -38,22 +38,22 @@ class LiveTestCase(unittest.TestCase):
         response = balances.json()
         if "error" in response:
             raise Exception(response["error"]["message"])
-        keys = response["addresses"].keys()
-        self.addressWithBalance = ""
-        self.addressWithoutBalance = ""
-        for key in keys:
-            coins = response["addresses"][key]["confirmed"]["coins"]
-            if coins > 0:
-                self.addressWithBalance = key
-            self.wallets[key]['balance'] = coins
-        assert self.addressWithBalance != "", "No wallet with balance"
-        for key in keys:
-            if key != self.addressWithBalance:
-                self.destinationAddress = key
-        assert self.destinationAddress != "", "Couldn't find a destination address"
+        raise Exception(str(response))
 
+    def _getBalanceForAddresses(self, addresses):
+        values = {"addrs": ",".join(addresses)}
+        balances = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
+        if not balances.json:
+            raise Exception("Error when getting wallet balances")
+        response = balances.json()
+        if "error" in response:
+            raise Exception(response["error"]["message"])
+        result = {}
+        for address in addresses:
+            result[address] = response["addresses"][address]["confirmed"]["coins"]
+        return result
 
-    def _transferSKY(self, sourceAddress, destAddress, operationId):
+    def _transferSKY(self, sourceAddress, destAddress, amount, operationId):
         sourceWallet = self.wallets[sourceAddress]["addressContext"]
         privateKey = self.wallets[sourceAddress]["privateKey"]
 
@@ -63,7 +63,7 @@ class LiveTestCase(unittest.TestCase):
             'fromAddressContext' : sourceWallet,
             'toAddress' : destAddress,
             'assetId' : 'SKY',
-            'amount' : '1000', #1000 droplet
+            'amount' : str(amount), #1000 droplet
             'includeFee' : False
         }
         response = self.app.post(
@@ -120,35 +120,55 @@ class LiveTestCase(unittest.TestCase):
         timeOut = 5
         tries = 10
         confirmed = False
-        while tries > 10 and not confirmed:
+        while tries > 0 and not confirmed:
             try:
-                response = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL,
+                response = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL,
                     "/api/v1/transaction"),
                     params={"txid": hashHex})
                 if response.status_code == 200:
-                    json_response = json.loads(response.get_data(as_text=True))
+                    json_response = response.json()
                     if not json_response:
                         raise Exception("Invalid response from /api/v1/transaction. No response")
                     logging.debug("Response from /api/v1/transaction: {}".format(json_response))
-                    if lower(json_response['txn']['txid']) != lower(hashHex):
+                    if json_response['txn']['txid'].lower() != hashHex.lower():
                         raise Exception("Received transaction info for the wrong transaction." + \
                             " {} != {}".format(json_response['txn']['txid'], hashHex))
                     confirmed = json_response["status"]["confirmed"]
-                    loggin.debug("Confirmed result: {}".format(confirmed))
+                    logging.debug("Confirmed result: {}".format(confirmed))
+                    if confirmed:
+                        break
                 if not confirmed:
+                    logging.debug("Error getting transaction status, retrying")
                     time.sleep(timeOut)
-                    tries -= 1
             except Exception as e:
-                loggin.debug("Error when checking transaction status. Error: {}".format(str(e)) )
+                logging.debug("Error when checking transaction status. Error: {}".format(str(e)) )
+            finally:
+                tries -= 1
 
 
     def test_transaction_single(self):
         sourceAddress = self.addressWithBalance
         #save previous balance to check after transaction is confirmed
-        previous_balance = self.wallets[sourceAddress]['balance']
         destAddress = self.destinationAddress
-        self._transferSKY(sourceAddress, destAddress, '4324432444332') #just some operation id
-        self._transferSKY(destAddress, sourceAddress, '4324432444333')
+        previousBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
+        self._transferSKY(sourceAddress, destAddress, 1000, '4324432444332') #just some operation id
+        newBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
+        self._transferSKY(destAddress, sourceAddress, 1000, '4324432444333')
+        backBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
+
+        self.assertEqual(previousBalance[sourceAddress],
+            newBalance[sourceAddress] + 1000,
+            "Address {0} should have lost 1000 droplets".format(sourceAddress))
+        self.assertEqual(previousBalance[destAddress],
+            newBalance[destAddress] - 1000,
+            "Address {0} should have gained 1000 droplets".format(destAddress))
+        self.assertEqual(previousBalance[sourceAddress],
+            backBalance[sourceAddress],
+            "Address {0} should have regained 1000 droplets".format(sourceAddress))
+        self.assertEqual(previousBalance[destAddress],
+            backBalance[destAddress],
+            "Address {0} should have returned 1000 droplets".format(destAddress))
+
 
     def _createTestWallets(self):
         seeds_path = os.path.join(
