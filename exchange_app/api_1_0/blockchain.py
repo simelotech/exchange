@@ -1,119 +1,14 @@
 
 import binascii
-import requests
 import logging
 from .. import app
 from ..settings import app_config
 from time import perf_counter
+from ..common import form_url, get_url, post_url
 import skycoin
-
-def form_url(base, path):
-    """
-    Conform the full URL from base URL and path
-    """
-
-    if path[0] != '/':
-        path = '/' + path
-
-    if base[len(base) - 1] == '/':
-        base = base[0:len(base) - 1]
-
-    url = base + path
-
-    return url
-
-
-def get_url(path, values=""):
-    """
-    General GET function for blockchain
-    """
-
-    url = form_url(app_config.SKYCOIN_NODE_URL, path)
-
-    # resp = requests.get(url, params = values)
-    # response_data = resp.json()
-
-    response_data = {"Called": "get_url()", "url": url, "values:": values}
-
-    return response_data
-
-
-def post_url(path, values=""):
-    """
-    General POST function for blockchain
-    """
-
-    url = form_url(app_config.SKYCOIN_NODE_URL, path)
-
-    # resp = requests.post(url, data = values)
-    # response_data = resp.json()
-
-    response_data = {"Called": "post_url()", "url": url, "values:": values}
-
-    return response_data
-
-
-def create_wallet():
-    """
-    Create the wallet in blockchain
-    """
-
-    # generate CSRF token
-    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
-
-    if not CSRF_token or "csrf_token" not in CSRF_token:
-        return {"status": 500, "error": "Unknown server error"}
-
-    # generate new seed
-    new_seed = app.lykke_session.get(
-        form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/newSeed?entropy=128"),
-        headers={'X-CSRF-Token': CSRF_token['csrf_token']}).json()
-
-    if not new_seed or "seed" not in new_seed:
-        return {"status": 500, "error": "Unknown server error"}
-
-    # create the wallet from seed
-    resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/create"),
-                         {"seed": new_seed["seed"],
-                             "label": "wallet123", "scan": "5"},
-                         headers={'X-CSRF-Token': CSRF_token['csrf_token']})
-
-    if not resp:
-        return {"status": 500, "error": "Unknown server error"}
-
-    if resp.status_code != 200:
-        return {"status": 500, "error": "Unknown server error"}
-
-    new_wallet = resp.json()
-
-    if not new_wallet or "entries" not in new_wallet:
-        return {"status": 500, "error": "Unknown server error"}
-
-    seed = new_seed['seed']
-    pubkey = skycoin.cipher_PubKey()
-    seckey = skycoin.cipher_SecKey()
-    error = skycoin.SKY_cipher_GenerateDeterministicKeyPair(
-            seed.encode(), pubkey, seckey)
-    if error != 0:
-        return {"status": 500, "error": "Unknown server error"}
-
-    return {
-        "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
-        "publicAddress": new_wallet["entries"][0]["address"],
-        "addressContext": new_wallet['meta']['filename']
-    }
-
-def spend(values):
-    """
-    Transfer balance
-    """
-    resp = requests.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/spend"), data=values)
-
-    if not resp.json:
-        return {"status": 500, "error": "Unknown server error"}
-
-    return {"status": resp.status_code, "error": resp.json()["error"]}
-
+from flask import jsonify
+import json
+import codecs
 
 def get_version():
     """
@@ -141,9 +36,12 @@ def get_balance(address):
 
     if app.config['DEBUG']:
         logging.debug("Got balance for address")
-        logging.debug(balances.json())
+        logging.debug(str(balances))
 
-    return balances.json()['confirmed']['coins']
+    try:
+        return {'balance' : int(balances.json()['confirmed']['coins'])}
+    except:
+        return {"status": 500, "error": "Unknown server error"}
 
 
 def get_balance_scan(address, start_block = 1):
@@ -260,32 +158,6 @@ def get_address_transactions(address):
 
     return result.json()
 
-def sign_hash(hashHex, seckeyHex):
-    seckey = skycoin.cipher_Sig()
-    error = skycoin.SKY_cipher_SecKeyFromHex(seckeyHex.encode(), seckey)
-    if error != 0:
-        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
-
-    sha256 = skycoin.cipher_SHA256()
-    error = skycoin.SKY_cipher_SHA256FromHex(hashHex.encode(), sha256)
-    if error != 0:
-        return make_response(jsonify(build_error('Invalid Input Format', error_codes.badFormat)), 400)
-
-    signedHash = skycoin.cipher__Sig()
-    error = skycoin.SKY_cipher_SignHash(hash, seckey, signedHash)
-    if error != 0:
-        return make_response(jsonify(build_error('Unknown Server Error', error_codes.unknown)), 500)
-
-    error, signedHashHex = SKY_cipher_Sig_Hex(signedHash)
-    if error != 0:
-        return make_response(jsonify(build_error('Unknown Server Error', error_codes.unknown)), 500)
-
-    retvalue = {
-        "signedTransaction": signedHashHex
-    }
-    return jsonify(retvalue)
-
-
 def transaction_many_inputs(values):
     """
     build a transaction with many inputs
@@ -322,3 +194,105 @@ def transaction_many_outputs(values):
     if resp.status_code != 200:
         return {"status": 500, "error": "Unknown server error"}
     return resp.json()
+
+def transaction_broadcast(signedTransaction):
+    # generate CSRF token
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+    if not CSRF_token or "csrf_token" not in CSRF_token:
+        logging.debug('transaction_broadcast - Error trying to get CSRF token')
+        return {"status": 500, "error": "Unknown server error"}
+    #broadcast transaction
+    resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/injectTransaction"),
+         json.dumps({"rawtx": signedTransaction}),
+         headers={'X-CSRF-Token': CSRF_token['csrf_token']})
+    if not resp:
+        return {"status": 500, "error": "Unknown server error"}
+    if resp.status_code != 200:
+        return {"status": 500, "error": "Unknown server error"}
+    result = response.get_data(as_text=True)
+    return {"result" : result}
+
+#Check balances for a transaction
+def check_balance_from_transaction(tx):
+    result = get_balance(tx['fromAddress'])
+    if 'error' in result:
+        logging.debug('check_balance_from_transaction - Error ' + result['error'])
+        return False, 500, "Unknown server error"
+    balance = result['balance']
+    amount = 0
+    for output in tx['outputs']:
+        amount += output['amount']
+    if balance < amount:
+        logging.debug('check_balance_from_transaction - Not enough balance')
+        return False, 400, "Not enough balance"
+    return True, 0, ""
+
+# Creates a transaction
+# Calls skycoin node to create the transactions
+# Skycoin returns a signed transactions
+# Then signing is removed
+def create_transaction(tx):
+    #generate CSRF token
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+    if not CSRF_token or "csrf_token" not in CSRF_token:
+        logging.debug('create_transaction - Error trying to get CSRF token')
+        return {"status": 500, "error": "Unknown server error"}
+    outputs = []
+    for output in tx['outputs']:
+        dest = {
+        	"address": output['toAddress'],
+        	"coins": output['amount']
+        }
+        outputs.append(dest)
+    data = {
+    	"hours_selection": {
+        	"type": "auto",
+        	"mode": "share",
+        	"share_factor": "0.5"
+    	},
+    	"wallet": {
+        	"id": tx['fromAddressContext'],
+        	"addresses": [tx['fromAddress']],
+    	},
+    	"to": outputs
+    }
+    response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
+            '/api/v1/wallet/transaction'),
+            data=json.dumps(data),
+            headers={'X-CSRF-Token': CSRF_token['csrf_token']})
+    if response.status_code == 200:
+        json_response = json.loads(response.get_data(as_text=True))
+        if not 'error' in json_response:
+            if 'encoded_transaction' in json_response:
+                ok, tx = _removeSigningFromTransaction(json_response['encoded_transaction'])
+                if ok:
+                    return {"encoded_transaction" : tx}
+                else:
+                    logging.debug('create_transaction - Failed at removing signature from transaction"}')
+                    return {"status": 500, "error": "Error creating transaction in Skycoin"}
+        logging.debug('create_transaction - Invalid response from /api/v1/wallet/transaction"}')
+        return {"status": 500, "error": "Invalid response from /api/v1/wallet/transaction"}
+    else:
+        logging.debug('create_transaction - Error creating transaction in Skycoin')
+        return {"status": response.status_code, "error": "Error creating transaction in Skycoin"}
+
+
+def _removeSigningFromTransaction(hexencoded_transaction):
+    transaction_handle = 0
+    try:
+        serialized = codecs.decode(hexencoded_transaction, 'hex')
+        error, transaction_handle = skycoin.SKY_coin_TransactionDeserialize(serialized)
+        if error != 0:
+            return False, ""
+        error = skycoin.SKY_coin_Transaction_ResetSignatures(transaction_handle, 0)
+        if error != 0:
+            return False, ""
+        error, serialized = SKY_coin_Transaction_Serialize(transaction_handle)
+        if error != 0:
+            return False, ""
+        return True, codecs.encode(serialized, 'hex')
+    except:
+        return False, ""
+    finally:
+        if transaction_handle != 0:
+            skycoin.SKY_handle_close(handle)
