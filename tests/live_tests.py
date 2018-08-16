@@ -7,6 +7,7 @@ import skycoin
 import binascii
 import urllib.request
 import time
+import logging
 
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://localhost:6421/"
 
@@ -18,6 +19,7 @@ class LiveTestCase(unittest.TestCase):
         self.app = app.test_client()
         #Wait for service to finish checking database (too big)
         time.sleep(10)
+        self.serverUp = False
         self.wallets = self._createTestWallets()
         self.addressWithBalance = ""
         self.walletWithBalance = ""
@@ -135,14 +137,27 @@ class LiveTestCase(unittest.TestCase):
             wallets.append(wallet)
         return wallets
 
+    def _getCSRFToken(self):
+        # generate CSRF token
+        tries = 1
+        if not self.serverUp:
+            tries = 10
+        timeOut = 10
+        CSRF_token = False
+        while tries > 0:
+            try:
+                CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+            except:
+                logging.debug("Error requesting csrf token")
+                time.sleep(timeOut)
+            tries -= 1
+        if not CSRF_token or "csrf_token" not in CSRF_token:
+            assert False, "Error requesting token"
+        self.serverUp = True
+        return CSRF_token
 
     def _createWalletFromSeed(self, seed):
-        # generate CSRF token
-        CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
-
-        if not CSRF_token or "csrf_token" not in CSRF_token:
-            assert False, "Error requesting token from"
-            #return {"status": 500, "error": "Unknown server error"}
+        CSRF_token = self._getCSRFToken()
         # create the wallet from seed
         resp = app.lykke_session.post(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/create"),
                              {"seed": seed,
