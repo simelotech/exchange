@@ -35,7 +35,7 @@ def setup():
                          " -disable-networking=true" \
                          " -web-interface-port=6420"
         init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params,
-            volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
+            volumes={skycoin_data_path: '/data/test'})
         skycoin_params = " -enable-wallet-api=true" \
                          " -db-path=/data/test/data.db" \
                          " -download-peerlist=false" \

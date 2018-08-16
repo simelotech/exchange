@@ -22,7 +22,7 @@ def testrun_id():
     """
     return services_started[testrun_service_name()][0]
 
-def init_service(service_name, version, port, command=None, volumes = None):
+def init_service(service_name, version, port, command=None, volumes=None):
     """Ensure service is running. If not available run it with Docker.
 
     service_name : The name of the official Docker image used to run
@@ -30,23 +30,23 @@ def init_service(service_name, version, port, command=None, volumes = None):
     default_port : Default service port. Usually matches the value
                    EXPOSE'd in Dockerfile.
     """
-    '''
     try:
         port = int(os.getenv('PORT_' + service_name.upper(), default_port))
     except ValueError:
         port = default_port
-    '''
 
     launched = False
     service_id = docker_service_name(service_name)
     service_id += "_" + str(len(services_started))
+    if volumes is not None:
+        volumes={hostdir: {'bind': mount, 'mode' : 'rw'} for hostdir, mount in volumes.items()}
     if not is_listening_at(port):
         log.debug('Creating Docker container ... ' + service_id)
         docker_run(service_name, tag=version,
                 name=service_id ,
                 ports={'%s/tcp' % (port,): port},
                 command=command,
-                volumes=volumes)
+                volumes={mount: {'bind':'/data/test', 'mode' : 'rw'}})
         launched = True
     services_started[service_id] = (port, launched)
     return service_id
