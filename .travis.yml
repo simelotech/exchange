@@ -4,24 +4,24 @@ services:
 matrix:
   include:
   - os: linux
-      dist: trusty
-      sudo: required
+    dist: trusty
+    sudo: required
     language: python
     python: 3.4
     env:
     - TOXENV=py34
     - PYTHON=3.4
   - os: linux
-      dist: trusty
-      sudo: required
+    dist: trusty
+    sudo: required
     language: python
     python: 3.5
     env:
     - TOXENV=py35
     - PYTHON=3.5
   - os: linux
-      dist: trusty
-      sudo: required
+    dist: trusty
+    sudo: required
     language: python
     python: 3.6
     env:
