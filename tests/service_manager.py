@@ -22,7 +22,7 @@ def testrun_id():
     """
     return services_started[testrun_service_name()][0]
 
-def init_service(service_name, version, port, command=None, volumes=None):
+def init_service(service_name, version, default_port, command=None, volumes=None):
     """Ensure service is running. If not available run it with Docker.
 
     service_name : The name of the official Docker image used to run
