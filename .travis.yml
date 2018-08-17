@@ -1,6 +1,8 @@
 sudo: required
+
 services:
 - docker
+
 matrix:
   include:
   - os: linux
@@ -33,17 +35,19 @@ matrix:
         - deadsnakes
         packages:
         - python3.6
+
 before_install:
 - openssl aes-256-cbc -K $encrypted_c0ced77aa1a1_key -iv $encrypted_c0ced77aa1a1_iv
   -in vars.enc.txt.enc -out tests/data/lykke_tests/vars.enc.txt -d
 - mkdir -p build/lyyke_tests
 - git clone https://github.com/LykkeCity/Lykke.Automation.Tests build/lykke_tests
-- cat 'tests/data/lykke_tests/properties.json' | python -c 'import sys, json; sys.stdin.read().format(json.load("./tests/data/lykke_tests/vars.enc.txt"))'
+- cat 'tests/data/lykke_tests/properties.json' | python -c 'import sys, json; print(sys.stdin.read().format(**json.load(open("./tests/data/lykke_tests/vars.enc.txt"))))'
   > build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/properties.json
 - openssl aes-256-cbc -K $encrypted_2c77414c66d3_key -iv $encrypted_2c77414c66d3_iv
   -in seeds.json.enc -out tests/data/skycoin/seeds.json -d
 - wget -O ./tests/data/skycoin/data.50994.db https://transfer.sh/duNid/skycoin.data.50994.db
 - export TEST_ID="lykke_sky_${TRAVIS_JOB_ID}_${TRAVIS_JOB_NUMBER}"
+
 install:
 - sudo pip install tox-travis
 - mkdir swig_build && cd swig_build && wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
@@ -56,6 +60,7 @@ install:
 - sudo apt-get install apt-transport-https
 - sudo apt-get update
 - sudo apt-get install dotnet-runtime-2.0.7
+
 script:
 - tox
 - docker run --name ${TEST_ID}_mongo -p 27017:27017 mongo:3.6.4-jessie
@@ -67,18 +72,22 @@ script:
 - ENVIRONMENT='TRAVIS_ACCEPT' python manage.py runserver & && echo "$!" > app.id.txt
 - cd build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/ && dotnet test AFTests.csproj
   --filter "TestCategory=BlockchainIntegration"
+
 after_failure:
 - cat ./.tox/${TOXENV}/log/${TOXENV}-*.log
 - XUnitTestCommon\Reports\allure-cli\bin\allure generate
 - curl --upload-file AFTests\bin\Debug\netcoreapp2.0\allure-results\index.html https://transfer.sh/lykke.sky.${TRAVIS_JOB_ID}-${TRAVIS_JOB_NUMBER}.html
+
 after_script:
 - kill -s KILL $(cat app.id.txt) || true
 - docker stop ${TEST_ID}_mongo && docker rm ${TEST_ID}_mongo ; true
 - docker stop ${TEST_ID}_redis && docker rm ${TEST_ID}_redis ; true
 - docker stop ${TEST_ID}_sky   && docker rm ${TEST_ID}_sky   ; true
+
 notifications:
   email: false
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
 env:
   matrix:
     secure: bSfQak2r7oJs3DJJVgVjL3lYIazwhzMmk6O47fcQ6Ni9o9/xmG73lfnOKoPoRhqGLh1uVrNBpOm1ZofbNL+ID8GS7xwObeikv5E5vVhB/YR3+VZ3mAsr+MGZ8QG7uowI0b/Y0uIRqT6PWrf9JGdGdsLsXicWPcUwmSUaM7mNm9Br7jk3nWC63OCPTbXRD5Mg8gmC1geF5eb4CfG2DcSF7UMxUSk+aOD/U+42TPxNAT1jBAt2Z/tB7+hiQIZmqik4P8Isg1zmAkFP67CuZ0pr03jYlRZ74icvCpSgTQVR2CKRfXaD2H1u4ulTV16MFJKp5OVMdY8wDxJckNq0gTFLW15XUIWq3iKYMlDSMFKJHip6s8Mgm0FaRAxStonmXsCCWinSj5UK3vxZkR+otV4eHfpa83BBi+NB/d/4/eOJ3oOAx8GFg6PT3prLp4VAh+a60NaoZ9mZxwaeCSaX54lIVgMdtSe4twb2c/3hHuKwoBWdKtfTkZG/or2cj3NmyYW5TB5xYxK1rUk3mExSdxdwg1FOzYjWsoirVyjNQRUxdxJuivXKTHBSpblO6XDbmsP3x2TIDwv9vcgHrNQRZGdTznbM2wJElaH3lVRv0ZA0PMSAK5a2X8mXEoO9CD0hHZf0xWYjRMaa5jinRP4OATnUbOy6KTtS0MMk2Ss4Yp4Ef7o=

@@ -1,4 +1,4 @@
-{
+{{
   "BlockchainIntegration": "Skycoin",
   "AssetId": "SKY",
   "BlockchainApi": "http://127.0.0.1:5000",
@@ -11,4 +11,4 @@
   "ExternalWalletKey": "{external_wallet_key}",
   "ExternalWalletAddressContext": "{external_wallet_ctx}",
   "BlockchainMiningTime": 2
-}
+}}
