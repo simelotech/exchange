@@ -103,6 +103,9 @@ class LiveTestCase(unittest.TestCase):
         #Get transaction hash to check for confirmation
         error, hashHex = skycoin.SKY_cipher_SHA256_Hex(hash)
         self.assertEqual(error, 0, "Error converting hash to hex")
+        hashHex = str(hashHex)
+        if hashHex.startswith("b\'"):
+            hashHex = hashHex[2:len(hashHex)-1]
 
         #Test transaction broadcast
         data = {
@@ -188,8 +191,8 @@ class LiveTestCase(unittest.TestCase):
         # generate CSRF token
         tries = 1
         if not self.serverUp:
-            tries = 10
-        timeOut = 7
+            tries = 30
+        timeOut = 20
         CSRF_token = False
         while tries > 0:
             try:
