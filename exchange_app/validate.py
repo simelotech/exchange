@@ -17,6 +17,7 @@ def validate_transaction_single(json):
     if amount <= 0:
         logging.debug('/api/transactions/single - Amount is zero')
         return False, "Amount is zero"
+    amount = float(amount) / 1000000 #Convert to droplets
     if json['assetId'] != 'SKY':
         logging.debug('/api/transactions/single - Asset id must be SKY')
         return False, "Only coin is SKY"
@@ -49,9 +50,19 @@ def validate_transaction_many_outputs(json):
     for output in outputs:
         if not 'toAddress' in output or not 'amount' in output:
             return False, "Input format error"
+        amount = 0
+        try:
+            amount = int(output['amount'])
+        except:
+            logging.debug('/api/transactions/single - Error while parsing amount')
+            return False, "Amount is not an integer"
+        if amount <= 0:
+            logging.debug('/api/transactions/single - Amount is zero')
+            return False, "Amount is zero"
+        amount = float(amount) / 1000000 #Convert to droplets
         to = {
             'to' : output['toAddress'],
-            'amount' : output['amount']
+            'amount' : amount
         }
         tos.append(to)
     tx = {'operationId' : json['operationID'],

@@ -11,6 +11,7 @@ import skycoin
 def sign_transaction(txContext, privateKeys):
     transaction_handle = 0
     try:
+        assert len(privateKeys) > 0
         serialized = codecs.decode(txContext, 'hex')
         error, transaction_handle = skycoin.SKY_coin_TransactionDeserialize(serialized)
         if error != 0:
@@ -24,6 +25,17 @@ def sign_transaction(txContext, privateKeys):
                 logging.debug('sign_transaction - Error parsing hex sec key')
                 return {"status": 500, "error": "Error parsing hex sec key"}
             secKeys.append(seckey)
+        #This function name changed to SKY_coin_Transaction_GetInputsCount
+        error, inputsCount = skycoin.SKY_coin_Transaction_Get_Inputs_Count(transaction_handle)
+        if error != 0:
+            logging.debug('SKY_coin_Transaction_GetInputsCount failed')
+            return {"status": 500, "error": "SKY_coin_Transaction_GetInputsCount failed"}
+        #assert len(secKeys) == inputsCount, "seckeys: {} inputs:{}".format(len(secKeys), inputsCount)
+        #Match private keys with inputs
+        #Transaction was created with more inputs than private secKeys
+        #We hope to solve it repeating the first private key
+        while len(secKeys) < inputsCount:
+            secKeys.append(secKeys[0])
         error = skycoin.SKY_coin_Transaction_SignInputs(transaction_handle, secKeys)
         if error != 0:
             logging.debug('sign_transaction - Error signing transaction')
@@ -32,13 +44,18 @@ def sign_transaction(txContext, privateKeys):
         if error != 0:
             logging.debug('sign_transaction - Error serializing transaction')
             return {"status": 500, "error": "Error serializing transaction"}
-        newContext = codecs.encode(serialized, 'hex')
+        logging.debug('Serialized Transaction: {}'.format(serialized))
+        newContext = str(codecs.encode(serialized, 'hex'))
+        if newContext.startswith("b\'"):
+            newContext = newContext[2:len(newContext)-1]
+        logging.debug('Signed Transaction Context: {}'.format(newContext))
         return {"signedTransaction" : newContext}
-    except:
+    except Exception as e:
+        logging.debug("Error signing transaction. Error: {}".format(str(e)))
         return {"status": 500, "error": "Unknown Error"}
     finally:
         if transaction_handle != 0:
-            skycoin.SKY_handle_close(handle)
+            skycoin.SKY_handle_close(transaction_handle)
 
 '''
 def sign_transaction(tx):
