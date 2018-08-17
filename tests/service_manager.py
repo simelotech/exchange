@@ -46,7 +46,7 @@ def init_service(service_name, version, default_port, command=None, volumes=None
                 name=service_id ,
                 ports={'%s/tcp' % (port,): port},
                 command=command,
-                volumes={mount: {'bind':'/data/test', 'mode' : 'rw'}})
+                volumes=volumes)
         launched = True
     services_started[service_id] = (port, launched)
     return service_id
