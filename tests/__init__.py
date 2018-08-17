@@ -44,7 +44,7 @@ def setup():
                          " -disable-networking=true" \
                          " -web-interface-port=6421"
         init_service('skycoin/skycoin', 'develop',      6421, command=skycoin_params,
-            volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
+            volumes={skycoin_data_path: '/data/test'})
     except:
         log.error('Error found in test suite setup')
         raise
