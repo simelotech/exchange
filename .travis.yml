@@ -41,6 +41,7 @@ before_install:
   -in vars.enc.txt.enc -out tests/data/lykke_tests/vars.enc.txt -d
 - mkdir -p build/lyyke_tests
 - git clone https://github.com/LykkeCity/Lykke.Automation.Tests build/lykke_tests
+- mkdir -p build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0
 - cat 'tests/data/lykke_tests/properties.json' | python -c 'import sys, json; print(sys.stdin.read().format(**json.load(open("./tests/data/lykke_tests/vars.enc.txt"))))'
   > build/lykke_tests/AFTests/bin/Debug/netcoreapp2.0/properties.json
 - openssl aes-256-cbc -K $encrypted_2c77414c66d3_key -iv $encrypted_2c77414c66d3_iv
