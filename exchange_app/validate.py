@@ -35,21 +35,21 @@ def validate_transaction_single(json):
 def validate_transaction_many_outputs(json):
     if not json:
         logging.debug('/api/transactions/many-outputs - No json data')
-        return False, "Input format error"
-    if not 'operationId' in json or not 'assetId' in json:
-        return False, "Input format error"
+        return False, "No input data."
+    if not 'operationID' in json or not 'assetId' in json:
+        return False, "Input format error. No operationId"
     if json['assetId'] != 'SKY':
         logging.debug('/api/transactions/many-outputs - Asset id must be SKY')
         return False, "Only coin is SKY"
     if not 'outputs' in json:
-        return False, "Input format error"
+        return False, "Input format error. No outputs."
     outputs = json['outputs']
     if not isinstance(outputs, list) or len(outputs) <= 0:
-        return False, "Input format error"
-        tos = []
+        return False, "Input format error. Outputs should be array."
+    tos = []
     for output in outputs:
         if not 'toAddress' in output or not 'amount' in output:
-            return False, "Input format error"
+            return False, "Input format error. Invalid outputs"
         amount = 0
         try:
             amount = int(output['amount'])
@@ -61,7 +61,7 @@ def validate_transaction_many_outputs(json):
             return False, "Amount is zero"
         amount = float(amount) / 1000000 #Convert to droplets
         to = {
-            'to' : output['toAddress'],
+            'toAddress' : output['toAddress'],
             'amount' : amount
         }
         tos.append(to)
@@ -70,7 +70,7 @@ def validate_transaction_many_outputs(json):
             'fromAddressContext' : json['fromAddressContext'],
             'outputs': tos,
             'assetId' : json['assetId'],
-            'includeFee' : json['includeFee']}
+            'includeFee' : False}
     return tx, ""
 
 def validate_sign_transaction(json):

@@ -17,10 +17,11 @@ def transactions_broadcast():
     if not ok:
         logging.debug("Invalid transaction to broadcast")
         return make_response(jsonify(build_error(errormsg)), 400)
-    tx = get_transaction(request.json["operationId"])
+    operationId = request.json["operationId"]
+    tx = get_transaction(operationId)
     if not tx:
         #TODO: We could broadcast the transaction anyway
-        logging.debug("Operation Id doesn\'t match a transaction")
+        logging.debug("Operation Id doesn\'t match a transaction : {}".format(operationId))
         return make_response(jsonify(build_error("Operation Id doesn\'t match a transaction")), 400)
     if 'broadcasted' in tx and tx['broadcasted']:
         logging.debug("Transaction already broadcasted: {}".format(request.json["operationId"]))

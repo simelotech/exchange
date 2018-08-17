@@ -39,6 +39,7 @@ def transactions_single():
 def transactions_many_outputs():
     tx, errormsg = validate_transaction_many_outputs(request.json)
     if not tx:
+        logging.debug('/api/transactions/many-outputs - Error: {}'.format(errormsg))
         return make_response(jsonify(build_error(errormsg)), 400)
     logging.debug('/api/transactions/many-outputs - Transaction: ' + str(tx))
     savedtx = get_transaction(tx['operationId'])
@@ -49,10 +50,15 @@ def transactions_many_outputs():
             return make_response("Conflict. Transaction already broadcasted", 409)
         else:
             if 'encoded_transaction' in savedtx:
+                logging.debug("Transaction {} already in db".format(tx['operationId']))
                 transaction_context = savedtx['encoded_transaction']
     if not transaction_context:
         result = create_transaction(tx)
         if 'error' in result:
-            return make_response(result['error'], 500)
-        transaction_context = result['encoded_transaction']
+            status = result.get('status', 500)
+            return make_response(result['error'], status)
+        transaction_context = str(result['encoded_transaction'])
+        if transaction_context.startswith("b\'"):
+            transaction_context = transaction_context[2:len(transaction_context)-1]
+        add_transaction(tx['operationId'], transaction_context)
     return jsonify({"transactionContext" : transaction_context})
