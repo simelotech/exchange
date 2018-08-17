@@ -112,3 +112,8 @@ ENV/
 
 #Pyskycoin repository
 pyskycoin
+
+# Files to be encrypted
+*.enc.txt
+
+
