@@ -27,6 +27,7 @@ URL_ADDRESS_EXPLORER = '/v1/api/addresses/{address}/explorer-url'
 URL_ADDRESS_OBSERVE  = '/v1/api/balances/{address}/observation'
 URL_BALANCES_FIRST   = '/v1/api/balances?take={limit}'
 URL_BALANCES_PAGE    = '/v1/api/balances?take={limit}&continuation={offset}'
+URL_BALANCES_PAGE    = '/v1/api/isalive'
 
 ADDRESS_VALID = r'2GgFvqoyk9RjwVzj8tqfcXVXB4orBwoc9qv'
 ADDRESS_INVALID = r'12345678'
@@ -40,6 +41,21 @@ class BaseApiTestCase(unittest.TestCase):
 
 
 class ApiTestCase(BaseApiTestCase):
+    def test_isalive(self):
+        response = self.app.get(URL_ISALIVE)
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertIn("name", json_response)
+        self.assertIn("version", json_response)
+        self.assertIn("env", json_response)
+        self.assertIn("isDebug", json_response)
+        self.assertIn("contractVersion", json_response)
+        self.assertEqual(json_response["name"], app_config.SKYCOIN_FIBER_NAME)
+        self.assertEqual(json_response["version"], '0.24.1')
+        self.assertEqual(json_response["env"], 'Dev')
+        self.assertEqual(json_response["isDebug"], True)
+        self.assertEqual(json_response["contractVersion"], app_config.LYKKE_API_VERSION)
+
     def test_address_valid(self):
         address = ADDRESS_VALID
         response = self.app.get(URL_ADDRESS_VALIDITY.format(address=address))

@@ -51,13 +51,15 @@ class DevelopmentConfig(Config):
     #: Redis
     REDIS_HOST = '127.0.0.1'
     REDIS_PORT = 6379
-    #: SKYCOIN
+    #: Skycoin
     SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
     WTF_CSRF_SECRET_KEY = '1!qaz2@wsx3#edc$4rfv'
     SKYCOIN_NODE_URL = 'http://localhost:6420/'
     SKYCOIN_WALLET_SHARED = False
     SKYCOIN_FIBER_ASSET = "SKY"
     SKYCOIN_FIBER_NAME = "Skycoin"
+    #: Lykke
+    LYKKE_API_VERSION = '1.3.0'
 
 
 class TestingConfig(Config):
