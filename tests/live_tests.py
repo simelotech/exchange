@@ -260,11 +260,13 @@ class LiveTestCase(unittest.TestCase):
         # generate CSRF token
         tries = 1
         if not LiveTestCase.serverUp:
-            tries = 30
+            tries = 100
         timeOut = 5
         CSRF_token = False
+        i = 1
         while tries > 0:
-            print("*")
+            print("Connecting to skycoin node. Try: {}".format(i))
+            i += 1
             try:
                 CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
                 if CSRF_token and "csrf_token" in CSRF_token:
