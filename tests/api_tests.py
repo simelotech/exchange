@@ -52,7 +52,7 @@ class ApiTestCase(BaseApiTestCase):
         self.assertIn("contractVersion", json_response)
         self.assertEqual(json_response["name"], app_config.SKYCOIN_FIBER_NAME)
         self.assertEqual(json_response["version"], '0.24.1')
-        self.assertEqual(json_response["env"], 'Dev')
+        self.assertEqual(json_response["env"], 'development')
         self.assertEqual(json_response["isDebug"], True)
         self.assertEqual(json_response["contractVersion"], app_config.LYKKE_API_VERSION)
 
