@@ -21,7 +21,7 @@ class LiveTestCase(unittest.TestCase):
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
-        LiveTestCase.wallets = self._createTestWallets()
+        LiveTestCase.wallets = self._getTestWallets()
         self.addressWithBalance = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
         self.destinationAddress = "22TdufeUbAehE7ZnLuBUaTkacQHAFtCVnw2"
         self.destinationAddress2 = "jL6tDHrNg87BjxTQLqLqHFat987NgdeUMc"
@@ -238,6 +238,76 @@ class LiveTestCase(unittest.TestCase):
             backBalance[destAddress2],
             "Address {0} should have returned 1000 droplets".format(destAddress2))
 
+
+    def _getTestWallets(self):
+        if LiveTestCase.wallets:
+            return LiveTestCase.wallets
+        CSRF_token = self._getCSRFToken()
+        seeds_path = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                *('data/skycoin/seeds.json'.split('/')))
+        file = open(seeds_path, "r")
+        text = file.read()
+        r = json.loads(text)
+        file.close()
+        wallets = {}
+        for seed in r["seeds"]:
+            pubkey = skycoin.cipher_PubKey()
+            seckey = skycoin.cipher_SecKey()
+            error = skycoin.SKY_cipher_GenerateDeterministicKeyPair(
+                    seed.encode(), pubkey, seckey)
+            if error != 0:
+                raise Exception("Error when creating private and public keys for wallet")
+
+            wallet = {
+                "seed" : seed,
+                "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
+                "publicKey": binascii.hexlify(bytearray(pubkey.toStr())).decode('ascii')
+            }
+            wallets[wallet["publicKey"]] = wallet
+        wallets = self._matchServerWallets(wallets)
+        wallets = self._createMissingWallets(wallets)
+        return wallets
+
+    def _createMissingWallets(self, wallets):
+        i = 0
+        newWallets = {}
+        for key in wallets.keys():
+            wallet = wallets[key]
+            if not "addressContext" in wallet:
+                i += 1
+                newWallet = self._createWalletFromSeed(wallet["seed"],
+                    "testwallet" + str(i))
+                wallet["addressContext"] = newWallet["addressContext"]
+                wallet["publicAddress"] = newWallet["publicAddress"]
+                assert wallet["privateKey"] == newWallet["privateKey"], "{} != {}".format(wallet["privateKey"], newWallet["privateKey"])
+                assert wallet["publicKey"] == newWallet["publicKey"], "{} != {}".format(wallet["publicKey"], newWallet["publicKey"])
+            newWallets[wallet["publicAddress"]] = wallet
+        return newWallets
+
+    def _matchServerWallets(self, wallets):
+        resp = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL,
+                    "/api/v1/wallets"))
+        if not resp:
+            raise Exception("No response when getting wallets")
+        if resp.status_code != 200:
+            raise Exception("Error {0} when getting wallets".format(resp.status_code))
+        serverWallets = resp.json()
+        matched = 0
+        for wallet in serverWallets:
+            walletName = wallet["meta"]["filename"]
+            for entry in wallet["entries"]:
+                pubkey = entry["public_key"]
+                if pubkey in wallets:
+                    wallets[pubkey]["addressContext"] = walletName
+                    wallets[pubkey]["publicAddress"] = entry["address"]
+                    matched += 1
+                    break
+            if matched == len(wallets):
+                break
+        return wallets
+
+
     def _createTestWallets(self):
         if LiveTestCase.wallets:
             return LiveTestCase.wallets
@@ -308,12 +378,14 @@ class LiveTestCase(unittest.TestCase):
         if error != 0:
             raise Exception("No response when creating private and public keys for wallet")
 
-        return {
+        result = {
             "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
             "publicKey": binascii.hexlify(bytearray(pubkey.toStr())).decode('ascii'),
             "publicAddress": new_wallet["entries"][0]["address"],
             "addressContext": new_wallet['meta']['filename']
         }
+        logging.debug("Wallet created {}".format(str(result)))
+        return result
 
 
     def form_url(self, base, path):
