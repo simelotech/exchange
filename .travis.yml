@@ -64,7 +64,7 @@ install:
 - sudo apt-get install dotnet-sdk-2.1
 
 script:
-- tox
+#- tox
 - docker run -d --name ${TEST_ID}_mongo -p 27017:27017 mongo:3.6.4-jessie
 - docker run -d --name ${TEST_ID}_redis -p  6379:6379  redis:3.0.7-alpine
 - docker run -d --name ${TEST_ID}_sky   -p  6423:6423 -p 6000:6000 -v $(pwd)/tests/data/skycoin:/data/test
