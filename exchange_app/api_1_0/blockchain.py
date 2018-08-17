@@ -265,6 +265,7 @@ def create_transaction(tx):
             "Content-Type" : "application/json"})
     if response.status_code == 200:
         json_response = response.json()
+        logging.debug("Response from '/api/v1/wallet/transaction: {}".format(str(json_response)))
         if not 'error' in json_response:
             if 'encoded_transaction' in json_response:
                 ok, tx = _removeSigningFromTransaction(json_response['encoded_transaction'])

@@ -22,6 +22,7 @@ def transactions_single():
             return make_response("Conflict. Transaction already broadcasted", 409)
         else:
             if 'encoded_transaction' in savedtx:
+                logging.debug("Transaction {} already in db".format(tx['operationId']))
                 transaction_context = savedtx['encoded_transaction']
     if not transaction_context:
         result = create_transaction(tx)
