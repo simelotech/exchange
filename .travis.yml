@@ -37,6 +37,8 @@ matrix:
         - python3.6
 
 before_install:
+- export TEST_ID="lykke_sky_${TRAVIS_JOB_ID}_${TRAVIS_JOB_NUMBER}"
+- export BUILD_DIR="/tmp/${TEST_ID}"
 - openssl aes-256-cbc -K $encrypted_c0ced77aa1a1_key -iv $encrypted_c0ced77aa1a1_iv
   -in vars.enc.txt.enc -out tests/data/lykke_tests/vars.enc.txt -d
 - mkdir -p ${BUILD_DIR}/lyyke_tests
@@ -47,8 +49,6 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_2c77414c66d3_key -iv $encrypted_2c77414c66d3_iv
   -in seeds.json.enc -out tests/data/skycoin/seeds.json -d
 - wget -O ./tests/data/skycoin/data.50994.db https://transfer.sh/duNid/skycoin.data.50994.db
-- export TEST_ID="lykke_sky_${TRAVIS_JOB_ID}_${TRAVIS_JOB_NUMBER}"
-- export BUILD_DIR="/tmp/${TEST_ID}"
 
 install:
 - sudo pip install tox-travis
