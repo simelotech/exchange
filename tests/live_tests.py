@@ -141,12 +141,13 @@ class LiveTestCase(unittest.TestCase):
                     if confirmed:
                         break
                 if not confirmed:
-                    logging.debug("Error getting transaction status, retrying")
-                    time.sleep(timeOut)
+                    logging.debug("Error getting transaction status or transaction not confirmed")
             except Exception as e:
                 logging.debug("Error when checking transaction status. Error: {}".format(str(e)) )
             finally:
                 tries -= 1
+                if not confirmed:
+                    time.sleep(timeOut)
 
 
     def test_transaction_single(self):
