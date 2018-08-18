@@ -71,7 +71,8 @@ script:
   skycoin/skycoin:develop -enable-wallet-api='true' -db-path=/data/test/data.50994.db
   -download-peerlist='false' -rpc-interface='true' -db-read-only='false' -disable-networking='false'
   -web-interface-port=6423
-- ENVIRONMENT='TRAVIS_ACCEPT' python manage.py runserver & ; echo "$!" > app.id.txt
+- bash -c "ENVIRONMENT='TRAVIS_ACCEPT' python manage.py runserver & " && echo "$!" > app.id.txt
+- sleep 3
 - wget -O - http://localhost:5000/v1/api/isalive
 - cd ${BUILD_DIR}/lykke_tests/AFTests/ && dotnet test AFTests.csproj
   --filter "TestCategory=BlockchainIntegration"
