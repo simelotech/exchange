@@ -49,6 +49,7 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_2c77414c66d3_key -iv $encrypted_2c77414c66d3_iv
   -in seeds.json.enc -out tests/data/skycoin/seeds.json -d
 - wget -O ./tests/data/skycoin/data.50994.db https://transfer.sh/duNid/skycoin.data.50994.db
+- sudo apt install screen
 
 install:
 - sudo pip install tox-travis
@@ -72,8 +73,8 @@ script:
   -download-peerlist='false' -rpc-interface='true' -db-read-only='false' -disable-networking='false'
   -web-interface-port=6423
 - pip install -r requirements_dev.txt
-- bash -c "ENVIRONMENT='TRAVIS_ACCEPT' python manage.py runserver & " && echo "$!" > app.id.txt
-- sleep 3
+- screen -S exchange_app -dm bash -c "ENVIRONMENT='TRAVIS_ACCEPT' python manage.py runserver"
+- screen -ls && sleep 3
 - wget -O - http://localhost:5000/v1/api/isalive
 - cd ${BUILD_DIR}/lykke_tests/AFTests/ && dotnet test AFTests.csproj
   --filter "TestCategory=BlockchainIntegration"
@@ -84,7 +85,7 @@ after_failure:
 - curl --upload-file AFTests\bin\Debug\netcoreapp2.0\allure-results\index.html https://transfer.sh/lykke.sky.${TRAVIS_JOB_ID}-${TRAVIS_JOB_NUMBER}.html
 
 after_script:
-- kill -s KILL $(cat app.id.txt) || true
+- screen -S exchange_app -X quit || true
 - docker stop ${TEST_ID}_mongo && docker rm ${TEST_ID}_mongo ; true
 - docker stop ${TEST_ID}_redis && docker rm ${TEST_ID}_redis ; true
 - docker stop ${TEST_ID}_sky   && docker rm ${TEST_ID}_sky   ; true
