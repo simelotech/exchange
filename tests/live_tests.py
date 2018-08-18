@@ -36,17 +36,6 @@ class LiveTestCase(unittest.TestCase):
         pass
         #app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
 
-    def pickAddresses(self):
-        values = {"addrs": ",".join(self.wallets.keys())}
-        balances = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
-        if not balances.json:
-            raise Exception("Error when getting wallet balances")
-
-        response = balances.json()
-        if "error" in response:
-            raise Exception(response["error"]["message"])
-        raise Exception(str(response))
-
     def _getBalanceForAddresses(self, addresses):
         logging.debug("Calling skycoin to get balances")
         data = {"addrs": ",".join(addresses)}
@@ -164,13 +153,9 @@ class LiveTestCase(unittest.TestCase):
         confirmed = False
         while tries > 0 and not confirmed:
             try:
-                response = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL,
-                    "/api/v1/transaction"),
-                    params={"txid": hashHex})
-                if response.status_code == 200:
-                    json_response = response.json()
-                    if not json_response:
-                        raise Exception("Invalid response from /api/v1/transaction. No response")
+                params={"txid": hashHex}
+                json_response = self.makeHttpRequest("api/v1/transaction?" + urllib.parse.urlencode(params))
+                if json_response:
                     logging.debug("Response from /api/v1/transaction: {}".format(json_response))
                     if json_response['txn']['txid'].lower() != hashHex.lower():
                         raise Exception("Received transaction info for the wrong transaction." + \
@@ -179,6 +164,8 @@ class LiveTestCase(unittest.TestCase):
                     logging.debug("Confirmed result: {}".format(confirmed))
                     if confirmed:
                         break
+                else:
+                    raise Exception("Invalid response from /api/v1/transaction. No response")
                 if not confirmed:
                     logging.debug("Error getting transaction status or transaction not confirmed")
             except Exception as e:
@@ -378,14 +365,14 @@ class LiveTestCase(unittest.TestCase):
             "publicAddress": new_wallet["entries"][0]["address"],
             "addressContext": new_wallet['meta']['filename']
         }
-        logging.debug("Wallet created {}".format(str(result)))
+        logging.debug("Wallet created {}".format(str(result["publicAddress"])))
         return result
 
     def makeHttpRequest(self, url, data = None, headers = None):
         if data:
             data = urllib.parse.urlencode(data)
             data = data.encode()
-        logging.debug("Making request to {} with data {}".format(url, data))
+        logging.debug("Making request to {}".format(url))
         request = urllib.request.Request(app_config.SKYCOIN_NODE_URL + url)
         if headers:
             for key in headers.keys():
@@ -397,20 +384,4 @@ class LiveTestCase(unittest.TestCase):
         result = str(response.read().replace(b'\n', b''))
         if result.startswith("b\'"):
             result = result[2:len(result)-1]
-        logging.debug("Result from request: " + str(result))
         return json.loads(result)
-
-    def form_url(self, base, path):
-        """
-        Conform the full URL from base URL and path
-        """
-
-        if path[0] != '/':
-            path = '/' + path
-
-        if base[len(base) - 1] == '/':
-            base = base[0:len(base) - 1]
-
-        url = base + path
-
-        return url

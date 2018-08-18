@@ -15,7 +15,8 @@ def get_version():
     Get blockchain version
     """
 
-    version = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/version"))
+    version = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/version"),
+        verify = app_config.VERIFY_SSL)
 
     if not version.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -29,7 +30,8 @@ def get_balance(address):
     """
 
     values = {"addrs": address}
-    balances = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
+    balances = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"),
+        verify = app_config.VERIFY_SSL, params=values)
 
     if not balances.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -94,7 +96,8 @@ def get_block_count():
     Get the current block height of blockchain
     """
 
-    progress = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/blockchain/progress"))
+    progress = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/blockchain/progress"),
+        verify = app_config.VERIFY_SSL)
 
     return progress.json()['current']
 
@@ -106,7 +109,8 @@ def get_block_range(start_block, end_block):
 
     values = {"start": start_block, "end": end_block}
 
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/blocks"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/blocks"),
+        verify = app_config.VERIFY_SSL, params=values)
 
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -121,7 +125,8 @@ def get_block_by_hash(hash):
 
     values = {"hash": hash}
 
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/block"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/block"),
+        verify = app_config.VERIFY_SSL, params=values)
 
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -136,7 +141,8 @@ def get_block_by_seq(seqnum):
 
     values = {"seq": seqnum}
 
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/block"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/block"),
+        verify = app_config.VERIFY_SSL, params=values)
 
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -151,7 +157,8 @@ def get_address_transactions(address):
 
     values = {'confirmed': 1, 'addrs': address}
 
-    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/transactions"), params=values)
+    result = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/transactions"),
+        verify = app_config.VERIFY_SSL, params=values)
 
     if not result.json:
         return {"status": 500, "error": "Unknown server error"}
@@ -197,7 +204,8 @@ def transaction_many_outputs(values):
 
 def transaction_broadcast(signedTransaction):
     # generate CSRF token
-    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf"),
+        verify = app_config.VERIFY_SSL).json()
     if not CSRF_token or "csrf_token" not in CSRF_token:
         logging.debug('transaction_broadcast - Error trying to get CSRF token')
         return {"status": 500, "error": "Unknown server error"}
@@ -205,7 +213,8 @@ def transaction_broadcast(signedTransaction):
     resp = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/injectTransaction"),
          json.dumps({"rawtx": signedTransaction}),
          headers={'X-CSRF-Token': CSRF_token['csrf_token'],
-         "Content-Type" : "application/json"})
+         "Content-Type" : "application/json"},
+         verify = app_config.VERIFY_SSL)
     if not resp:
         return {"status": 500, "error": "Unknown server error"}
     if resp.status_code != 200:
@@ -234,7 +243,8 @@ def check_balance_from_transaction(tx):
 # Then signing is removed
 def create_transaction(tx):
     #generate CSRF token
-    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+    CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf"),
+        verify = app_config.VERIFY_SSL).json()
     if not CSRF_token or "csrf_token" not in CSRF_token:
         logging.debug('create_transaction - Error trying to get CSRF token')
         return {"status": 500, "error": "Unknown server error"}
@@ -262,7 +272,8 @@ def create_transaction(tx):
             '/api/v1/wallet/transaction'),
             data=json.dumps(data),
             headers={'X-CSRF-Token': CSRF_token['csrf_token'],
-            "Content-Type" : "application/json"})
+            "Content-Type" : "application/json"},
+            verify = app_config.VERIFY_SSL)
     if response.status_code == 200:
         json_response = response.json()
         logging.debug("Response from '/api/v1/wallet/transaction: {}".format(str(json_response)))
