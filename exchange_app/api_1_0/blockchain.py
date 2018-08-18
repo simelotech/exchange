@@ -267,7 +267,7 @@ def create_transaction(tx):
     	},
     	"to": outputs
     }
-    logging.debug("Creating transaction with: {}".format(str(data)))
+    logging.debug("Creating transaction")
     response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
             '/api/v1/wallet/transaction'),
             data=json.dumps(data),

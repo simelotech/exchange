@@ -13,7 +13,7 @@ def transactions_single():
     tx, errormsg = validate_transaction_single(request.json)
     if not tx:
         return make_response(jsonify(build_error(errormsg)), 400)
-    logging.debug('/api/transactions/single - Transaction: ' + str(tx))
+    logging.debug('/api/transactions/single')
     savedtx = get_transaction(tx['operationId'])
     transaction_context = False
     if savedtx:
@@ -41,7 +41,7 @@ def transactions_many_outputs():
     if not tx:
         logging.debug('/api/transactions/many-outputs - Error: {}'.format(errormsg))
         return make_response(jsonify(build_error(errormsg)), 400)
-    logging.debug('/api/transactions/many-outputs - Transaction: ' + str(tx))
+    logging.debug('/api/transactions/many-outputs')
     savedtx = get_transaction(tx['operationId'])
     transaction_context = False
     if savedtx:
