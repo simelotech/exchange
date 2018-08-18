@@ -178,10 +178,15 @@ class LiveTestCase(unittest.TestCase):
     def test_transaction_single(self):
         sourceAddress = self.addressWithBalance
         destAddress = self.destinationAddress
+        #Wait 5 seconds before checking balance to allow
+        #synchronize transactions in node blockchain
+        time.sleep(5)
         previousBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
         self._transferSKY(sourceAddress, [destAddress], [1000], '4324432444332') #just some operation id
+        time.sleep(5)
         newBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
         self._transferSKY(destAddress, [sourceAddress], [1000], '4324432444333')
+        time.sleep(5)
         backBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
 
         self.assertEqual(previousBalance[sourceAddress],
