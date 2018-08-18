@@ -207,11 +207,20 @@ class LiveTestCase(unittest.TestCase):
         sourceAddress = self.addressWithBalance
         destAddress = self.destinationAddress
         destAddress2 = self.destinationAddress2
+        #Wait 5 seconds before checking balance to allow
+        #synchronize transactions in node blockchain
+        time.sleep(5)
         previousBalance = self._getBalanceForAddresses([sourceAddress, destAddress, destAddress2])
         self._transferSKY(sourceAddress, [destAddress,destAddress2], [1000,1000], '1324432444332') #just some operation id
+        #Wait 5 seconds before checking balance to allow
+        #synchronize transactions in node blockchain
+        time.sleep(5)
         newBalance = self._getBalanceForAddresses([sourceAddress, destAddress, destAddress2])
         self._transferSKY(destAddress, [sourceAddress], [1000], '1324432444333')
         self._transferSKY(destAddress2, [sourceAddress], [1000], '1324432444331')
+        #Wait 5 seconds before checking balance to allow
+        #synchronize transactions in node blockchain
+        time.sleep(5)
         backBalance = self._getBalanceForAddresses([sourceAddress, destAddress, destAddress2])
 
         self.assertEqual(previousBalance[sourceAddress],
