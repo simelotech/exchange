@@ -6,11 +6,13 @@ import json
 import skycoin
 import binascii
 import urllib.request
+import urllib.parse
 import time
 import logging
 import codecs
+import ssl
 
-LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://localhost:6421/"
+LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "https://skyapi.simelo.tech:6420/"
 
 class LiveTestCase(unittest.TestCase):
     wallets = False
@@ -18,6 +20,7 @@ class LiveTestCase(unittest.TestCase):
 
     def setUp(self):
         logging.debug("setup started")
+        ssl._create_default_https_context = ssl._create_unverified_context
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
@@ -45,16 +48,17 @@ class LiveTestCase(unittest.TestCase):
         raise Exception(str(response))
 
     def _getBalanceForAddresses(self, addresses):
-        values = {"addrs": ",".join(addresses)}
-        balances = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/balance"), params=values)
-        if not balances.json:
+        logging.debug("Calling skycoin to get balances")
+        data = {"addrs": ",".join(addresses)}
+        data = urllib.parse.urlencode(data)
+        balances = self.makeHttpRequest("api/v1/balance?"+data)
+        if not balances:
             raise Exception("Error when getting wallet balances")
-        response = balances.json()
-        if "error" in response:
-            raise Exception(response["error"]["message"])
+        if "error" in balances:
+            raise Exception(balances["error"]["message"])
         result = {}
         for address in addresses:
-            result[address] = response["addresses"][address]["confirmed"]["coins"]
+            result[address] = balances["addresses"][address]["confirmed"]["coins"]
         return result
 
     def _transferSKY(self, sourceAddress, destAddresses, amounts, operationId):
@@ -242,7 +246,6 @@ class LiveTestCase(unittest.TestCase):
     def _getTestWallets(self):
         if LiveTestCase.wallets:
             return LiveTestCase.wallets
-        CSRF_token = self._getCSRFToken()
         seeds_path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 *('data/skycoin/seeds.json'.split('/')))
@@ -286,13 +289,9 @@ class LiveTestCase(unittest.TestCase):
         return newWallets
 
     def _matchServerWallets(self, wallets):
-        resp = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL,
-                    "/api/v1/wallets"))
-        if not resp:
+        serverWallets = self.makeHttpRequest( "api/v1/wallets" )
+        if serverWallets is None:
             raise Exception("No response when getting wallets")
-        if resp.status_code != 200:
-            raise Exception("Error {0} when getting wallets".format(resp.status_code))
-        serverWallets = resp.json()
         matched = 0
         for wallet in serverWallets:
             walletName = wallet["meta"]["filename"]
@@ -330,19 +329,20 @@ class LiveTestCase(unittest.TestCase):
         # generate CSRF token
         tries = 1
         if not LiveTestCase.serverUp:
-            tries = 100
+            tries = 5
         timeOut = 5
         CSRF_token = False
         i = 1
         while tries > 0:
             print("Connecting to skycoin node. Try: {}".format(i))
+            logging.debug("Connecting to skycoin node. Try: {}".format(i))
             i += 1
             try:
-                CSRF_token = app.lykke_session.get(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf")).json()
+                CSRF_token = self.makeHttpRequest("api/v1/csrf")
                 if CSRF_token and "csrf_token" in CSRF_token:
                     break
-            except:
-                logging.debug("Error requesting csrf token")
+            except Exception as e:
+                logging.debug("Error requesting csrf token. Error: {}".format(e))
                 time.sleep(timeOut)
             tries -= 1
         if not CSRF_token or "csrf_token" not in CSRF_token:
@@ -355,18 +355,12 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("Got csrf token: {}".format(CSRF_token['csrf_token']))
         logging.debug("Calling skycoin to create wallet with seed")
         # create the wallet from seed
-        resp = app.lykke_session.post(self.form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/wallet/create"),
-                             {"seed": seed,
-                                 "label": label, "scan": "5"},
-                             headers={'X-CSRF-Token': CSRF_token['csrf_token']})
+        data = {"seed": seed, "label": label, "scan": "5"}
+        headers = {'X-CSRF-Token': CSRF_token['csrf_token']}
+        new_wallet = self.makeHttpRequest("api/v1/wallet/create", data, headers)
 
-        if not resp:
+        if not new_wallet:
             raise Exception("No response when creating wallet")
-
-        if resp.status_code != 200:
-            raise Exception("Error {0} when creating wallet".format(resp.status_code))
-
-        new_wallet = resp.json()
 
         if not new_wallet or "entries" not in new_wallet:
             raise Exception("Error when creating wallet")
@@ -387,6 +381,24 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("Wallet created {}".format(str(result)))
         return result
 
+    def makeHttpRequest(self, url, data = None, headers = None):
+        if data:
+            data = urllib.parse.urlencode(data)
+            data = data.encode()
+        logging.debug("Making request to {} with data {}".format(url, data))
+        request = urllib.request.Request(app_config.SKYCOIN_NODE_URL + url)
+        if headers:
+            for key in headers.keys():
+                request.add_header(key, headers[key])
+        response = urllib.request.urlopen(request, data)
+        if not response:
+            logging.debug("Error. No response from {}".format(url))
+            raise Exception("Error. No response from {}".format(url))
+        result = str(response.read().replace(b'\n', b''))
+        if result.startswith("b\'"):
+            result = result[2:len(result)-1]
+        logging.debug("Result from request: " + str(result))
+        return json.loads(result)
 
     def form_url(self, base, path):
         """
