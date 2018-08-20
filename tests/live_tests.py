@@ -15,7 +15,6 @@ import ssl
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "https://skyapi.simelo.tech:6420/"
 
 class LiveTestCase(unittest.TestCase):
-    wallets = False
     serverUp = False
 
     def setUp(self):
@@ -24,17 +23,19 @@ class LiveTestCase(unittest.TestCase):
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
-        LiveTestCase.wallets = self._getTestWallets()
-        self.addressWithBalance = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
-        self.destinationAddress = "22TdufeUbAehE7ZnLuBUaTkacQHAFtCVnw2"
-        self.destinationAddress2 = "jL6tDHrNg87BjxTQLqLqHFat987NgdeUMc"
+        self.wallets = self._getTestWallets()
+        self.mainAddress = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
+        addresses = self._generateNewAddresses(3)
+        self.assertEqual(len(addresses), 3,
+            "3 new addresses should have been created")
+        self.addressWithBalance = self.mainAddress
+        self.destinationAddress = addresses[0]
+        self.destinationAddress2 = addresses[1]
+        self.destinationAddress3 = addresses[2]
         logging.debug("setup finished")
-        #self.pickAddresses()
-
 
     def tearDown(self):
         pass
-        #app_config.SKYCOIN_NODE_URL = self.defaultSkycoinNodeUrl
 
     def _getBalanceForAddresses(self, addresses):
         logging.debug("Calling skycoin to get balances")
@@ -178,15 +179,10 @@ class LiveTestCase(unittest.TestCase):
     def test_transaction_single(self):
         sourceAddress = self.addressWithBalance
         destAddress = self.destinationAddress
-        #Wait 5 seconds before checking balance to allow
-        #synchronize transactions in node blockchain
-        time.sleep(5)
         previousBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
         self._transferSKY(sourceAddress, [destAddress], [1000], '4324432444332') #just some operation id
-        time.sleep(5)
         newBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
         self._transferSKY(destAddress, [sourceAddress], [1000], '4324432444333')
-        time.sleep(5)
         backBalance = self._getBalanceForAddresses([sourceAddress, destAddress])
 
         self.assertEqual(previousBalance[sourceAddress],
@@ -204,23 +200,15 @@ class LiveTestCase(unittest.TestCase):
 
     def test_transaction_many_outputs(self):
         logging.debug("Test transaction many outputs")
+
         sourceAddress = self.addressWithBalance
-        destAddress = self.destinationAddress
-        destAddress2 = self.destinationAddress2
-        #Wait 5 seconds before checking balance to allow
-        #synchronize transactions in node blockchain
-        time.sleep(5)
+        destAddress = self.destinationAddress2
+        destAddress2 = self.destinationAddress3
         previousBalance = self._getBalanceForAddresses([sourceAddress, destAddress, destAddress2])
         self._transferSKY(sourceAddress, [destAddress,destAddress2], [1000,1000], '1324432444332') #just some operation id
-        #Wait 5 seconds before checking balance to allow
-        #synchronize transactions in node blockchain
-        time.sleep(5)
         newBalance = self._getBalanceForAddresses([sourceAddress, destAddress, destAddress2])
         self._transferSKY(destAddress, [sourceAddress], [1000], '1324432444333')
         self._transferSKY(destAddress2, [sourceAddress], [1000], '1324432444331')
-        #Wait 5 seconds before checking balance to allow
-        #synchronize transactions in node blockchain
-        time.sleep(5)
         backBalance = self._getBalanceForAddresses([sourceAddress, destAddress, destAddress2])
 
         self.assertEqual(previousBalance[sourceAddress],
@@ -245,8 +233,6 @@ class LiveTestCase(unittest.TestCase):
 
 
     def _getTestWallets(self):
-        if LiveTestCase.wallets:
-            return LiveTestCase.wallets
         seeds_path = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 *('data/skycoin/seeds.json'.split('/')))
@@ -286,6 +272,8 @@ class LiveTestCase(unittest.TestCase):
                 wallet["publicAddress"] = newWallet["publicAddress"]
                 assert wallet["privateKey"] == newWallet["privateKey"], "{} != {}".format(wallet["privateKey"], newWallet["privateKey"])
                 assert wallet["publicKey"] == newWallet["publicKey"], "{} != {}".format(wallet["publicKey"], newWallet["publicKey"])
+                #new created wallet should have 1 address
+                wallet["entries_count"] = 1
             newWallets[wallet["publicAddress"]] = wallet
         return newWallets
 
@@ -301,29 +289,11 @@ class LiveTestCase(unittest.TestCase):
                 if pubkey in wallets:
                     wallets[pubkey]["addressContext"] = walletName
                     wallets[pubkey]["publicAddress"] = entry["address"]
+                    wallets[pubkey]["entries_count"] = len(wallet["entries"])
                     matched += 1
                     break
             if matched == len(wallets):
                 break
-        return wallets
-
-
-    def _createTestWallets(self):
-        if LiveTestCase.wallets:
-            return LiveTestCase.wallets
-        seeds_path = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                *('data/skycoin/seeds.json'.split('/')))
-        file = open(seeds_path, "r")
-        text = file.read()
-        r = json.loads(text)
-        file.close()
-        wallets = {}
-        i = 0
-        for seed in r["seeds"]:
-            wallet = self._createWalletFromSeed(seed, "testwallet{}".format(i))
-            wallets[wallet["publicAddress"]] = wallet
-            i += 1
         return wallets
 
     def _getCSRFToken(self):
@@ -353,7 +323,6 @@ class LiveTestCase(unittest.TestCase):
 
     def _createWalletFromSeed(self, seed, label):
         CSRF_token = self._getCSRFToken()
-        logging.debug("Got csrf token: {}".format(CSRF_token['csrf_token']))
         logging.debug("Calling skycoin to create wallet with seed")
         # create the wallet from seed
         data = {"seed": seed, "label": label, "scan": "5"}
@@ -381,6 +350,59 @@ class LiveTestCase(unittest.TestCase):
         }
         logging.debug("Wallet created {}".format(str(result["publicAddress"])))
         return result
+
+    def _generateNewAddresses(self, n):
+        addresses = []
+        mainWallet = self.wallets[self.mainAddress]
+        wallet_entries = mainWallet["entries_count"]
+        logging.debug("Wallet with main address {} has {} addresses".format( \
+            self.mainAddress, wallet_entries))
+        seed = mainWallet["seed"]
+        seed = seed.encode()
+        i = 0
+        pubkey = skycoin.cipher_PubKey()
+        seckey = skycoin.cipher_SecKey()
+        while i < wallet_entries:
+            error, new_seed = \
+                skycoin.SKY_cipher_DeterministicKeyPairIterator(seed,
+                pubkey, seckey)
+            self.assertEqual(error, 0, "Error with SKY_cipher_DeterministicKeyPairIterator")
+            seed = new_seed
+            i += 1
+        CSRF_token = self._getCSRFToken()
+        logging.debug("Calling skycoin to create new addresses")
+        # create addresses in the wallet
+        data = {"id": mainWallet["addressContext"], "num": n}
+        headers = {'X-CSRF-Token': CSRF_token['csrf_token']}
+        new_addresses = self.makeHttpRequest("api/v1/wallet/newAddress", data, headers)
+        logging.debug("New addresses created: {}".format(str(new_addresses)))
+        i = 0
+        for new_address in new_addresses["addresses"]:
+            logging.debug("Verifying new address created: {}".format(new_address) )
+            #Generate new keys
+            pubkey = skycoin.cipher_PubKey()
+            seckey = skycoin.cipher_SecKey()
+            error, new_seed = skycoin.SKY_cipher_DeterministicKeyPairIterator(
+                    seed, pubkey, seckey)
+            seed = new_seed
+            address_created = skycoin.cipher__Address()
+            error = skycoin.SKY_cipher_DecodeBase58Address(new_address.encode(), address_created)
+            self.assertEqual(error, 0, "Error decoding address: {}".format(new_address))
+            calc_address = skycoin.cipher__Address()
+            err = skycoin.SKY_cipher_AddressFromPubKey(pubkey, calc_address)
+            self.assertEqual(error, 0, "Error creating address from pub key.")
+            assert address_created == calc_address, "Address mismatch"
+            #Save new wallet (actually it is a new address in main wallet)
+            newWallet = {
+                "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
+                "publicKey": binascii.hexlify(bytearray(pubkey.toStr())).decode('ascii'),
+                "publicAddress": new_address,
+                "addressContext": mainWallet["addressContext"]
+            }
+            self.wallets[new_address] = newWallet
+            addresses.append( new_address )
+        return addresses
+
 
     def makeHttpRequest(self, url, data = None, headers = None):
         if data:
