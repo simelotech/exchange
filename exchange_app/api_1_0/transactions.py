@@ -8,6 +8,8 @@ from ..models import add_transaction, get_transaction
 from .. import app
 from ..validate import validate_transaction_single, validate_transaction_many_outputs
 
+PICK_OUTPUTS=True
+
 @api.route('/transactions/single', methods=['POST'])
 def transactions_single():
     tx, errormsg = validate_transaction_single(request.json)
@@ -25,7 +27,10 @@ def transactions_single():
                 logging.debug("Transaction {} already in db".format(tx['operationId']))
                 transaction_context = savedtx['encoded_transaction']
     if not transaction_context:
-        result = create_transaction(tx)
+        minhours = 0
+        if PICK_OUTPUTS:
+            minhours = 4
+        result = create_transaction(tx, minhours)
         if 'error' in result:
             status = result.get('status', 500)
             return make_response(result['error'], status)
@@ -53,7 +58,10 @@ def transactions_many_outputs():
                 logging.debug("Transaction {} already in db".format(tx['operationId']))
                 transaction_context = savedtx['encoded_transaction']
     if not transaction_context:
-        result = create_transaction(tx)
+        minhours = 0
+        if PICK_OUTPUTS:
+            minhours = 8
+        result = create_transaction(tx, minhours)
         if 'error' in result:
             status = result.get('status', 500)
             return make_response(result['error'], status)

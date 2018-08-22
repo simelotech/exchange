@@ -241,7 +241,7 @@ def check_balance_from_transaction(tx):
 # Calls skycoin node to create the transactions
 # Skycoin returns a signed transactions
 # Then signing is removed
-def create_transaction(tx):
+def create_transaction(tx, min_output_hours=0):
     #generate CSRF token
     CSRF_token = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL, "/api/v1/csrf"),
         verify = app_config.VERIFY_SSL).json()
@@ -249,11 +249,13 @@ def create_transaction(tx):
         logging.debug('create_transaction - Error trying to get CSRF token')
         return {"status": 500, "error": "Unknown server error"}
     outputs = []
+    total_amount = 0
     for output in tx['outputs']:
         dest = {
         	"address": output['toAddress'],
         	"coins": "{:f}".format(output['amount'])
         }
+        total_amount += output['amount']
         outputs.append(dest)
     data = {
     	"hours_selection": {
@@ -262,11 +264,19 @@ def create_transaction(tx):
         	"share_factor": "0.5"
     	},
     	"wallet": {
-        	"id": tx['fromAddressContext'],
-        	"addresses": [tx['fromAddress']],
+        	"id": tx['fromAddressContext']
     	},
     	"to": outputs
     }
+    if min_output_hours > 0:
+        output = _pickOutputFromAddress(tx['fromAddress'],
+            total_amount, min_output_hours)
+        if output != '':
+            data["wallet"]["unspents"] = [output]
+        else:
+            min_output_hours = 0
+    if min_output_hours <= 0:
+        data["wallet"]["addresses"] = [tx['fromAddress']]
     logging.debug("Creating transaction")
     response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
             '/api/v1/wallet/transaction'),
@@ -315,3 +325,34 @@ def _removeSigningFromTransaction(hexencoded_transaction):
     finally:
         if transaction_handle != 0:
             skycoin.SKY_handle_close(transaction_handle)
+
+#When making tests picking an output to spend
+#that will allow subsequent transactions
+def _pickOutputFromAddress(address, min_amount, minimum = 32):
+    #Pick the output with less coin hours
+    #but with at least 10 to be able to
+    #return SKY to original address
+    data = {"addrs" : address}
+    resp = app.lykke_session.get(form_url(app_config.SKYCOIN_NODE_URL,
+        "api/v1/outputs"),
+        params=data,
+        verify = app_config.VERIFY_SSL)
+    if resp.status_code != 200:
+        logging.debug("Error getting outputs for address: {}. {}",
+            address, resp.text)
+        return ''
+    result = resp.json()
+    if "error" in result:
+        logging.debug("Error getting outputs for address: {}. Error: {}",
+            address, result["error"]["message"])
+        return ''
+    min_hours = 1000000000
+    hash = ''
+    for output in result["head_outputs"]:
+        hours = output['hours']
+        coins = float(output['coins'])
+        if coins >= min_amount + 0.001 and hours >= minimum and hours < min_hours:
+            min_hours = hours
+            hash = output['hash']
+    logging.debug("Picked output {} with {} hours".format(hash, min_hours))
+    return hash
