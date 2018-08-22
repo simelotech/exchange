@@ -10,7 +10,8 @@ from .service_manager import *
 
 TestSetupError = RuntimeError
 
-stopServices = True
+StopServices = True
+StartSkycoinNode = False
 
 def setup():
     """Setup integration tests
@@ -38,6 +39,16 @@ def setup():
                          " -web-interface-port=6420"
         init_service('skycoin/skycoin', 'develop',      6420, command=skycoin_params,
             volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
+        if StartSkycoinNode:
+            skycoin_params = " -enable-wallet-api=true" \
+                         " -db-path=/data/test/data.db" \
+                         " -download-peerlist=false" \
+                         " -rpc-interface=true" \
+                         " -db-read-only=false" \
+                         " -disable-networking=false" \
+                         " -web-interface-port=6421"
+            init_service('skycoin/skycoin', 'develop',      6421, command=skycoin_params,
+                volumes={skycoin_data_path: {'bind':'/data/test', 'mode' : 'rw'}})
     except:
         log.error('Error found in test suite setup')
         raise
@@ -48,7 +59,7 @@ def setup():
 def teardown():
     """Unload launched services if no test suite is running.
     """
-    if stopServices:
+    if StopServices:
         testservice_name = testrun_service_name()
         log.info('Clean up after test run %s' % (testservice_name,))
         for service_id, (_, launched) in services_started.items():

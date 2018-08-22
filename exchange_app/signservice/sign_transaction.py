@@ -26,7 +26,7 @@ def sign_transaction(txContext, privateKeys):
                 return {"status": 500, "error": "Error parsing hex sec key"}
             secKeys.append(seckey)
         #This function name changed to SKY_coin_Transaction_GetInputsCount
-        error, inputsCount = skycoin.SKY_coin_Transaction_GetInputsCount(transaction_handle)
+        error, inputsCount = skycoin.SKY_coin_Transaction_Get_Inputs_Count(transaction_handle)
         if error != 0:
             logging.debug('SKY_coin_Transaction_GetInputsCount failed')
             return {"status": 500, "error": "SKY_coin_Transaction_GetInputsCount failed"}
