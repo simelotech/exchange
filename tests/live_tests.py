@@ -288,6 +288,7 @@ class LiveTestCase(unittest.TestCase):
 
     def test_transaction_single(self):
         transferredTo = ''
+        self._printOutputsForAddress(self.mainAddress)
         #Requires at least 16 coin hours to make 2 more transactions
         self._getSomeSkyForTest(amount = 1000, minCoinHours = 16)
         sourceAddress = self.addressWithBalance
@@ -316,6 +317,7 @@ class LiveTestCase(unittest.TestCase):
 
     def test_transaction_many_outputs(self):
         logging.debug("Test transaction many outputs")
+        self._printOutputsForAddress(self.mainAddress)
         #Requires at least 32 coin hours to make one many outputs
         #transaction and one single output transaction
         self._printOutputsForAddress(self.addressWithBalance)
