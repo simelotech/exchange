@@ -69,7 +69,7 @@ class LiveTestCase(unittest.TestCase):
         for output in outputs["head_outputs"]:
             hours = output['hours']
             coins = float(output['coins'])
-            if coins >= amount + 0.001 and hours >= minimum and hours < min_hours:
+            if coins >= amount and hours >= minimum and hours < min_hours:
                 min_hours = hours
                 hash = output['hash']
         assert hash != '', "No outputs to spend"

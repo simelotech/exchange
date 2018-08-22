@@ -351,7 +351,7 @@ def _pickOutputFromAddress(address, min_amount, minimum = 32):
     for output in result["head_outputs"]:
         hours = output['hours']
         coins = float(output['coins'])
-        if coins >= min_amount + 0.001 and hours >= minimum and hours < min_hours:
+        if coins >= min_amount and hours >= minimum and hours < min_hours:
             min_hours = hours
             hash = output['hash']
     logging.debug("Picked output {} with {} hours".format(hash, min_hours))
