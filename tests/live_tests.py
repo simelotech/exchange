@@ -151,9 +151,10 @@ class LiveTestCase(unittest.TestCase):
                 verify = app_config.VERIFY_SSL)
         if response.status_code != 200:
             raise Exception("Error broadcasting transaction: {}".format(response.text))
-        confirmed = self._waitForTransactionConfirmation(encoded_transaction)
+        confirmed, hashHex = self._waitForTransactionConfirmation(encoded_transaction)
         if not confirmed:
             raise Exception("Transaction not confirmed")
+        return hashHex
 
     def _waitForTransactionConfirmation(self, encoded_transaction):
         serialized = codecs.decode(encoded_transaction, 'hex')
@@ -195,7 +196,7 @@ class LiveTestCase(unittest.TestCase):
                 tries -= 1
                 if not confirmed:
                     time.sleep(timeOut)
-        return confirmed
+        return confirmed, hashHex
 
 
     def _transferSKY(self, sourceAddress, destAddresses, amounts, operationId):
@@ -286,10 +287,10 @@ class LiveTestCase(unittest.TestCase):
         if response.status_code != 200:
             return False, response.status_code
 
-        confirmed = self._waitForTransactionConfirmation(signedTransaction)
+        confirmed, hashHex = self._waitForTransactionConfirmation(signedTransaction)
         if not confirmed:
             raise Exception("Error, transaction not confirmed")
-        return True, 200
+        return True, 200, hashHex
 
     def _pickAddress(self, minAmount, minCoinHours):
         mainWallet = self.wallets[self.mainAddress]
@@ -326,6 +327,9 @@ class LiveTestCase(unittest.TestCase):
                     break
         return pickedAddress
 
+    #Just any address to test a transactions
+    #that should fail. The address doesnt require
+    #balance
     def _pickAnyAddress(self):
         return "iZfykDvX1YD2NJJ5UTLfZFfXQBSkpCg9FW"
 
@@ -412,7 +416,7 @@ class LiveTestCase(unittest.TestCase):
         if sourceAddress1 == '':
             sourceAddress1 = self._lockAddress()
             self._getSomeSkyForTest(sourceAddress1, 1000, 4)
-        elif sourceAddress2 == '':
+        if sourceAddress2 == '':
             sourceAddress2 = self._lockAddress()
             self._getSomeSkyForTest(sourceAddress2, 2000, 4)
         logging.debug("address1 : {}, address2: {}".format(sourceAddress1,
@@ -425,7 +429,7 @@ class LiveTestCase(unittest.TestCase):
         previousBalance = self._getBalanceForAddresses([source,
                             dest])
         logging.debug("Balance: {}".format(previousBalance))
-        ok, status = self._transferSKY(source, [dest], [1000],
+        ok, status, hashHex = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
         self.assertTrue(ok)
         self.assertEqual(status, 200)
@@ -439,7 +443,7 @@ class LiveTestCase(unittest.TestCase):
             newBalance[dest] - 1000,
             "Address {0} should have gained 1000 droplets".format(dest))
         #Test creating a broadcasted transaction
-        ok, status = self._transferSKY(source, [dest], [1000],
+        ok, status, hashHex = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
@@ -452,7 +456,7 @@ class LiveTestCase(unittest.TestCase):
         previousBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(previousBalance))
-        ok, status = self._transferSKY(source, [dest1, dest2], [1000, 1000],
+        ok, status, hashHex = self._transferSKY(source, [dest1, dest2], [1000, 1000],
                 '8986575765') #just some operation id
         self.assertTrue(ok)
         self.assertEqual(status, 200)
@@ -469,19 +473,63 @@ class LiveTestCase(unittest.TestCase):
             newBalance[dest2] - 1000,
             "Address {0} should have gained 1000 droplets".format(dest2))
         #Test creating a broadcasted transaction
-        ok, status = self._transferSKY(source, [dest1, dest2], [1000, 1000],
+        ok, status, hashHex = self._transferSKY(source, [dest1, dest2], [1000, 1000],
                 '8986575765') #just some operation id
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
+    def _convertFromHexToBase64(self, s):
+        return ""
+
+    def _checkHistory(self, transactions):
+        for transaction in transactions:
+            source = transaction["source"]
+            dest = transaction["dest"]
+            hash = transaction["hash"]
+            amount = transaction["amount"]
+            hash = self._convertFromHexToBase64(hash)
+            response = self.app.get(
+                "/api/transactions/history/from/{}/observation".format(source)
+            )
+            self.assertEqual(response.status_code, 200,
+                "Error getting history from {}".format(source))
+            from_transactions = response.json()
+            found = False
+            for t in from_transactions:
+                if t["hash"] == hash:
+                    self.assertEqual(source, t["fromAddress"])
+                    self.assertEqual(dest, t["toAddress"])
+                    self.assertEqual(amount, t["amount"])
+                    found = True
+            self.assertTrue(found)
+            response = self.app.get(
+                "/api/transactions/history/to/{}/observation".format(dest)
+            )
+            self.assertEqual(response.status_code, 200,
+                "Error getting history to {}".format(source))
+            to_transactions = response.json()
+            found = False
+            for t in to_transactions:
+                if t["hash"] == hash:
+                    self.assertEqual(source, t["fromAddress"])
+                    self.assertEqual(dest, t["toAddress"])
+                    self.assertEqual(amount, t["amount"])
+                    found = True
+            self.assertTrue(found)
+
     def test_transactions(self):
-        self.assertTrue(True)
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
+        #self._addToHistoryObservations([sourceAddress1, destAddress1])
         self._checkTransactionSingle(sourceAddress1, destAddress1)
+        #self._removeFromHistoryObservations([sourceAddress1, destAddress1])
         destAddress2 = self._lockAddress()
+        #self._addToHistoryObservations([sourceAddress2, destAddress1
+        #    destAddress2])
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
+        #self._removeFromHistoryObservations([sourceAddress2, destAddress1
+        #    destAddress2])
         if sourceAddress1 != '':
             self.makeHttpRequest("free?n={}".format(sourceAddress1),
                 None, None, SYNCHRONIZATION_SERVER)
@@ -495,7 +543,7 @@ class LiveTestCase(unittest.TestCase):
             self.makeHttpRequest("free?n={}".format(destAddress2),
                 None, None, SYNCHRONIZATION_SERVER)
 
-    def _testFailingOperations(self):
+    def test_failing_operations(self):
         sourceAddress = self.mainAddress
         mainWallet = self.wallets[self.mainAddress]
         walletName = mainWallet["addressContext"]
@@ -532,6 +580,27 @@ class LiveTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400) #Missing parameters
 
+    def _addToHistoryObservations(self, addresses):
+        for address in addresses:
+            response = self.app.post(
+                "/api/transactions/history/from/{}/observation".format(address)
+            )
+            self.assertEqual(response.status, 200)
+            response = self.app.post(
+                "/api/transactions/history/to/{}/observation".format(address)
+            )
+            self.assertEqual(response.status, 200)
+
+    def _removeFromHistoryObservations(self, addresses):
+        for address in addresses:
+            response = self.app.delete(
+                "/api/transactions/history/from/{}/observation".format(address)
+            )
+            self.assertEqual(response.status, 200)
+            response = self.app.delete(
+                "/api/transactions/history/to/{}/observation".format(address)
+            )
+            self.assertEqual(response.status, 200)
 
     def _getTestWallets(self):
         seeds_path = os.path.join(
