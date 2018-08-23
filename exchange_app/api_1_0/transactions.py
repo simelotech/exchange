@@ -8,7 +8,7 @@ from ..models import add_transaction, get_transaction
 from .. import app
 from ..validate import validate_transaction_single, validate_transaction_many_outputs
 
-PICK_OUTPUTS=True
+PICK_OUTPUTS=False
 
 @api.route('/transactions/single', methods=['POST'])
 def transactions_single():

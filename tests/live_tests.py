@@ -28,20 +28,11 @@ class LiveTestCase(unittest.TestCase):
         self._getCSRFToken()
         self.wallets = self._getTestWallets()
         self.mainAddress = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
-        self.lockIndexes = self._getLockIndexes(3)
-        logging.debug("Lock indexes: {}".format(self.lockIndexes))
-        addresses = self._generateNewAddresses(3, self.lockIndexes)
-        self.assertEqual(len(addresses), 3,
-            "3 new addresses should have been created")
-        self.addressWithBalance = addresses[0]
-        self.destinationAddress = addresses[1]
-        self.destinationAddress2 = addresses[2]
-        logging.debug("setup finished")
+        self._recreateWalletAddresses()
 
     def tearDown(self):
-        self._unlockIndexes(self.lockIndexes)
-        balance = self._getBalanceForAddresses([self.mainAddress,
-            self.addressWithBalance])
+        #self._unlockIndexes(self.lockIndexes)
+        balance = self._getBalanceForAddresses([self.mainAddress])
         logging.debug("Balance at tearDown: {}".format(balance))
 
     def _getBalanceForAddresses(self, addresses):
@@ -58,27 +49,51 @@ class LiveTestCase(unittest.TestCase):
             result[address] = balances["addresses"][address]["confirmed"]["coins"]
         return result
 
-    def _pickOutputFromAddress(self, address, amount, minimum = 32):
+    def _pickOutputsFromAddress(self, address, amount, minimum = 32):
         #Pick the output with less coin hours
         #but with at least 10 to be able to
         #return SKY to original address
         data = urllib.parse.urlencode({"addrs" : address})
         outputs = self.makeHttpRequest("api/v1/outputs?" + data)
         min_hours = 1000000000
-        hash = ''
+        hashes = []
+        minhash = ''
+        total_hours = 0
+        total_coins = 0
         for output in outputs["head_outputs"]:
             hours = output['hours']
             coins = float(output['coins'])
             if coins >= amount and hours >= minimum and hours < min_hours:
                 min_hours = hours
-                hash = output['hash']
-        assert hash != '', "No outputs to spend"
-        logging.debug("Picked output {} with {} hours".format(hash, min_hours))
-        return hash
+                minhash = output['hash']
+                total_hours = hours
+                total_coins = coins
+        if minhash != '':
+            hashes = [minhash]
+        else:
+            total_hours = 0
+            total_coins = 0
+            outs = outputs["head_outputs"]
+            outs.sort(key = lambda x: x["hours"])
+            for output in outs:
+                hours = output['hours']
+                coins = float(output['coins'])
+                total_hours += hours
+                total_coins += coins
+                hashes.append( output["hash"] )
+                if total_coins >= amount and total_hours >= minimum:
+                    break
+        logging.debug("Picked outputs {} with {} hours and {} coins".\
+            format(hashes, total_hours, total_coins))
+        return hashes
 
-    def _transferSKYEx(self, sourceAddress, destAddress, amount, output):
+    def _transferSKYEx(self, sourceAddress, destAddress, amount, outputs):
+        tx = self.buildSingleTransaction(sourceAddress, destAddress, amount, outputs)
+        self._sendTransaction(tx)
+
+    def buildSingleTransaction(self, sourceAddress, destAddress, amount, outputs):
         amount = float(amount) / 1000000 #Convert to droplets
-        logging.debug("******Transferring from {} to {}, amount {}".format( \
+        logging.debug("******Transferring (Skycoin) from {} to {}, amount {}".format( \
             sourceAddress, destAddress, amount))
         sourceWallet = self.wallets[sourceAddress]["addressContext"]
         privateKey = self.wallets[sourceAddress]["privateKey"]
@@ -96,10 +111,14 @@ class LiveTestCase(unittest.TestCase):
                 "coins" : "{:f}".format(amount)
             }]
         }
-        if output:
-            tx["wallet"]["unspents"] = [output]
+        if outputs:
+            tx["wallet"]["unspents"] = outputs
         else:
             tx["wallet"]["addresses"] = [sourceAddress]
+        return tx
+
+
+    def _sendTransaction(self, tx):
         CSRF_token = self._getCSRFToken()
         logging.debug("Calling skycoin to create new transaction")
         response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
@@ -135,7 +154,6 @@ class LiveTestCase(unittest.TestCase):
         confirmed = self._waitForTransactionConfirmation(encoded_transaction)
         if not confirmed:
             raise Exception("Transaction not confirmed")
-
 
     def _waitForTransactionConfirmation(self, encoded_transaction):
         serialized = codecs.decode(encoded_transaction, 'hex')
@@ -268,89 +286,190 @@ class LiveTestCase(unittest.TestCase):
         if not confirmed:
             raise Exception("Error, transaction not confirmed")
 
+    def _pickAddress(self, minAmount, minCoinHours):
+        mainWallet = self.wallets[self.mainAddress]
+        walletName = mainWallet["addressContext"]
+        balance = self.makeHttpRequest("api/v1/wallet/balance?id=" + \
+                walletName)
+        logging.debug("Wallet balance: {}".format(balance))
+        pickedAddress = ''
+        pickedCoins = 0
+        pickedHours = 0
+        addresses = []
+        for address in balance["addresses"].keys():
+            if address == self.mainAddress:
+                continue
+            a = {
+                "coins" : balance["addresses"][address]["confirmed"]["coins"],
+                "hours" : balance["addresses"][address]["confirmed"]["hours"],
+                "address" : address
+            }
+            addresses.append(a)
+        addresses.sort(key = lambda x : x["hours"])
+        #Pick an address with balance and coin hours
+        for address in addresses:
+            coins = address["coins"]
+            hours = address["hours"]
+            if coins >= minAmount and hours >= minCoinHours:
+                address = address["address"]
+                result = self.makeHttpRequest("lock?n={}".format(address),
+                    None, None, SYNCHRONIZATION_SERVER)
+                if "index" in result:
+                    pickedAddress = address
+                    pickedCoins = coins
+                    pickedHours = hours
+                    break
+        return pickedAddress
 
-    def _getSomeSkyForTest(self, amount, minCoinHours):
+    def _lockAddress(self):
+        mainWallet = self.wallets[self.mainAddress]
+        walletName = mainWallet["addressContext"]
+        balance = self.makeHttpRequest("api/v1/wallet/balance?id=" + \
+                walletName)
+        for address in balance["addresses"].keys():
+            if address == self.mainAddress:
+                continue
+            result = self.makeHttpRequest("lock?n={}".format(address),
+                None, None, SYNCHRONIZATION_SERVER)
+            if "index" in result:
+                logging.debug("Locked address: {}".format(address))
+                return address
+        return Exception("Unable to lock an address for testing")
+
+    def _getSomeSkyForTest(self, toAddress, amount, minCoinHours):
+        logging.debug("Reserving {},{} for {}".format(amount, minCoinHours,
+                toAddress))
         #Pick an output with enough coin hours that will allow
         #subsequent transfers
-        output = self._pickOutputFromAddress(self.mainAddress, amount / 10e6, minCoinHours)
+        outputs = self._pickOutputsFromAddress(self.mainAddress, amount / 1e6,
+            minCoinHours)
+        if len(outputs) == 0:
+            return False
         balance = self._getBalanceForAddresses([self.mainAddress,
-            self.addressWithBalance])
+            toAddress])
         logging.debug("Balance: {}".format(balance))
         self._transferSKYEx(self.mainAddress,
-            self.addressWithBalance, amount, output)
+            toAddress, amount, outputs)
         balance = self._getBalanceForAddresses([self.mainAddress,
-            self.addressWithBalance])
+            toAddress])
         logging.debug("Balance: {}".format(balance))
+        return True
+
+    def _getSpendableOutputsForAddresses(self, addresses):
+        data = {"addrs": ",".join(addresses)}
+        data = urllib.parse.urlencode(data)
+        spendables = []
+        outputs = self.makeHttpRequest("api/v1/outputs?"+data)
+        total = 0
+        for output in outputs["head_outputs"]:
+            coins = float(output["coins"])
+            hours = output["hours"]
+            if coins >= 0.0009 and hours >= 1:
+                spendables.append( output )
+                total += coins
+        return spendables, total
+
+    def _recoverOutputs(self, addresses, dest):
+        for address in addresses:
+            outputs, total = self._getSpendableOutputsForAddresses([address])
+            logging.debug("Outputs to recover: {}. Total: {}".format(outputs, total))
+            self._transferSKYEx(address, dest, total, outputs)
 
     def _printOutputsForAddress(self, address):
         result = self.makeHttpRequest("api/v1/outputs?addrs=" + address)
         logging.debug("Outputs for address {}: {}".format( address, str(result)))
 
-    def test_transaction_single(self):
-        transferredTo = ''
-        self._printOutputsForAddress(self.mainAddress)
-        #Requires at least 16 coin hours to make 2 more transactions
-        self._getSomeSkyForTest(amount = 1000, minCoinHours = 4)
-        sourceAddress = self.addressWithBalance
-        destAddress = self.destinationAddress
-        transferredTo = self.addressWithBalance
-        previousBalance = self._getBalanceForAddresses([sourceAddress,
-                            destAddress])
+
+    def _pickAddresses(self):
+        sourceAddress1 = ''
+        sourceAddress2 = ''
+        #Find an address with 3000 droplets and at least 4 coin hours
+        address = self._pickAddress(3000, 4)
+        logging.debug("Found address '{}' with at leat 3000 coins and 4 hours".\
+            format(address))
+        if address == '':
+            sourceAddress2 = self._pickAddress(2000, 1)
+            sourceAddress1 = self._pickAddress(1000, 1)
+        else:
+            sourceAddress1 = address
+            sourceAddress2 = address
+        reserved = False
+        if sourceAddress1 == ''  and sourceAddress2 == '':
+            sourceAddress1 = self._lockAddress()
+            sourceAddress2 = sourceAddress1
+            reserved = self._getSomeSkyForTest(sourceAddress1, 3000, 16)
+            if not reserved:
+                sourceAddress2 = ''
+                reserved = self._getSomeSkyForTest(sourceAddress1, 1000, 4)
+        if sourceAddress1 == '':
+            sourceAddress1 = self._lockAddress()
+            self._getSomeSkyForTest(sourceAddress1, 1000, 4)
+        elif sourceAddress2 == '':
+            sourceAddress2 = self._lockAddress()
+            self._getSomeSkyForTest(sourceAddress2, 2000, 4)
+        logging.debug("address1 : {}, address2: {}".format(sourceAddress1,
+                sourceAddress2))
+        return sourceAddress1, sourceAddress2
+
+    def _checkTransactionSingle(self, source, dest):
+        self._printOutputsForAddress(source)
+        self._printOutputsForAddress(dest)
+        previousBalance = self._getBalanceForAddresses([source,
+                            dest])
         logging.debug("Balance: {}".format(previousBalance))
-        self._printOutputsForAddress(destAddress)
-        self._transferSKY(sourceAddress, [destAddress], [1000],
+        self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
-        self._printOutputsForAddress(destAddress)
-        transferredTo = destAddress
-        newBalance = self._getBalanceForAddresses([sourceAddress,
-                destAddress])
+        newBalance = self._getBalanceForAddresses([source,
+                dest])
         logging.debug("Balance: {}".format(newBalance))
-        if transferredTo != '':
-            self._transferSKYEx(transferredTo,
-                self.mainAddress, 1000, False)
-        self.assertEqual(previousBalance[sourceAddress],
-            newBalance[sourceAddress] + 1000,
-            "Address {0} should have lost 1000 droplets".format(sourceAddress))
-        self.assertEqual(previousBalance[destAddress],
-            newBalance[destAddress] - 1000,
-            "Address {0} should have gained 1000 droplets".format(destAddress))
+        self.assertEqual(previousBalance[source],
+            newBalance[source] + 1000,
+            "Address {0} should have lost 1000 droplets".format(source))
+        self.assertEqual(previousBalance[dest],
+            newBalance[dest] - 1000,
+            "Address {0} should have gained 1000 droplets".format(dest))
 
-    def test_transaction_many_outputs(self):
-        logging.debug("Test transaction many outputs")
-        self._printOutputsForAddress(self.mainAddress)
-        #Requires at least 32 coin hours to make one many outputs
-        #transaction and one single output transaction
-        self._printOutputsForAddress(self.addressWithBalance)
-        self._getSomeSkyForTest(amount = 2000, minCoinHours = 8)
-        self._printOutputsForAddress(self.addressWithBalance)
-        sourceAddress = self.addressWithBalance
-        destAddress = self.destinationAddress
-        destAddress2 = self.destinationAddress2
-
-        previousBalance = self._getBalanceForAddresses([sourceAddress,
-                            destAddress, destAddress2])
+    def _checkTransactionManyOutputs(self, source, dest1, dest2):
+        self._printOutputsForAddress(source)
+        self._printOutputsForAddress(dest1)
+        self._printOutputsForAddress(dest2)
+        previousBalance = self._getBalanceForAddresses([source,
+                            dest1, dest2])
         logging.debug("Balance: {}".format(previousBalance))
-        self._printOutputsForAddress(destAddress)
-        self._printOutputsForAddress(destAddress2)
-        self._transferSKY(sourceAddress, [destAddress, destAddress2],
-                [1000, 1000], '555555555') #just some operation id
-        self._printOutputsForAddress(destAddress)
-        self._printOutputsForAddress(destAddress2)
-        newBalance = self._getBalanceForAddresses([sourceAddress,
-                destAddress, destAddress2])
-        self.assertEqual(previousBalance[sourceAddress],
-            newBalance[sourceAddress] + 2000,
-            "Address {0} should have lost 2000 droplets".format(sourceAddress))
-        self.assertEqual(previousBalance[destAddress],
-            newBalance[destAddress] - 1000,
-            "Address {0} should have gained 1000 droplets".format(destAddress))
-        self.assertEqual(previousBalance[destAddress2],
-            newBalance[destAddress2] - 1000,
-            "Address {0} should have gained 1000 droplets".format(destAddress2))
-        self._transferSKYEx(destAddress,
-            self.mainAddress, 1000, False)
-        self._transferSKYEx(destAddress2,
-            self.mainAddress, 1000, False)
+        self._transferSKY(source, [dest1, dest2], [1000, 1000],
+                '8986575765') #just some operation id
+        newBalance = self._getBalanceForAddresses([source,
+                            dest1, dest2])
+        logging.debug("Balance: {}".format(newBalance))
+        self.assertEqual(previousBalance[source],
+            newBalance[source] + 2000,
+            "Address {0} should have lost 2000 droplets".format(source))
+        self.assertEqual(previousBalance[dest1],
+            newBalance[dest1] - 1000,
+            "Address {0} should have gained 1000 droplets".format(dest1))
+        self.assertEqual(previousBalance[dest2],
+            newBalance[dest2] - 1000,
+            "Address {0} should have gained 1000 droplets".format(dest2))
+
+    def test_transactions(self):
+        sourceAddress1, sourceAddress2 = self._pickAddresses()
+        destAddress1 = self._lockAddress()
+        self._checkTransactionSingle(sourceAddress1, destAddress1)
+        destAddress2 = self._lockAddress()
+        self._checkTransactionManyOutputs(sourceAddress2,
+                destAddress1, destAddress2)
+        if sourceAddress1 != '':
+            self.makeHttpRequest("free?n={}".format(sourceAddress1),
+                None, None, SYNCHRONIZATION_SERVER)
+        if sourceAddress2 != '' and sourceAddress2 != sourceAddress1:
+            self.makeHttpRequest("free?n={}".format(sourceAddress2),
+                None, None, SYNCHRONIZATION_SERVER)
+        if destAddress1 != '':
+            self.makeHttpRequest("free?n={}".format(destAddress1),
+                None, None, SYNCHRONIZATION_SERVER)
+        if destAddress2 != '':
+            self.makeHttpRequest("free?n={}".format(destAddress2),
+                None, None, SYNCHRONIZATION_SERVER)
 
     def _getTestWallets(self):
         seeds_path = os.path.join(
@@ -471,25 +590,42 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("Wallet created {}".format(str(result["publicAddress"])))
         return result
 
-    def _generateNewAddresses(self, n, indexes):
+    def _recreateWalletAddresses(self):
         addresses = []
         mainWallet = self.wallets[self.mainAddress]
         wallet_entries = mainWallet["entries_count"]
-        maxIndex = 0
-        for index in indexes:
-            if index > maxIndex:
-                maxIndex = index
-        if maxIndex + 1 > wallet_entries:
-            #Generate addresses until we reach the indexes
-            newAddressesCount = maxIndex + 1 - wallet_entries
-            newaddresses = self._createNewAddresses( newAddressesCount)
-            logging.debug("New addresses created in skycoin: {}".format(newaddresses))
-        addresses = []
-        for index in indexes:
-            wallet = self._getAddressByIndex(index)
-            addresses.append(wallet["publicAddress"])
-            self.wallets[wallet["publicAddress"]] = wallet
-        return addresses
+        logging.debug("Wallet with main address {} has {} addresses".format( \
+            self.mainAddress, wallet_entries))
+        seed = mainWallet["seed"]
+        seed = seed.encode()
+        pubkey = skycoin.cipher_PubKey()
+        seckey = skycoin.cipher_SecKey()
+        i = 0
+        while i < wallet_entries:
+            error, new_seed = \
+                skycoin.SKY_cipher_DeterministicKeyPairIterator(seed,
+                pubkey, seckey)
+            self.assertEqual(error, 0, "Error with SKY_cipher_DeterministicKeyPairIterator")
+            address = skycoin.cipher__Address()
+            err = skycoin.SKY_cipher_AddressFromPubKey(pubkey, address)
+            self.assertEqual(error, 0, "Error creating address from pub key.")
+            error, strAddress = skycoin.SKY_cipher_Address_String(address)
+            self.assertEqual(error, 0, "Error with SKY_cipher_Address_String")
+            strAddress = str(strAddress)
+            if strAddress.startswith("b\'"):
+                strAddress = strAddress[2:len(strAddress)-1]
+            i += 1
+            seed = new_seed
+            if strAddress == self.mainAddress:
+                continue
+            logging.debug("Address generated: {}".format(strAddress))
+            newWallet = {
+                "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
+                "publicKey": binascii.hexlify(bytearray(pubkey.toStr())).decode('ascii'),
+                "publicAddress": strAddress,
+                "addressContext": mainWallet["addressContext"]
+            }
+            self.wallets[strAddress] = newWallet
 
     def _createNewAddresses(self, n):
         mainWallet = self.wallets[self.mainAddress]
@@ -540,10 +676,6 @@ class LiveTestCase(unittest.TestCase):
             "addressContext": mainWallet["addressContext"]
         }
         return newWallet
-
-    def _getLockIndexes(self, n):
-        lockIndexes = self.makeHttpRequest("lock?n={}".format(n), None, None, SYNCHRONIZATION_SERVER)
-        return lockIndexes["indexes"]
 
     def _unlockIndexes(self, indexes):
         logging.debug("Unlocking indexes: {}".format(indexes))
@@ -615,13 +747,3 @@ def post_url(path, values=""):
     response_data = {"Called": "post_url()", "url": url, "values:": values}
 
     return response_data
-
-def get_transaction_context(tx):
-	#TODO: Find a more ellegant way to create the context
-	return json.dumps(tx)
-
-def get_transaction_from_context(context):
-    try:
-        return json.loads(context)
-    except:
-        return False
