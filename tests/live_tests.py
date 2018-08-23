@@ -224,7 +224,8 @@ class LiveTestCase(unittest.TestCase):
                 data = json.dumps(testTx),
                 content_type='application/json'
             )
-            self.assertEqual(response.status_code, 200)
+            if response.status_code != 200:
+                return False, response.status_code
             json_response = json.loads(response.get_data(as_text=True))
             self.assertIn('transactionContext', json_response)
             transaction_context = json_response['transactionContext']
@@ -250,7 +251,8 @@ class LiveTestCase(unittest.TestCase):
                 data = json.dumps(testTx),
                 content_type='application/json'
             )
-            self.assertEqual(response.status_code, 200)
+            if response.status_code != 200:
+                return False, response.status_code
             json_response = json.loads(response.get_data(as_text=True))
             self.assertIn('transactionContext', json_response)
             transaction_context = json_response['transactionContext']
@@ -265,7 +267,8 @@ class LiveTestCase(unittest.TestCase):
             data = json.dumps(data),
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 200)
+        if response.status_code != 200:
+            return False, response.status_code
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('signedTransaction', json_response)
         signedTransaction = json_response['signedTransaction']
@@ -280,11 +283,13 @@ class LiveTestCase(unittest.TestCase):
             data = json.dumps(data),
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 200)
+        if response.status_code != 200:
+            return False, response.status_code
 
         confirmed = self._waitForTransactionConfirmation(signedTransaction)
         if not confirmed:
             raise Exception("Error, transaction not confirmed")
+        return True, 200
 
     def _pickAddress(self, minAmount, minCoinHours):
         mainWallet = self.wallets[self.mainAddress]
@@ -320,6 +325,9 @@ class LiveTestCase(unittest.TestCase):
                     pickedHours = hours
                     break
         return pickedAddress
+
+    def _pickAnyAddress(self):
+        return "iZfykDvX1YD2NJJ5UTLfZFfXQBSkpCg9FW"
 
     def _lockAddress(self):
         mainWallet = self.wallets[self.mainAddress]
@@ -417,8 +425,10 @@ class LiveTestCase(unittest.TestCase):
         previousBalance = self._getBalanceForAddresses([source,
                             dest])
         logging.debug("Balance: {}".format(previousBalance))
-        self._transferSKY(source, [dest], [1000],
+        ok, status = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
+        self.assertTrue(ok)
+        self.assertEqual(status, 200)
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
@@ -428,6 +438,12 @@ class LiveTestCase(unittest.TestCase):
         self.assertEqual(previousBalance[dest],
             newBalance[dest] - 1000,
             "Address {0} should have gained 1000 droplets".format(dest))
+        #Test creating a broadcasted transaction
+        ok, status = self._transferSKY(source, [dest], [1000],
+                '4324432444332') #just some operation id
+        self.assertFalse(ok) #Already broadcasted
+        self.assertEqual(status, 409)
+
 
     def _checkTransactionManyOutputs(self, source, dest1, dest2):
         self._printOutputsForAddress(source)
@@ -436,8 +452,10 @@ class LiveTestCase(unittest.TestCase):
         previousBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(previousBalance))
-        self._transferSKY(source, [dest1, dest2], [1000, 1000],
+        ok, status = self._transferSKY(source, [dest1, dest2], [1000, 1000],
                 '8986575765') #just some operation id
+        self.assertTrue(ok)
+        self.assertEqual(status, 200)
         newBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(newBalance))
@@ -450,8 +468,14 @@ class LiveTestCase(unittest.TestCase):
         self.assertEqual(previousBalance[dest2],
             newBalance[dest2] - 1000,
             "Address {0} should have gained 1000 droplets".format(dest2))
+        #Test creating a broadcasted transaction
+        ok, status = self._transferSKY(source, [dest1, dest2], [1000, 1000],
+                '8986575765') #just some operation id
+        self.assertFalse(ok) #Already broadcasted
+        self.assertEqual(status, 409)
 
     def test_transactions(self):
+        self.assertTrue(True)
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
         self._checkTransactionSingle(sourceAddress1, destAddress1)
@@ -470,6 +494,44 @@ class LiveTestCase(unittest.TestCase):
         if destAddress2 != '':
             self.makeHttpRequest("free?n={}".format(destAddress2),
                 None, None, SYNCHRONIZATION_SERVER)
+
+    def _testFailingOperations(self):
+        sourceAddress = self.mainAddress
+        mainWallet = self.wallets[self.mainAddress]
+        walletName = mainWallet["addressContext"]
+        destAddress = self._pickAnyAddress()
+        testTx = {
+            'operationID' : "22222222",
+            'fromAddress' : sourceAddress,
+            'fromAddressContext' : walletName,
+            'toAddress' : destAddress,
+            'assetId' : 'SKY',
+            'amount' : 1e15, #Hoping there will never be 1 billion skys
+            'includeFee' : False
+        }
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) #Not enough balance
+        testTx['amount'] = 1 #amount to small
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) #amount to small
+        testTx = {
+            'operationID' : "22222222"
+        }
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) #Missing parameters
+
 
     def _getTestWallets(self):
         seeds_path = os.path.join(
