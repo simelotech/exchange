@@ -226,7 +226,7 @@ class LiveTestCase(unittest.TestCase):
                 content_type='application/json'
             )
             if response.status_code != 200:
-                return False, response.status_code
+                return False, response.status_code, ""
             json_response = json.loads(response.get_data(as_text=True))
             self.assertIn('transactionContext', json_response)
             transaction_context = json_response['transactionContext']
@@ -253,7 +253,7 @@ class LiveTestCase(unittest.TestCase):
                 content_type='application/json'
             )
             if response.status_code != 200:
-                return False, response.status_code
+                return False, response.status_code, ""
             json_response = json.loads(response.get_data(as_text=True))
             self.assertIn('transactionContext', json_response)
             transaction_context = json_response['transactionContext']
@@ -269,7 +269,7 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         if response.status_code != 200:
-            return False, response.status_code
+            return False, response.status_code, ""
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('signedTransaction', json_response)
         signedTransaction = json_response['signedTransaction']
@@ -285,7 +285,7 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         if response.status_code != 200:
-            return False, response.status_code
+            return False, response.status_code, ""
 
         confirmed, hashHex = self._waitForTransactionConfirmation(signedTransaction)
         if not confirmed:
