@@ -478,58 +478,13 @@ class LiveTestCase(unittest.TestCase):
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
-    def _convertFromHexToBase64(self, s):
-        return ""
-
-    def _checkHistory(self, transactions):
-        for transaction in transactions:
-            source = transaction["source"]
-            dest = transaction["dest"]
-            hash = transaction["hash"]
-            amount = transaction["amount"]
-            hash = self._convertFromHexToBase64(hash)
-            response = self.app.get(
-                "/api/transactions/history/from/{}/observation".format(source)
-            )
-            self.assertEqual(response.status_code, 200,
-                "Error getting history from {}".format(source))
-            from_transactions = response.json()
-            found = False
-            for t in from_transactions:
-                if t["hash"] == hash:
-                    self.assertEqual(source, t["fromAddress"])
-                    self.assertEqual(dest, t["toAddress"])
-                    self.assertEqual(amount, t["amount"])
-                    found = True
-            self.assertTrue(found)
-            response = self.app.get(
-                "/api/transactions/history/to/{}/observation".format(dest)
-            )
-            self.assertEqual(response.status_code, 200,
-                "Error getting history to {}".format(source))
-            to_transactions = response.json()
-            found = False
-            for t in to_transactions:
-                if t["hash"] == hash:
-                    self.assertEqual(source, t["fromAddress"])
-                    self.assertEqual(dest, t["toAddress"])
-                    self.assertEqual(amount, t["amount"])
-                    found = True
-            self.assertTrue(found)
-
     def test_transactions(self):
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
-        #self._addToHistoryObservations([sourceAddress1, destAddress1])
         self._checkTransactionSingle(sourceAddress1, destAddress1)
-        #self._removeFromHistoryObservations([sourceAddress1, destAddress1])
         destAddress2 = self._lockAddress()
-        #self._addToHistoryObservations([sourceAddress2, destAddress1
-        #    destAddress2])
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
-        #self._removeFromHistoryObservations([sourceAddress2, destAddress1
-        #    destAddress2])
         if sourceAddress1 != '':
             self.makeHttpRequest("free?n={}".format(sourceAddress1),
                 None, None, SYNCHRONIZATION_SERVER)
@@ -757,56 +712,6 @@ class LiveTestCase(unittest.TestCase):
                 "addressContext": mainWallet["addressContext"]
             }
             self.wallets[strAddress] = newWallet
-
-    def _createNewAddresses(self, n):
-        mainWallet = self.wallets[self.mainAddress]
-        CSRF_token = self._getCSRFToken()
-        logging.debug("Calling skycoin to create new addresses")
-        # create addresses in the wallet
-        data = {"id": mainWallet["addressContext"], "num": n}
-        headers = {'X-CSRF-Token': CSRF_token['csrf_token']}
-        new_addresses = self.makeHttpRequest("api/v1/wallet/newAddress", data, headers)
-        logging.debug("New addresses created: {}".format(str(new_addresses)))
-
-    def _getAddressByIndex(self, index):
-        addresses = []
-        mainWallet = self.wallets[self.mainAddress]
-        wallet_entries = mainWallet["entries_count"]
-        logging.debug("Wallet with main address {} has {} addresses".format( \
-            self.mainAddress, wallet_entries))
-        seed = mainWallet["seed"]
-        seed = seed.encode()
-        pubkey = skycoin.cipher_PubKey()
-        seckey = skycoin.cipher_SecKey()
-        i = 0
-        while i < index:
-            error, new_seed = \
-                skycoin.SKY_cipher_DeterministicKeyPairIterator(seed,
-                pubkey, seckey)
-            self.assertEqual(error, 0, "Error with SKY_cipher_DeterministicKeyPairIterator")
-            seed = new_seed
-            i += 1
-        #Got the seed, lets generate
-        error, new_seed = \
-            skycoin.SKY_cipher_DeterministicKeyPairIterator(seed,
-            pubkey, seckey)
-        self.assertEqual(error, 0, "Error with SKY_cipher_DeterministicKeyPairIterator")
-        address = skycoin.cipher__Address()
-        err = skycoin.SKY_cipher_AddressFromPubKey(pubkey, address)
-        self.assertEqual(error, 0, "Error creating address from pub key.")
-        error, strAddress = skycoin.SKY_cipher_Address_String(address)
-        self.assertEqual(error, 0, "Error with SKY_cipher_Address_String")
-        strAddress = str(strAddress)
-        if strAddress.startswith("b\'"):
-            strAddress = strAddress[2:len(strAddress)-1]
-        logging.debug("Address generated: {}".format(strAddress))
-        newWallet = {
-            "privateKey": binascii.hexlify(bytearray(seckey.toStr())).decode('ascii'),
-            "publicKey": binascii.hexlify(bytearray(pubkey.toStr())).decode('ascii'),
-            "publicAddress": strAddress,
-            "addressContext": mainWallet["addressContext"]
-        }
-        return newWallet
 
     def _unlockIndexes(self, indexes):
         logging.debug("Unlocking indexes: {}".format(indexes))
