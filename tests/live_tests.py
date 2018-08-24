@@ -11,6 +11,7 @@ import time
 import logging
 import codecs
 import ssl
+import base64
 
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "https://skyapi.simelo.tech:6420/"
 #LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://127.0.0.1:6421/"
