@@ -567,6 +567,7 @@ def get_transactions_to(address, take, afterhash = ''):
         timestamp = txn['time']
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         txn_hash = txn['txn']['inner_hash']
+        tx_hash = _hexToB64(txn_hash)
         txn_type = txn['txn']['type']
         orig_addr = get_hash_address(txn['txn']['inputs'][0])['address']
 

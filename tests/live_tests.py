@@ -205,6 +205,7 @@ class LiveTestCase(unittest.TestCase):
                     confirmed = json_response["status"]["confirmed"]
                     logging.debug("Confirmed result: {}".format(confirmed))
                     if confirmed:
+                        logging.debug("Transaction confirmed: {}".format(json_response))
                         innerHash = json_response['txn']['inner_hash']
                         break
                 else:
@@ -490,16 +491,17 @@ class LiveTestCase(unittest.TestCase):
         return r
 
     def _checkTransactionSingleHistory(self, source, dest, amount, hash):
+        logging.debug("Tx to search in history in hex: {}".format(hash))
         hash = self._hexToB64(hash)
         logging.debug("Checking single transaction history. " + \
             "hash: {}, source: {}, dest: {} ".format(hash, source, dest))
         coins = amount / 1e6
-        historySourceFrom = self._getHistoryFrom(source)
-        logging.debug("History From {}: {}".format(source, historySourceFrom))
-        historySourceTo = self._getHistoryTo(dest)
-        logging.debug("History From {}: {}".format(dest, historySourceTo))
-        self._findInHistory(historySourceFrom, source, dest, amount, hash)
-        self._findInHistory(historySourceTo, source, dest, amount, hash)
+        historyFrom = self._getHistoryFrom(source)
+        logging.debug("History From {}: {}".format(source, historyFrom))
+        historyTo = self._getHistoryTo(dest)
+        logging.debug("History To {}: {}".format(dest, historyTo))
+        self._findInHistory(historyFrom, source, dest, amount, hash)
+        self._findInHistory(historyTo, source, dest, amount, hash)
 
 
     def _checkTransactionSingle(self, source, dest):
