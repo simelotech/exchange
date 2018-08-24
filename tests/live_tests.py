@@ -77,6 +77,7 @@ class LiveTestCase(unittest.TestCase):
             #with enough coin hours
             total_hours = 0
             total_coins = 0
+<<<<<<< HEAD
             foundHours = False
             foundCoins = False
             outs = outputs["head_outputs"]
@@ -105,6 +106,32 @@ class LiveTestCase(unittest.TestCase):
                 #Add output hours first hoping it will force
                 #the transfer of these hours
                 hashes = [outputWithHours, outputWithCoins]
+=======
+            outs = outputs["head_outputs"]
+            outs.sort(key = lambda x: x["hours"])
+            #find output with enough hours
+            for output in outs:
+                hours = output['hours']
+                coins = float(output['coins'])
+                if hours >= minimum:
+                    hashes.append( output["hash"] )
+                    total_hours += hours
+                    total_coins += coins
+                    break
+            if len(hashes) > 0:
+                #Now add more outputs to fulfill coins
+                outs.sort(key = lambda x: x["coins"])
+                for output in outs:
+                    if output["hash"] == hashes[0]:
+                        continue
+                    hashes.append( output["hash"] )
+                    hours = output['hours']
+                    coins = float(output['coins'])
+                    total_hours += hours
+                    total_coins += coins
+                    if total_coins >= amount:
+                        break
+>>>>>>> stdevEclipse_t114_transactions_endpoints
         logging.debug("Picked outputs {} with {} hours and {} coins".\
             format(hashes, total_hours, total_coins))
         return hashes
