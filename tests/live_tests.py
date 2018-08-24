@@ -487,8 +487,8 @@ class LiveTestCase(unittest.TestCase):
                 self.assertEqual(tx['toAddress'], dest,
                     "{} != {}".format(tx['toAddress'], dest))
                 txAmount = float(tx['amount'])
-                assert abs(txAmount - coins) < 0.00001, \
-                    "{}!={}".format(txAmount, coins)
+                assert abs(txAmount - amount) < 0.00001, \
+                    "{}!={}".format(txAmount, amount)
                 self.assertEqual(tx['assetId'], 'SKY',
                     "{} != SKY".format(tx['assetId']))
                 break
@@ -511,8 +511,8 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("History From {}: {}".format(source, historyFrom))
         historyTo = self._getHistoryTo(dest)
         logging.debug("History To {}: {}".format(dest, historyTo))
-        self._findInHistory(historyFrom, source, dest, amount, hash)
-        self._findInHistory(historyTo, source, dest, amount, hash)
+        self._findInHistory(historyFrom, source, dest, coins, hash)
+        self._findInHistory(historyTo, source, dest, coins, hash)
 
 
     def _checkTransactionSingle(self, source, dest):
