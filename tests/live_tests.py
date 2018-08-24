@@ -27,16 +27,14 @@ class LiveTestCase(unittest.TestCase):
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
         self.mainAddress = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
-        #self._getCSRFToken()
-        #self.wallets = self._getTestWallets()
-        #self.mainAddress = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
-        #self._recreateWalletAddresses()
+        self._getCSRFToken()
+        self.wallets = self._getTestWallets()
+        self._recreateWalletAddresses()
 
     def tearDown(self):
         #self._unlockIndexes(self.lockIndexes)
-        #balance = self._getBalanceForAddresses([self.mainAddress])
-        #logging.debug("Balance at tearDown: {}".format(balance))
-        pass
+        balance = self._getBalanceForAddresses([self.mainAddress])
+        logging.debug("Balance at tearDown: {}".format(balance))
 
     def _getBalanceForAddresses(self, addresses):
         logging.debug("Calling skycoin to get balances")
