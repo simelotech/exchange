@@ -80,25 +80,31 @@ class LiveTestCase(unittest.TestCase):
             foundHours = False
             foundCoins = False
             outs = outputs["head_outputs"]
+            outputWithHours = ''
+            outputWithCoins = ''
             outs.sort(key = lambda x: x["hours"])
             for output in outs:
                 hours = output['hours']
                 coins = float(output['coins'])
                 added = False
                 if not foundHours and hours >= minimum:
-                    hashes.append( output["hash"] )
+                    outputWithHours = output["hash"]
                     foundHours = True
                     total_hours += hours
                     total_coins += coins
                     added = True
                 if not foundCoins and total_coins + coins >= amount:
                     foundCoins = True
-                    hashes.append( output["hash"] )
+                    outputWithCoins = output["hash"]
                     if not added:
                         total_hours += hours
                         total_coins += coins
                 if foundHours and foundCoins:
                     break
+            if foundHours and foundCoins:
+                #Add output hours first hoping it will force
+                #the transfer of these hours
+                hashes = [outputWithHours, outputWithCoins]
         logging.debug("Picked outputs {} with {} hours and {} coins".\
             format(hashes, total_hours, total_coins))
         return hashes
