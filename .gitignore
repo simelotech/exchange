@@ -106,3 +106,7 @@ ENV/
 
 #Pyskycoin repository
 pyskycoin
+
+#Skycoin node data dir
+tests/data
+tests/tmp
