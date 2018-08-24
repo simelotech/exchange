@@ -521,11 +521,11 @@ class LiveTestCase(unittest.TestCase):
         previousBalance = self._getBalanceForAddresses([source,
                             dest])
         logging.debug("Balance: {}".format(previousBalance))
-        self._addToHistoryObservations([source, dest])
+        self._addToHistoryObservations([source], [dest])
         ok, status, hashHex = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
         self._checkTransactionSingleHistory(source, dest, 1000, hashHex)
-        self._removeFromHistoryObservations([source, dest])
+        self._removeFromHistoryObservations([source], [dest])
         self.assertTrue(ok)
         self.assertEqual(status, 200)
         newBalance = self._getBalanceForAddresses([source,
@@ -626,23 +626,25 @@ class LiveTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400) #Missing parameters
 
-    def _addToHistoryObservations(self, addresses):
-        for address in addresses:
+    def _addToHistoryObservations(self, fromAddresses, toAddresses):
+        for address in fromAddresses:
             response = self.app.post(
                 "/v1/api/transactions/history/from/{}/observation".format(address)
             )
             self.assertEqual(response.status_code, 200)
+        for address in toAddresses:
             response = self.app.post(
                 "/v1/api/transactions/history/to/{}/observation".format(address)
             )
             self.assertEqual(response.status_code, 200)
 
-    def _removeFromHistoryObservations(self, addresses):
-        for address in addresses:
+    def _removeFromHistoryObservations(self, fromAddresses, toAddresses):
+        for address in fromAddresses:
             response = self.app.delete(
                 "/v1/api/transactions/history/from/{}/observation".format(address)
             )
             self.assertEqual(response.status_code, 200)
+        for address in toAddresses:
             response = self.app.delete(
                 "/v1/api/transactions/history/to/{}/observation".format(address)
             )
@@ -650,7 +652,7 @@ class LiveTestCase(unittest.TestCase):
 
     def _getHistoryFrom(self, address):
         response = self.app.get(
-            "/v1/api/transactions/history/from/{}?take=5".format(address)
+            "/v1/api/transactions/history/from/{}?take=500".format(address)
         )
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
@@ -658,7 +660,7 @@ class LiveTestCase(unittest.TestCase):
 
     def _getHistoryTo(self, address):
         response = self.app.get(
-            "/v1/api/transactions/history/to/{}?take=5".format(address)
+            "/v1/api/transactions/history/to/{}?take=500".format(address)
         )
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
