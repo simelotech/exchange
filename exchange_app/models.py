@@ -420,9 +420,9 @@ def get_transactions_from(address, take, afterhash = ''):
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
 
         for txn in block['body']['txns']:
-
+            tx_hash = _hexToB64(txn['inner_hash'])
             #If afterhash is specified, return from that point only
-            if afterhash == '' or txn['inner_hash'] == afterhash:
+            if afterhash == '' or tx_hash == afterhash:
                 process_txn = True
 
             if not process_txn:
@@ -430,8 +430,6 @@ def get_transactions_from(address, take, afterhash = ''):
 
             inputs = txn['inputs']
             outputs = txn['outputs']
-
-            tx_hash = _hexToB64(txn['inner_hash'])
             txn_type = txn['type']
 
             #Outgoing
@@ -555,8 +553,12 @@ def get_transactions_to(address, take, afterhash = ''):
 
     for txn in txns:
 
+        tx_hash = txn['txn']['inner_hash']
+        tx_hash = _hexToB64(tx_hash)
+
+
         #If afterhash is specified, return from that point only
-        if afterhash == '' or txn['txn']['inner_hash'] == afterhash:
+        if afterhash == '' or tx_hash == afterhash:
             process_txn = True
 
         if not process_txn:
@@ -566,8 +568,6 @@ def get_transactions_to(address, take, afterhash = ''):
 
         timestamp = txn['time']
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
-        txn_hash = txn['txn']['inner_hash']
-        tx_hash = _hexToB64(txn_hash)
         txn_type = txn['txn']['type']
         orig_addr = get_hash_address(txn['txn']['inputs'][0])['address']
 
@@ -580,7 +580,7 @@ def get_transactions_to(address, take, afterhash = ''):
                 item['toAddress'] = address  #TODO: Handle multiple inputs
                 item['assetId'] = 'SKY'
                 item['amount'] = output['coins']
-                item['hash'] = txn_hash
+                item['hash'] = tx_hash
                 #item['transactionType'] = txn_type
                 items.append(item)
                 taken += 1
