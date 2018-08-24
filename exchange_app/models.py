@@ -452,7 +452,7 @@ def get_transactions_from(address, take, afterhash = ''):
                         if dst_addr != addr:  #Only record if dst is different from self. #TODO: Handle multiple outputs
                             #Record to history output
                             item = {}
-                            item['transactionType'] =  txn_type
+                            #item['transactionType'] =  txn_type
                             item['timestamp'] = timestamp
                             item['fromAddress'] = address
                             item['toAddress'] = dst_addr
@@ -579,7 +579,7 @@ def get_transactions_to(address, take, afterhash = ''):
                 item['assetId'] = 'SKY'
                 item['amount'] = output['coins']
                 item['hash'] = txn_hash
-                item['transactionType'] = txn_type
+                #item['transactionType'] = txn_type
                 items.append(item)
                 taken += 1
                 if taken >= take:
