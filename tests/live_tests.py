@@ -480,7 +480,15 @@ class LiveTestCase(unittest.TestCase):
                 break
         self.assertTrue(found)
 
+    def _hexToB64(s):
+        r = base64.b64encode(bytes.fromhex(s))
+        r = str(r)
+        if r.startswith("b\'"):
+            r = r[2:len(r)-1]
+        return r
+
     def _checkTransactionSingleHistory(self, source, dest, amount, hash):
+        hash = _hexToB64(hash)
         logging.debug("Checking single transaction history. " + \
             "hash: {}, source: {}, dest: {} ".format(hash, source, dest))
         coins = amount / 1e6
