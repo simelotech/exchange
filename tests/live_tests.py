@@ -14,7 +14,8 @@ import ssl
 
 LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "https://skyapi.simelo.tech:6420/"
 #LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL = "http://127.0.0.1:6421/"
-SYNCHRONIZATION_SERVER = "http://107.173.160.237:8080/"  #107.173.160.237
+SYNCHRONIZATION_SERVER = "http://107.173.160.237:8080/"
+#SYNCHRONIZATION_SERVER = "http://localhost:8080/"
 
 class LiveTestCase(unittest.TestCase):
     serverUp = False
@@ -71,17 +72,32 @@ class LiveTestCase(unittest.TestCase):
         if minhash != '':
             hashes = [minhash]
         else:
+            #No output with enough coins and coin hours
+            #Then find one with enough coin and another one
+            #with enough coin hours
             total_hours = 0
             total_coins = 0
+            foundHours = False
+            foundCoins = False
             outs = outputs["head_outputs"]
             outs.sort(key = lambda x: x["hours"])
             for output in outs:
                 hours = output['hours']
                 coins = float(output['coins'])
-                total_hours += hours
-                total_coins += coins
-                hashes.append( output["hash"] )
-                if total_coins >= amount and total_hours >= minimum:
+                added = False
+                if not foundHours and hours >= minimum:
+                    hashes.append( output["hash"] )
+                    foundHours = True
+                    total_hours += hours
+                    total_coins += coins
+                    added = True
+                if not foundCoins and total_coins + coins >= amount:
+                    foundCoins = True
+                    hashes.append( output["hash"] )
+                    if not added:
+                        total_hours += hours
+                        total_coins += coins
+                if foundHours and foundCoins:
                     break
         logging.debug("Picked outputs {} with {} hours and {} coins".\
             format(hashes, total_hours, total_coins))
@@ -322,6 +338,7 @@ class LiveTestCase(unittest.TestCase):
                     None, None, SYNCHRONIZATION_SERVER)
                 if "index" in result:
                     pickedAddress = address
+                    logging.debug("Found address: {}".format(pickedAddress))
                     pickedCoins = coins
                     pickedHours = hours
                     break
@@ -348,14 +365,32 @@ class LiveTestCase(unittest.TestCase):
                 return address
         return Exception("Unable to lock an address for testing")
 
+    def _lockMainAddress(self):
+        locked = False
+        tries = 100
+        while not locked and tries > 0:
+            result = self.makeHttpRequest("lock?n={}".format(self.mainAddress),
+                None, None, SYNCHRONIZATION_SERVER)
+            if "index" in result:
+                locked = True
+            else:
+                time.sleep(1)
+                tries -= 1
+
+    def _freeMainAddress(self):
+         self.makeHttpRequest("free?n={}".format(self.mainAddress),
+            None, None, SYNCHRONIZATION_SERVER)
+
     def _getSomeSkyForTest(self, toAddress, amount, minCoinHours):
         logging.debug("Reserving {},{} for {}".format(amount, minCoinHours,
                 toAddress))
         #Pick an output with enough coin hours that will allow
         #subsequent transfers
+        self._lockMainAddress()
         outputs = self._pickOutputsFromAddress(self.mainAddress, amount / 1e6,
             minCoinHours)
         if len(outputs) == 0:
+            self._freeMainAddress()
             return False
         balance = self._getBalanceForAddresses([self.mainAddress,
             toAddress])
@@ -364,6 +399,7 @@ class LiveTestCase(unittest.TestCase):
             toAddress, amount, outputs)
         balance = self._getBalanceForAddresses([self.mainAddress,
             toAddress])
+        self._freeMainAddress()
         logging.debug("Balance: {}".format(balance))
         return True
 
@@ -725,7 +761,7 @@ class LiveTestCase(unittest.TestCase):
         if data:
             data = urllib.parse.urlencode(data)
             data = data.encode()
-        logging.debug("Making request to {}".format(url))
+        logging.debug("Making request to {}".format(url.split("?")[0]))
         request = urllib.request.Request(server + url)
         if headers:
             for key in headers.keys():
