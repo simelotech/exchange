@@ -194,6 +194,7 @@ class LiveTestCase(unittest.TestCase):
         timeOut = 5
         tries = 10
         confirmed = False
+        innerHash = ''
         while tries > 0 and not confirmed:
             try:
                 params={"txid": hashHex}
@@ -205,6 +206,7 @@ class LiveTestCase(unittest.TestCase):
                     confirmed = json_response["status"]["confirmed"]
                     logging.debug("Confirmed result: {}".format(confirmed))
                     if confirmed:
+                        innerHash = json_response['txn']['inner_hash']
                         break
                 else:
                     raise Exception("Invalid response from /api/v1/transaction. No response")
@@ -216,7 +218,7 @@ class LiveTestCase(unittest.TestCase):
                 tries -= 1
                 if not confirmed:
                     time.sleep(timeOut)
-        return confirmed, hashHex
+        return confirmed, innerHash
 
 
     def _transferSKY(self, sourceAddress, destAddresses, amounts, operationId):
@@ -463,14 +465,47 @@ class LiveTestCase(unittest.TestCase):
                 sourceAddress2))
         return sourceAddress1, sourceAddress2
 
+    def _findInHistory(self, history, source, dest, amount, hash):
+        found = False
+        for tx in history:
+            if tx['hash'] == hash:
+                found = True
+                self.assertEqual(tx['fromAddress'], source,
+                    "{} != {}".format(tx['fromAddress'], source))
+                self.assertEqual(tx['toAddress'], dest,
+                    "{} != {}".format(tx['toAddress'], dest))
+                txAmount = float(tx['amount'])
+                assert abs(txAmount - coins) < 0.00001,
+                        "{}!={}".format(txAmount, coins)
+                self.assertEqual(tx['assetId'], 'SKY',
+                    "{} != SKY".format(tx['assetId']))
+                break
+        self.assertTrue(found)
+
+    def _checkTransactionSingleHistory(self, source, dest, amount, hash):
+        logging.debug("""Checking single transaction history.
+            hash: {}, source: {}, dest: {} """). \
+            format(hash, source, dest)
+        coins = amount / 1e6
+        historySourceFrom = self._getHistoryFrom(source)
+        logging.debug("History From {}: {}".format(source, historySourceFrom))
+        historySourceTo = self._getHistoryTo(dest)
+        logging.debug("History From {}: {}".format(dest, historySourceTo))
+        self._findInHistory(historySourceFrom, source, dest, amount, hash)
+        self._findInHistory(historySourceTo, source, dest, amount, hash)
+
+
     def _checkTransactionSingle(self, source, dest):
         self._printOutputsForAddress(source)
         self._printOutputsForAddress(dest)
         previousBalance = self._getBalanceForAddresses([source,
                             dest])
         logging.debug("Balance: {}".format(previousBalance))
+        self._addToHistoryObservations([source, dest])
         ok, status, hashHex = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
+        self._checkTransactionSingleHistory(source, dest, 1000, hashHex)
+        self._removeFromHistoryObservations([source, dest])
         self.assertTrue(ok)
         self.assertEqual(status, 200)
         newBalance = self._getBalanceForAddresses([source,
@@ -518,6 +553,7 @@ class LiveTestCase(unittest.TestCase):
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
+    '''
     def test_history(self):
         self._addToHistoryObservations([self.mainAddress])
         historyFrom = self._getHistoryFrom(self.mainAddress)
@@ -526,8 +562,8 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("History to: {}".format(historyTo))
         self._removeFromHistoryObservations([self.mainAddress])
         raise Exception("Done")
-
     '''
+
     def test_transactions(self):
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
@@ -584,7 +620,6 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400) #Missing parameters
-    '''
 
     def _addToHistoryObservations(self, addresses):
         for address in addresses:

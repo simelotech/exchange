@@ -5,6 +5,7 @@ from .api_1_0.blockchain import get_block_count, get_block_range, get_block_by_h
 import requests
 from datetime import  datetime, timezone
 from time import perf_counter
+import base64
 
 def add_address_observation(address):
     """
@@ -430,7 +431,7 @@ def get_transactions_from(address, take, afterhash = ''):
             inputs = txn['inputs']
             outputs = txn['outputs']
 
-            tx_hash = txn['inner_hash']
+            tx_hash = _hexToB64(txn['inner_hash'])
             txn_type = txn['type']
 
             #Outgoing
@@ -514,7 +515,7 @@ def _get_transactions_to(address, take, afterhash = ''):
             outputs = txn['outputs']
 
             operation_id = txn['txid']
-            tx_hash = txn['inner_hash']
+            tx_hash = _hexToB64(txn['inner_hash'])
 
             orig_addr = get_hash_address(inputs[0])['address']
 
@@ -618,3 +619,10 @@ def set_transaction_as_broadcasted(id):
     """
     transactions = mongo.db.transactions #Collection to store transactions
     transactions.update({'_id': id}, {'$set': {'broadcasted': True}})
+
+def _hexToB64(s):
+    r = base64.b64encode(bytes.fromhex(s))
+    r = str(r)
+    if r.startswith("b\'"):
+        r = r[2:len(r)-1]
+    return r
