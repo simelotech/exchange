@@ -88,18 +88,19 @@ class LiveTestCase(unittest.TestCase):
                     total_hours += hours
                     total_coins += coins
                     break
-            #Now add more outputs to fulfill coins
-            outs.sort(key = lambda x: x["coins"])
-            for output in outs:
-                if output["hash"] == hashes[0]:
-                    continue
-                hashes.append( output["hash"] )
-                hours = output['hours']
-                coins = float(output['coins'])
-                total_hours += hours
-                total_coins += coins
-                if total_coins >= amount:
-                    break
+            if len(hashes) > 0:
+                #Now add more outputs to fulfill coins
+                outs.sort(key = lambda x: x["coins"])
+                for output in outs:
+                    if output["hash"] == hashes[0]:
+                        continue
+                    hashes.append( output["hash"] )
+                    hours = output['hours']
+                    coins = float(output['coins'])
+                    total_hours += hours
+                    total_coins += coins
+                    if total_coins >= amount:
+                        break
         logging.debug("Picked outputs {} with {} hours and {} coins".\
             format(hashes, total_hours, total_coins))
         return hashes
