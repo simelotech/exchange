@@ -347,6 +347,7 @@ class LiveTestCase(unittest.TestCase):
                     pickedCoins = coins
                     pickedHours = hours
                     break
+        logging.debug("Picked address:{}".format(pickedAddress))
         return pickedAddress
 
     #Just any address to test a transactions
