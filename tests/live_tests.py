@@ -31,9 +31,12 @@ class LiveTestCase(unittest.TestCase):
         self._getCSRFToken()
         self.wallets = self._getTestWallets()
         self._recreateWalletAddresses()
+        self.lockedAddresses = {}
 
     def tearDown(self):
-        #self._unlockIndexes(self.lockIndexes)
+        for address in self.lockedAddresses.keys():
+            if self.lockedAddresses[address]:
+                self._freeAddress(address)
         balance = self._getBalanceForAddresses([self.mainAddress])
         logging.debug("Balance at tearDown: {}".format(balance))
 
@@ -369,8 +372,14 @@ class LiveTestCase(unittest.TestCase):
                 None, None, SYNCHRONIZATION_SERVER)
             if "index" in result:
                 logging.debug("Locked address: {}".format(address))
+                self.lockedAddresses[address] = True
                 return address
         return Exception("Unable to lock an address for testing")
+
+    def _freeAddress(self, address):
+        self.lockedAddresses[address] = False
+        self.makeHttpRequest("free?n={}".format(address),
+            None, None, SYNCHRONIZATION_SERVER)
 
     def _lockMainAddress(self):
         locked = False
@@ -379,13 +388,15 @@ class LiveTestCase(unittest.TestCase):
             result = self.makeHttpRequest("lock?n={}".format(self.mainAddress),
                 None, None, SYNCHRONIZATION_SERVER)
             if "index" in result:
+                self.lockedAddresses[self.mainAddress] = True
                 locked = True
             else:
                 time.sleep(1)
                 tries -= 1
 
     def _freeMainAddress(self):
-         self.makeHttpRequest("free?n={}".format(self.mainAddress),
+        self.lockedAddresses[self.mainAddress] = False
+        self.makeHttpRequest("free?n={}".format(self.mainAddress),
             None, None, SYNCHRONIZATION_SERVER)
 
     def _getSomeSkyForTest(self, toAddress, amount, minCoinHours):
@@ -562,17 +573,6 @@ class LiveTestCase(unittest.TestCase):
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
-    '''
-    def test_history(self):
-        self._addToHistoryObservations([self.mainAddress])
-        historyFrom = self._getHistoryFrom(self.mainAddress)
-        historyTo = self._getHistoryTo(self.mainAddress)
-        logging.debug("History from: {}".format(historyFrom))
-        logging.debug("History to: {}".format(historyTo))
-        self._removeFromHistoryObservations([self.mainAddress])
-        raise Exception("Done")
-    '''
-
     def test_transactions(self):
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
@@ -581,17 +581,13 @@ class LiveTestCase(unittest.TestCase):
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
         if sourceAddress1 != '':
-            self.makeHttpRequest("free?n={}".format(sourceAddress1),
-                None, None, SYNCHRONIZATION_SERVER)
+            self._freeAddress(sourceAddress1)
         if sourceAddress2 != '' and sourceAddress2 != sourceAddress1:
-            self.makeHttpRequest("free?n={}".format(sourceAddress2),
-                None, None, SYNCHRONIZATION_SERVER)
+            self._freeAddress(sourceAddress2)
         if destAddress1 != '':
-            self.makeHttpRequest("free?n={}".format(destAddress1),
-                None, None, SYNCHRONIZATION_SERVER)
+            self._freeAddress(destAddress1)
         if destAddress2 != '':
-            self.makeHttpRequest("free?n={}".format(destAddress2),
-                None, None, SYNCHRONIZATION_SERVER)
+            self._freeAddress(destAddress2)
 
     def test_failing_operations(self):
         sourceAddress = self.mainAddress
