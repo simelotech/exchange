@@ -26,15 +26,17 @@ class LiveTestCase(unittest.TestCase):
         self.defaultSkycoinNodeUrl = app_config.SKYCOIN_NODE_URL
         app_config.SKYCOIN_NODE_URL = LIVE_TRANSACTIONS_TEST_SKYCOIN_NODE_URL
         self.app = app.test_client()
-        self._getCSRFToken()
-        self.wallets = self._getTestWallets()
         self.mainAddress = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
-        self._recreateWalletAddresses()
+        #self._getCSRFToken()
+        #self.wallets = self._getTestWallets()
+        #self.mainAddress = "2JvBi6BgCsZAzvbhCna4WTfD4FATCPwp2f1"
+        #self._recreateWalletAddresses()
 
     def tearDown(self):
         #self._unlockIndexes(self.lockIndexes)
-        balance = self._getBalanceForAddresses([self.mainAddress])
-        logging.debug("Balance at tearDown: {}".format(balance))
+        #balance = self._getBalanceForAddresses([self.mainAddress])
+        #logging.debug("Balance at tearDown: {}".format(balance))
+        pass
 
     def _getBalanceForAddresses(self, addresses):
         logging.debug("Calling skycoin to get balances")
@@ -77,36 +79,6 @@ class LiveTestCase(unittest.TestCase):
             #with enough coin hours
             total_hours = 0
             total_coins = 0
-<<<<<<< HEAD
-            foundHours = False
-            foundCoins = False
-            outs = outputs["head_outputs"]
-            outputWithHours = ''
-            outputWithCoins = ''
-            outs.sort(key = lambda x: x["hours"])
-            for output in outs:
-                hours = output['hours']
-                coins = float(output['coins'])
-                added = False
-                if not foundHours and hours >= minimum:
-                    outputWithHours = output["hash"]
-                    foundHours = True
-                    total_hours += hours
-                    total_coins += coins
-                    added = True
-                if not foundCoins and total_coins + coins >= amount:
-                    foundCoins = True
-                    outputWithCoins = output["hash"]
-                    if not added:
-                        total_hours += hours
-                        total_coins += coins
-                if foundHours and foundCoins:
-                    break
-            if foundHours and foundCoins:
-                #Add output hours first hoping it will force
-                #the transfer of these hours
-                hashes = [outputWithHours, outputWithCoins]
-=======
             outs = outputs["head_outputs"]
             outs.sort(key = lambda x: x["hours"])
             #find output with enough hours
@@ -131,7 +103,6 @@ class LiveTestCase(unittest.TestCase):
                     total_coins += coins
                     if total_coins >= amount:
                         break
->>>>>>> stdevEclipse_t114_transactions_endpoints
         logging.debug("Picked outputs {} with {} hours and {} coins".\
             format(hashes, total_hours, total_coins))
         return hashes
@@ -547,6 +518,16 @@ class LiveTestCase(unittest.TestCase):
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
+    def test_history(self):
+        self._addToHistoryObservations([self.mainAddress])
+        historyFrom = self._getHistoryFrom(self.mainAddress)
+        historyTo = self._getHistoryTo(self.mainAddress)
+        logging.debug("History from: {}".format(historyFrom))
+        logging.debug("History to: {}".format(historyTo))
+        self._removeFromHistoryObservations([self.mainAddress])
+        raise Exception("Done")
+
+    '''
     def test_transactions(self):
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
@@ -603,28 +584,45 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 400) #Missing parameters
+    '''
 
     def _addToHistoryObservations(self, addresses):
         for address in addresses:
             response = self.app.post(
-                "/api/transactions/history/from/{}/observation".format(address)
+                "/v1/api/transactions/history/from/{}/observation".format(address)
             )
-            self.assertEqual(response.status, 200)
+            self.assertEqual(response.status_code, 200)
             response = self.app.post(
-                "/api/transactions/history/to/{}/observation".format(address)
+                "/v1/api/transactions/history/to/{}/observation".format(address)
             )
-            self.assertEqual(response.status, 200)
+            self.assertEqual(response.status_code, 200)
 
     def _removeFromHistoryObservations(self, addresses):
         for address in addresses:
             response = self.app.delete(
-                "/api/transactions/history/from/{}/observation".format(address)
+                "/v1/api/transactions/history/from/{}/observation".format(address)
             )
-            self.assertEqual(response.status, 200)
+            self.assertEqual(response.status_code, 200)
             response = self.app.delete(
-                "/api/transactions/history/to/{}/observation".format(address)
+                "/v1/api/transactions/history/to/{}/observation".format(address)
             )
-            self.assertEqual(response.status, 200)
+            self.assertEqual(response.status_code, 200)
+
+    def _getHistoryFrom(self, address):
+        response = self.app.get(
+            "/v1/api/transactions/history/from/{}?take=5".format(address)
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        return json_response
+
+    def _getHistoryTo(self, address):
+        response = self.app.get(
+            "/v1/api/transactions/history/to/{}?take=5".format(address)
+        )
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        return json_response
 
     def _getTestWallets(self):
         seeds_path = os.path.join(
