@@ -481,9 +481,8 @@ class LiveTestCase(unittest.TestCase):
         self.assertTrue(found)
 
     def _checkTransactionSingleHistory(self, source, dest, amount, hash):
-        logging.debug("""Checking single transaction history.
-            hash: {}, source: {}, dest: {} """). \
-            format(hash, source, dest)
+        logging.debug("Checking single transaction history. " + \
+            "hash: {}, source: {}, dest: {} ".format(hash, source, dest))
         coins = amount / 1e6
         historySourceFrom = self._getHistoryFrom(source)
         logging.debug("History From {}: {}".format(source, historySourceFrom))
