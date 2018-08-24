@@ -475,8 +475,8 @@ class LiveTestCase(unittest.TestCase):
                 self.assertEqual(tx['toAddress'], dest,
                     "{} != {}".format(tx['toAddress'], dest))
                 txAmount = float(tx['amount'])
-                assert abs(txAmount - coins) < 0.00001,
-                        "{}!={}".format(txAmount, coins)
+                assert abs(txAmount - coins) < 0.00001, \
+                    "{}!={}".format(txAmount, coins)
                 self.assertEqual(tx['assetId'], 'SKY',
                     "{} != SKY".format(tx['assetId']))
                 break
