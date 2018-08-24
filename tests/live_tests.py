@@ -77,34 +77,29 @@ class LiveTestCase(unittest.TestCase):
             #with enough coin hours
             total_hours = 0
             total_coins = 0
-            foundHours = False
-            foundCoins = False
             outs = outputs["head_outputs"]
-            outputWithHours = ''
-            outputWithCoins = ''
             outs.sort(key = lambda x: x["hours"])
+            #find output with enough hours
             for output in outs:
                 hours = output['hours']
                 coins = float(output['coins'])
-                added = False
-                if not foundHours and hours >= minimum:
-                    outputWithHours = output["hash"]
-                    foundHours = True
+                if hours >= minimum:
+                    hashes.append( output["hash"] )
                     total_hours += hours
                     total_coins += coins
-                    added = True
-                if not foundCoins and total_coins + coins >= amount:
-                    foundCoins = True
-                    outputWithCoins = output["hash"]
-                    if not added:
-                        total_hours += hours
-                        total_coins += coins
-                if foundHours and foundCoins:
                     break
-            if foundHours and foundCoins:
-                #Add output hours first hoping it will force
-                #the transfer of these hours
-                hashes = [outputWithHours, outputWithCoins]
+            #Now add more outputs to fulfill coins
+            outs.sort(key = lambda x: x["coins"])
+            for output in outs:
+                if output["hash"] == hashes[0]:
+                    continue
+                hashes.append( output["hash"] )
+                hours = output['hours']
+                coins = float(output['coins'])
+                total_hours += hours
+                total_coins += coins
+                if total_coins >= amount:
+                    break
         logging.debug("Picked outputs {} with {} hours and {} coins".\
             format(hashes, total_hours, total_coins))
         return hashes
