@@ -604,6 +604,23 @@ class LiveTestCase(unittest.TestCase):
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
+    def _checkTransactionManyOutputsHistory(self, source, dest1, dest2, amount, hash):
+        logging.debug("Tx to search in history in hex: {}".format(hash))
+        hash = self._hexToB64(hash)
+        logging.debug("Checking many outputs transaction history. " + \
+            "hash: {}, source: {}, dest: {}, dest2: {} "\
+                .format(hash, source, dest1, dest2))
+        coins = amount / 1e6
+        historyFrom = self._getHistoryFrom(source)
+        historyTo1 = self._getHistoryTo(dest1)
+        historyTo2 = self._getHistoryTo(dest2)
+        logging.debug("history from: {}".format(historyFrom))
+        logging.debug("history to1: {}".format(historyTo1))
+        logging.debug("history to2: {}".format(historyTo2))
+        self._findInHistory(historyFrom, source, dest1, coins, hash)
+        self._findInHistory(historyFrom, source, dest2, coins, hash)
+        self._findInHistory(historyTo1, source, dest1, coins, hash)
+        self._findInHistory(historyTo2, source, dest2, coins, hash)
 
     def _checkTransactionManyOutputs(self, source, dest1, dest2):
         self._printOutputsForAddress(source)
@@ -616,6 +633,7 @@ class LiveTestCase(unittest.TestCase):
                 '8986575765') #just some operation id
         self.assertTrue(ok)
         self.assertEqual(status, 200)
+        self._checkTransactionManyOutputsHistory(source, dest1, dest, 1000, hashHex)
         newBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(newBalance))
