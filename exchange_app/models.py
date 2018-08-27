@@ -133,8 +133,11 @@ def add_transaction_observation_from_address(address):
 
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
+        timestamp = int(datetime.datetime.utcnow().timestamp())
+        logging.debug("Adding address to observation: {}, time: {}".\
+            format(address, timestamp))
         id = collection.insert({'address':address,
-            'timestamp': int(datetime.datetime.utcnow().timestamp())})
+            'timestamp':timestamp})
 
         if isinstance(id, ObjectId):
             update_index(address)
@@ -154,8 +157,11 @@ def add_transaction_observation_to_address(address):
 
     #If address not observed, insert it
     if not exists_address_transfer_observation_to(address):
+        timestamp = int(datetime.datetime.utcnow().timestamp())
+        logging.debug("Adding address to observation: {}, time: {}".\
+            format(address, timestamp))
         id = collection.insert({'address':address,
-            'timestamp': int(datetime.datetime.utcnow().timestamp())})
+            'timestamp': timestamp})
 
         if isinstance(id, ObjectId):
             update_index(address)
@@ -420,6 +426,7 @@ def get_transactions_from(address, take, afterhash = ''):
 
         timestamp = block['header']['timestamp']
         if timestamp < result['timestamp']:
+            logging.debug("Transaction out of time: {}".format(timestamp))
             continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
 
@@ -505,6 +512,7 @@ def get_transactions_to(address, take, afterhash = ''):
 
         timestamp = txn['time']
         if timestamp < result['timestamp']:
+            logging.debug("Transaction out of time: {}".format(timestamp))
             continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         txn_type = txn['txn']['type']
