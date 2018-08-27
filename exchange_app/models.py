@@ -130,7 +130,7 @@ def add_transaction_observation_from_address(address):
     """
 
     collection = mongo.db.trans_obs_from  #this colection will store all wallets addresses for transaction observation from it
-    
+
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
         timestamp = int(datetime.utcnow().timestamp())
@@ -410,6 +410,11 @@ def get_transactions_from(address, take, afterhash = ''):
     if result is None: #index not created yet
         return {"status": 500, "error": "Address is not indexed"}
 
+    collection = mongo.db.trans_obs_from #colection of observed addresses
+    ob_address = collection.find_one({'address': address})
+    if ob_address is None: #Address not in observation list
+        return {"status": 500, "error": "Address is not in observation list"}
+
     mentioned_blocks = result['blocks']
 
     items = []   # Hold the history output items from specified address
@@ -425,7 +430,7 @@ def get_transactions_from(address, take, afterhash = ''):
             return block
 
         timestamp = block['header']['timestamp']
-        if timestamp < result['timestamp']:
+        if timestamp < ob_address['timestamp']:
             logging.debug("Transaction out of time: {}".format(timestamp))
             continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
@@ -489,6 +494,11 @@ def get_transactions_to(address, take, afterhash = ''):
     if result is None: #index not created yet
         return {"status": 500, "error": "Address is not observed"}
 
+    collection = mongo.db.trans_obs_to #colection of observed addresses
+    ob_address = collection.find_one({'address': address})
+    if ob_address is None: #Address not in observation list
+        return {"status": 500, "error": "Address is not in observation list"}
+
     txns = get_address_transactions(address)
 
     items = []   # Hold the history output items from specified address
@@ -511,7 +521,7 @@ def get_transactions_to(address, take, afterhash = ''):
 
 
         timestamp = txn['time']
-        if timestamp < result['timestamp']:
+        if timestamp < ob_address['timestamp']:
             logging.debug("Transaction out of time: {}".format(timestamp))
             continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
