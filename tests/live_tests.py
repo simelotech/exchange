@@ -23,14 +23,18 @@ class LiveTestCase(unittest.TestCase):
 
     def test_transactions(self):
         sourceAddress1, sourceAddress2 = self._pickAddresses()
+        sources = [sourceAddress1]
+        if sourceAddress2 != sourceAddress1:
+            sources.append(sourceAddress2)
         destAddress1 = self._lockAddress()
-        self._addToHistoryObservations([sourceAddress1, sourceAddress2],
+        destAddress2 = self._lockAddress()
+
+        self._addToHistoryObservations(sources,
             [destAddress1, destAddress2])
         self._checkTransactionSingle(sourceAddress1, destAddress1)
-        destAddress2 = self._lockAddress()
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
-        self._removeFromHistoryObservations([sourceAddress1, sourceAddress2],
+        self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
         if sourceAddress1 != '':
             self._freeAddress(sourceAddress1)
