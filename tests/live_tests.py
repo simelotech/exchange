@@ -36,6 +36,7 @@ class LiveTestCase(unittest.TestCase):
                 destAddress1, destAddress2)
         self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
+        self._checkNotObservedHistoryFail(sourceAddress1, destAddress1)
         if sourceAddress1 != '':
             self._freeAddress(sourceAddress1)
         if sourceAddress2 != '' and sourceAddress2 != sourceAddress1:
@@ -585,7 +586,6 @@ class LiveTestCase(unittest.TestCase):
         self._checkTransactionSingleHistory(source, dest, 1000, hashHex)
         self.assertTrue(ok)
         self.assertEqual(status, 200)
-        self._checkNotObservedHistoryFail(source, dest)
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
