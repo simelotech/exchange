@@ -59,7 +59,7 @@ class LiveTestCase(unittest.TestCase):
             'fromAddressContext' : walletName,
             'toAddress' : destAddress,
             'assetId' : 'SKY',
-            'amount' : 1e15, #Hoping there will never be 1 billion skys
+            'amount' : 1e15, #Hoping there will never be 1 thousand skys
             'includeFee' : False
         }
         response = self.app.post(
@@ -67,7 +67,7 @@ class LiveTestCase(unittest.TestCase):
             data = json.dumps(testTx),
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400) #Not enough balance
+        self.assertNotEqual(response.status_code, 200) #Not enough balance
         testTx['amount'] = 1 #amount to small
         response = self.app.post(
             '/v1/api/transactions/single',
