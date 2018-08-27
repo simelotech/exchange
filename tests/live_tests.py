@@ -666,7 +666,10 @@ class LiveTestCase(unittest.TestCase):
         for item in json_response['items']:
             for address in addressBalances:
                 if address['address'] == item['address']:
-                    self.assertEqual(str(address['balance']), item['balance'],
+                    item_balance = float(item['balance'])
+                    item_balance = round(item_balance, 6)
+                    item_balance *= 1e6
+                    self.assertEqual(address['balance'], item_balance,
                         "Balance mismatch")
 
     def _addToBalanceObservations(self, addresses):
