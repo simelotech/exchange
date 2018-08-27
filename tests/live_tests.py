@@ -29,6 +29,7 @@ class LiveTestCase(unittest.TestCase):
         destAddress1 = self._lockAddress()
         destAddress2 = self._lockAddress()
 
+        self._addToBalanceObservations(sources + [destAddress1, destAddress2])
         self._addToHistoryObservations(sources,
             [destAddress1, destAddress2])
         self._checkTransactionSingle(sourceAddress1, destAddress1)
@@ -36,6 +37,7 @@ class LiveTestCase(unittest.TestCase):
                 destAddress1, destAddress2)
         self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
+        self._removeFromBalanceObservations(sources + [destAddress1, destAddress2])
         self._checkNotObservedHistoryFail(sourceAddress1, destAddress1)
         if sourceAddress1 != '':
             self._freeAddress(sourceAddress1)
@@ -589,6 +591,7 @@ class LiveTestCase(unittest.TestCase):
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
+        self._checkBalances([{'address' : source, newBalance[source]}])
         self.assertEqual(previousBalance[source],
             newBalance[source] + 1000,
             "Address {0} should have lost 1000 droplets".format(source))
@@ -655,6 +658,30 @@ class LiveTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 200)
 
+    def _checkBalances(self, addressBalances):
+        response = self.app.get("/v1/api/balances?take=500")
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        logging.debug("Balances: {}".format(json_response))
+        for item in json_response['items']:
+            for address in addressBalances:
+                if address['address'] == item['address']:
+                    self.assertEqual(str(address['balance']), item['balance'],
+                        "Balance mismatch")
+
+    def _addToBalanceObservations(self, addresses):
+        for address in addresses:
+            response = self.app.post(
+                "/v1/api/balances/{}/observation".format(address)
+            )
+            self.assertEqual(response.status_code, 200)
+
+    def _removeFromBalanceObservations(self, addresses):
+        for address in addresses:
+            response = self.app.delete(
+                "/v1/api/balances/{}/observation".format(address)
+            )
+            self.assertEqual(response.status_code, 200)
 
     def _checkNotObservedHistoryFail(self, source, dest):
         response = self.app.get(
