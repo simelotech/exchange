@@ -21,6 +21,59 @@ SYNCHRONIZATION_SERVER = "http://107.173.160.237:8080/"
 class LiveTestCase(unittest.TestCase):
     serverUp = False
 
+    def test_transactions(self):
+        sourceAddress1, sourceAddress2 = self._pickAddresses()
+        destAddress1 = self._lockAddress()
+        self._checkTransactionSingle(sourceAddress1, destAddress1)
+        destAddress2 = self._lockAddress()
+        self._checkTransactionManyOutputs(sourceAddress2,
+                destAddress1, destAddress2)
+        if sourceAddress1 != '':
+            self._freeAddress(sourceAddress1)
+        if sourceAddress2 != '' and sourceAddress2 != sourceAddress1:
+            self._freeAddress(sourceAddress2)
+        if destAddress1 != '':
+            self._freeAddress(destAddress1)
+        if destAddress2 != '':
+            self._freeAddress(destAddress2)
+
+    def test_failing_operations(self):
+        sourceAddress = self.mainAddress
+        mainWallet = self.wallets[self.mainAddress]
+        walletName = mainWallet["addressContext"]
+        destAddress = self._pickAnyAddress()
+        testTx = {
+            'operationID' : "22222222",
+            'fromAddress' : sourceAddress,
+            'fromAddressContext' : walletName,
+            'toAddress' : destAddress,
+            'assetId' : 'SKY',
+            'amount' : 1e15, #Hoping there will never be 1 billion skys
+            'includeFee' : False
+        }
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) #Not enough balance
+        testTx['amount'] = 1 #amount to small
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) #amount to small
+        testTx = {
+            'operationID' : "22222222"
+        }
+        response = self.app.post(
+            '/v1/api/transactions/single',
+            data = json.dumps(testTx),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) #Missing parameters
+
     def setUp(self):
         logging.debug("setup started")
         ssl._create_default_https_context = ssl._create_unverified_context
@@ -508,9 +561,7 @@ class LiveTestCase(unittest.TestCase):
             "hash: {}, source: {}, dest: {} ".format(hash, source, dest))
         coins = amount / 1e6
         historyFrom = self._getHistoryFrom(source)
-        logging.debug("History From {}: {}".format(source, historyFrom))
         historyTo = self._getHistoryTo(dest)
-        logging.debug("History To {}: {}".format(dest, historyTo))
         self._findInHistory(historyFrom, source, dest, coins, hash)
         self._findInHistory(historyTo, source, dest, coins, hash)
 
@@ -528,6 +579,7 @@ class LiveTestCase(unittest.TestCase):
         self._removeFromHistoryObservations([source], [dest])
         self.assertTrue(ok)
         self.assertEqual(status, 200)
+        self._checkNotObservedHistoryFail(source, dest)
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
@@ -573,59 +625,6 @@ class LiveTestCase(unittest.TestCase):
         self.assertFalse(ok) #Already broadcasted
         self.assertEqual(status, 409)
 
-    def test_transactions(self):
-        sourceAddress1, sourceAddress2 = self._pickAddresses()
-        destAddress1 = self._lockAddress()
-        self._checkTransactionSingle(sourceAddress1, destAddress1)
-        destAddress2 = self._lockAddress()
-        self._checkTransactionManyOutputs(sourceAddress2,
-                destAddress1, destAddress2)
-        if sourceAddress1 != '':
-            self._freeAddress(sourceAddress1)
-        if sourceAddress2 != '' and sourceAddress2 != sourceAddress1:
-            self._freeAddress(sourceAddress2)
-        if destAddress1 != '':
-            self._freeAddress(destAddress1)
-        if destAddress2 != '':
-            self._freeAddress(destAddress2)
-
-    def test_failing_operations(self):
-        sourceAddress = self.mainAddress
-        mainWallet = self.wallets[self.mainAddress]
-        walletName = mainWallet["addressContext"]
-        destAddress = self._pickAnyAddress()
-        testTx = {
-            'operationID' : "22222222",
-            'fromAddress' : sourceAddress,
-            'fromAddressContext' : walletName,
-            'toAddress' : destAddress,
-            'assetId' : 'SKY',
-            'amount' : 1e15, #Hoping there will never be 1 billion skys
-            'includeFee' : False
-        }
-        response = self.app.post(
-            '/v1/api/transactions/single',
-            data = json.dumps(testTx),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 400) #Not enough balance
-        testTx['amount'] = 1 #amount to small
-        response = self.app.post(
-            '/v1/api/transactions/single',
-            data = json.dumps(testTx),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 400) #amount to small
-        testTx = {
-            'operationID' : "22222222"
-        }
-        response = self.app.post(
-            '/v1/api/transactions/single',
-            data = json.dumps(testTx),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 400) #Missing parameters
-
     def _addToHistoryObservations(self, fromAddresses, toAddresses):
         for address in fromAddresses:
             response = self.app.post(
@@ -649,6 +648,17 @@ class LiveTestCase(unittest.TestCase):
                 "/v1/api/transactions/history/to/{}/observation".format(address)
             )
             self.assertEqual(response.status_code, 200)
+
+
+    def _checkNotObservedHistoryFail(self, source, dest):
+        response = self.app.get(
+            "/v1/api/transactions/history/from/{}?take=500".format(source)
+        )
+        self.assertEqual(response.status_code, 204)
+        response = self.app.get(
+            "/v1/api/transactions/history/to/{}?take=500".format(dest)
+        )
+        self.assertEqual(response.status_code, 204)
 
     def _getHistoryFrom(self, address):
         response = self.app.get(
