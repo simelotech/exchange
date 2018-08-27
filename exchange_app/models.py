@@ -130,10 +130,10 @@ def add_transaction_observation_from_address(address):
     """
 
     collection = mongo.db.trans_obs_from  #this colection will store all wallets addresses for transaction observation from it
-
+    
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
-        timestamp = int(datetime.datetime.utcnow().timestamp())
+        timestamp = int(datetime.utcnow().timestamp())
         logging.debug("Adding address to observation: {}, time: {}".\
             format(address, timestamp))
         id = collection.insert({'address':address,
@@ -157,7 +157,7 @@ def add_transaction_observation_to_address(address):
 
     #If address not observed, insert it
     if not exists_address_transfer_observation_to(address):
-        timestamp = int(datetime.datetime.utcnow().timestamp())
+        timestamp = int(datetime.utcnow().timestamp())
         logging.debug("Adding address to observation: {}, time: {}".\
             format(address, timestamp))
         id = collection.insert({'address':address,
