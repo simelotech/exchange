@@ -591,7 +591,7 @@ class LiveTestCase(unittest.TestCase):
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
-        self._checkBalances([{'address' : source, newBalance[source]}])
+        self._checkBalances([{'address' : source, 'balance' : newBalance[source]}])
         self.assertEqual(previousBalance[source],
             newBalance[source] + 1000,
             "Address {0} should have lost 1000 droplets".format(source))
