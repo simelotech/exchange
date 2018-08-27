@@ -133,7 +133,8 @@ def add_transaction_observation_from_address(address):
 
     #If address not observed, insert it
     if not exists_address_transfer_observation_from(address):
-        id = collection.insert({'address':address})
+        id = collection.insert({'address':address,
+            'timestamp': int(datetime.datetime.utcnow().timestamp())})
 
         if isinstance(id, ObjectId):
             update_index(address)
@@ -153,7 +154,8 @@ def add_transaction_observation_to_address(address):
 
     #If address not observed, insert it
     if not exists_address_transfer_observation_to(address):
-        id = collection.insert({'address':address})
+        id = collection.insert({'address':address,
+            'timestamp': int(datetime.datetime.utcnow().timestamp())})
 
         if isinstance(id, ObjectId):
             update_index(address)
@@ -417,6 +419,8 @@ def get_transactions_from(address, take, afterhash = ''):
             return block
 
         timestamp = block['header']['timestamp']
+        if timestamp < result['timestamp']:
+            continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
 
         for txn in block['body']['txns']:
@@ -500,6 +504,8 @@ def get_transactions_to(address, take, afterhash = ''):
 
 
         timestamp = txn['time']
+        if timestamp < result['timestamp']:
+            continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
         txn_type = txn['txn']['type']
         orig_addr = get_hash_address(txn['txn']['inputs'][0])['address']
