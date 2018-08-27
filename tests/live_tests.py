@@ -24,10 +24,14 @@ class LiveTestCase(unittest.TestCase):
     def test_transactions(self):
         sourceAddress1, sourceAddress2 = self._pickAddresses()
         destAddress1 = self._lockAddress()
+        self._addToHistoryObservations([sourceAddress1, sourceAddress2],
+            [destAddress1, destAddress2])
         self._checkTransactionSingle(sourceAddress1, destAddress1)
         destAddress2 = self._lockAddress()
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
+        self._removeFromHistoryObservations([sourceAddress1, sourceAddress2],
+            [destAddress1, destAddress2])
         if sourceAddress1 != '':
             self._freeAddress(sourceAddress1)
         if sourceAddress2 != '' and sourceAddress2 != sourceAddress1:
@@ -572,11 +576,9 @@ class LiveTestCase(unittest.TestCase):
         previousBalance = self._getBalanceForAddresses([source,
                             dest])
         logging.debug("Balance: {}".format(previousBalance))
-        self._addToHistoryObservations([source], [dest])
         ok, status, hashHex = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
         self._checkTransactionSingleHistory(source, dest, 1000, hashHex)
-        self._removeFromHistoryObservations([source], [dest])
         self.assertTrue(ok)
         self.assertEqual(status, 200)
         self._checkNotObservedHistoryFail(source, dest)
