@@ -416,6 +416,7 @@ def get_transactions_from(address, take, afterhash = ''):
         return {"status": 500, "error": "Address is not in observation list"}
 
     mentioned_blocks = result['blocks']
+    logging.debug("Searching transactions in blocks: {}".format(mentioned_blocks))
 
     items = []   # Hold the history output items from specified address
     process_txn = False
