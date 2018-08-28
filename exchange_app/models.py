@@ -432,7 +432,7 @@ def get_transactions_from(address, take, afterhash = ''):
         timestamp = block['header']['timestamp']
         if timestamp < ob_address['timestamp']:
             logging.debug("Transaction out of time: {}".format(timestamp))
-            continue
+            #continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
 
         for txn in block['body']['txns']:
