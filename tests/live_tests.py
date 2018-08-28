@@ -549,16 +549,16 @@ class LiveTestCase(unittest.TestCase):
         found = False
         for tx in history:
             if tx['hash'] == hash:
-                found = True
-                self.assertEqual(tx['fromAddress'], source,
-                    "{} != {}".format(tx['fromAddress'], source))
-                self.assertEqual(tx['toAddress'], dest,
-                    "{} != {}".format(tx['toAddress'], dest))
+                if tx['fromAddress'] != source:
+                    continue
+                if tx['toAddress'] != dest:
+                    continue
                 txAmount = float(tx['amount'])
-                assert abs(txAmount - amount) < 0.00001, \
-                    "{}!={}".format(txAmount, amount)
+                if abs(txAmount - amount) >= 0.00001:
+                    continue
                 self.assertEqual(tx['assetId'], 'SKY',
                     "{} != SKY".format(tx['assetId']))
+                found = True
                 break
         self.assertTrue(found)
 
