@@ -436,6 +436,7 @@ def get_transactions_from(address, take, afterhash = ''):
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
 
         for txn in block['body']['txns']:
+            logging.debug("Transaction hash: {}".format(txn['inner_hash']))
             tx_hash = _hexToB64(txn['inner_hash'])
             #If afterhash is specified, return from that point only
             if afterhash == '' or tx_hash == afterhash:
@@ -451,6 +452,9 @@ def get_transactions_from(address, take, afterhash = ''):
             #Outgoing
 
             input_addresses = []
+
+            if len(inputs) == 0:
+                logging.debug("No inputs")
 
             for input in inputs:
                 logging.debug("Checking input: {}".format(input))
