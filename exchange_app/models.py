@@ -229,6 +229,8 @@ def update_index(new_addr = ''):
     Update the index keeping observation addresses and blocks in which they are referred
     If new_addr is specified, scan from start and update index for the address
     """
+    if new_addr != '':
+        logging.debug("update_index: Updating index for address: {}".format(new_addr))
 
     #Get the latest block procesed in index (block height of blockchain in last update)
     collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
@@ -244,6 +246,7 @@ def update_index(new_addr = ''):
 
     if new_addr != '': #If new_addr is specified scan from the start to last index blockheight
         if collection.find_one({'address': new_addr}) is not None:   #address already indexed
+            logging.debug("update_index: address: {} already indexed".format(new_addr))
             return {}
 
         start_block = 1
@@ -254,6 +257,8 @@ def update_index(new_addr = ''):
 
 
     if start_block > block_count: #No new blocks since last update
+        if new_addr != '':
+            logging.debug("update_index: no new block since last update for address: {}".format(new_addr))
         return {}
 
     #Process unindexed blocks. Search for observed adresses and add block# to index
@@ -269,11 +274,14 @@ def update_index(new_addr = ''):
     else:
         addresses.append(new_addr)
 
-
+    if new_addr != '':
+        logging.debug("update_index: Scanning blocks {} - {} for address: {}".\
+            format(start_block, block_count, new_addr))
     #Get blocks from indexed + 1 to end in batches of 100
     step = 100   #How many blocks to retrieve in one batch
     for bn in range(start_block, block_count, step):
-
+        logging.debug("update_index: Scanning blocks: {} - {}"\
+            .format(bn, bn + step - 1))
         blocks = get_block_range(bn, bn + step - 1)
         if 'error' in blocks:
             return blocks
