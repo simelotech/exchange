@@ -432,7 +432,7 @@ def get_transactions_from(address, take, afterhash = ''):
         timestamp = block['header']['timestamp']
         if timestamp < ob_address['timestamp']:
             logging.debug("Transaction out of time: {}".format(timestamp))
-            #continue
+            continue
         timestamp = datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
 
         for txn in block['body']['txns']:
@@ -453,7 +453,9 @@ def get_transactions_from(address, take, afterhash = ''):
             input_addresses = []
 
             for input in inputs:
+                logging.debug("Checking input: {}".format(input))
                 addr = get_hash_address(input)['address']
+                logging.debug("Address from input: {}".format(addr))
 
                 if addr not in input_addresses: # count multiple inputs hashes from same address as one
                     input_addresses.append(addr)
