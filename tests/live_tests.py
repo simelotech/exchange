@@ -633,7 +633,7 @@ class LiveTestCase(unittest.TestCase):
                 '8986575765') #just some operation id
         self.assertTrue(ok)
         self.assertEqual(status, 200)
-        self._checkTransactionManyOutputsHistory(source, dest1, dest, 1000, hashHex)
+        self._checkTransactionManyOutputsHistory(source, dest1, dest2, 1000, hashHex)
         newBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(newBalance))
