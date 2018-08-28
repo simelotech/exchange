@@ -78,7 +78,7 @@ class LiveTestCase(unittest.TestCase):
             data = json.dumps(testTx),
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400) #amount to small
+        self.assertNotEqual(response.status_code, 200) #amount to small
         testTx = {
             'operationID' : "22222222"
         }
