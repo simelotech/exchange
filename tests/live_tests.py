@@ -509,11 +509,6 @@ class LiveTestCase(unittest.TestCase):
             logging.debug("Outputs to recover: {}. Total: {}".format(outputs, total))
             self._transferSKYEx(address, dest, total, outputs)
 
-    def _printOutputsForAddress(self, address):
-        result = self.makeHttpRequest("api/v1/outputs?addrs=" + address)
-        logging.debug("Outputs for address {}: {}".format( address, str(result)))
-
-
     def _pickAddresses(self):
         sourceAddress1 = ''
         sourceAddress2 = ''
@@ -582,8 +577,6 @@ class LiveTestCase(unittest.TestCase):
 
 
     def _checkTransactionSingle(self, source, dest):
-        self._printOutputsForAddress(source)
-        self._printOutputsForAddress(dest)
         previousBalance = self._getBalanceForAddresses([source,
                             dest])
         logging.debug("Balance: {}".format(previousBalance))
@@ -627,9 +620,6 @@ class LiveTestCase(unittest.TestCase):
         self._findInHistory(historyTo2, source, dest2, coins, hash)
 
     def _checkTransactionManyOutputs(self, source, dest1, dest2):
-        self._printOutputsForAddress(source)
-        self._printOutputsForAddress(dest1)
-        self._printOutputsForAddress(dest2)
         previousBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(previousBalance))
