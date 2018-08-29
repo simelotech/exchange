@@ -319,6 +319,7 @@ class LiveTestCase(unittest.TestCase):
                 content_type='application/json'
             )
             if response.status_code != 200:
+                logging.debug("Error creating transaction: {}".format(response.text))
                 return False, response.status_code, ""
             json_response = json.loads(response.get_data(as_text=True))
             self.assertIn('transactionContext', json_response)
@@ -346,6 +347,7 @@ class LiveTestCase(unittest.TestCase):
                 content_type='application/json'
             )
             if response.status_code != 200:
+                logging.debug("Error creating transaction: {}".format(response.text))
                 return False, response.status_code, ""
             json_response = json.loads(response.get_data(as_text=True))
             self.assertIn('transactionContext', json_response)
@@ -362,6 +364,7 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         if response.status_code != 200:
+            logging.debug("Error signing transaction: {}".format(response.text))
             return False, response.status_code, ""
         json_response = json.loads(response.get_data(as_text=True))
         self.assertIn('signedTransaction', json_response)
@@ -378,6 +381,7 @@ class LiveTestCase(unittest.TestCase):
             content_type='application/json'
         )
         if response.status_code != 200:
+            logging.debug("Error broadcasting transaction: {}".format(response.text))
             return False, response.status_code, ""
 
         confirmed, hashHex = self._waitForTransactionConfirmation(signedTransaction)
@@ -625,8 +629,8 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("Balance: {}".format(previousBalance))
         ok, status, hashHex = self._transferSKY(source, [dest1, dest2], [1000, 1000],
                 '8986575765') #just some operation id
-        self.assertTrue(ok)
         self.assertEqual(status, 200)
+        self.assertTrue(ok)
         self._checkTransactionManyOutputsHistory(source, dest1, dest2, 1000, hashHex)
         newBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
