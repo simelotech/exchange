@@ -229,8 +229,6 @@ def update_index(new_addr = ''):
     Update the index keeping observation addresses and blocks in which they are referred
     If new_addr is specified, scan from start and update index for the address
     """
-    if new_addr != '':
-        logging.debug("update_index: Updating index for address: {}".format(new_addr))
 
     #Get the latest block procesed in index (block height of blockchain in last update)
     collection = mongo.db.observed_index  #this colection will store the index for addresses in observation list
@@ -257,8 +255,8 @@ def update_index(new_addr = ''):
 
 
     if start_block > block_count: #No new blocks since last update
-        if new_addr != '':
-            logging.debug("update_index: no new block since last update for address: {}".format(new_addr))
+        logging.debug("update_index: no new block since last update. " + \
+            "start block: {} block count: {}".format(start_block, block_count))
         return {}
 
     #Process unindexed blocks. Search for observed adresses and add block# to index
@@ -274,13 +272,12 @@ def update_index(new_addr = ''):
     else:
         addresses.append(new_addr)
 
-    if new_addr != '':
-        logging.debug("update_index: Scanning blocks {} - {} for address: {}".\
-            format(start_block, block_count, new_addr))
+    logging.debug("update_index: Scanning blocks {} - {} for addresses: {}" \
+            .format(start_block, block_count, addresses))
     #Get blocks from indexed + 1 to end in batches of 100
     step = 100   #How many blocks to retrieve in one batch
     for bn in range(start_block, block_count, step):
-        logging.debug("update_index: Scanning blocks: {} - {}"\
+        logging.debug("update_index: Scanning blocks: {} - {}" \
             .format(bn, bn + step - 1))
         blocks = get_block_range(bn, bn + step - 1)
         if 'error' in blocks:
@@ -309,6 +306,7 @@ def update_index(new_addr = ''):
 
                         #Add this blocknum to index for addr
                         if not addr in indexed_addresses:  # Make sure the blocknum is added only once to addr index
+                            logging.debug("update_index: Adding block: {}".format(blocknum))
                             collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
                             indexed_addresses.append(addr)
 
@@ -329,6 +327,7 @@ def update_index(new_addr = ''):
 
                         #Add this blocknum to index for addr
                         if not addr in indexed_addresses:
+                            logging.debug("update_index: Adding block: {}".format(blocknum))
                             collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
                             indexed_addresses.append(addr)
 
