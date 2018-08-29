@@ -306,7 +306,6 @@ def update_index(new_addr = ''):
 
                         #Add this blocknum to index for addr
                         if not addr in indexed_addresses:  # Make sure the blocknum is added only once to addr index
-                            logging.debug("update_index: Adding block: {}".format(blocknum))
                             collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
                             indexed_addresses.append(addr)
 
@@ -327,7 +326,6 @@ def update_index(new_addr = ''):
 
                         #Add this blocknum to index for addr
                         if not addr in indexed_addresses:
-                            logging.debug("update_index: Adding block: {}".format(blocknum))
                             collection.update({'address': addr}, {'$push':{'blocks': blocknum}}, upsert = True)
                             indexed_addresses.append(addr)
 
