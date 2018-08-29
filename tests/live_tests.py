@@ -232,15 +232,22 @@ class LiveTestCase(unittest.TestCase):
         encoded_transaction = transaction["encoded_transaction"]
         CSRF_token = self._getCSRFToken()
         data = {"rawtx" : encoded_transaction}
-        logging.debug("Calling skycoin to broadcast transaction")
-        response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
-                '/api/v1/injectTransaction'),
-                data=json.dumps(data),
-                headers={'X-CSRF-Token': CSRF_token['csrf_token'],
-                "Content-Type" : "application/json"},
-                verify = app_config.VERIFY_SSL)
-        if response.status_code != 200:
-            raise Exception("Error broadcasting transaction: {}".format(response.text))
+        broadcasted = False
+        tries = 3
+        while not broadcasted and tries > 0:
+            tries -= 1
+            logging.debug("Calling skycoin to broadcast transaction")
+            response = app.lykke_session.post(form_url(app_config.SKYCOIN_NODE_URL,
+                    '/api/v1/injectTransaction'),
+                    data=json.dumps(data),
+                    headers={'X-CSRF-Token': CSRF_token['csrf_token'],
+                    "Content-Type" : "application/json"},
+                    verify = app_config.VERIFY_SSL)
+            if response.status_code != 200:
+                if tries == 0:
+                    raise Exception("Error broadcasting transaction: {}".format(response.text))
+            else:
+                broadcasted = True
         confirmed, hashHex = self._waitForTransactionConfirmation(encoded_transaction)
         if not confirmed:
             raise Exception("Transaction not confirmed")
@@ -378,15 +385,22 @@ class LiveTestCase(unittest.TestCase):
             "operationId" : operationId,
             "signedTransaction" : signedTransaction,
         }
-        response = self.app.post(
-            '/v1/api/transactions/broadcast',
-            data = json.dumps(data),
-            content_type='application/json'
-        )
-        response_text = response.get_data(as_text=True)
-        if response.status_code != 200:
-            logging.debug("Error broadcasting transaction: {}".format(response_text))
-            return False, response.status_code, ""
+        tries = 3
+        broadcasted = False
+        while not broadcasted and tries > 0:
+            tries -= 1
+            response = self.app.post(
+                '/v1/api/transactions/broadcast',
+                data = json.dumps(data),
+                content_type='application/json'
+            )
+            response_text = response.get_data(as_text=True)
+            if response.status_code != 200:
+                logging.debug("Error broadcasting transaction: {}".format(response_text))
+                if tries == 0:
+                    return False, response.status_code, ""
+            else:
+                broadcasted = True
 
         confirmed, hashHex = self._waitForTransactionConfirmation(signedTransaction)
         if not confirmed:
