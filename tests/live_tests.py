@@ -318,10 +318,11 @@ class LiveTestCase(unittest.TestCase):
                 data = json.dumps(testTx),
                 content_type='application/json'
             )
+            response_text = response.get_data(as_text=True)
             if response.status_code != 200:
-                logging.debug("Error creating transaction: {}".format(response.text))
+                logging.debug("Error creating transaction: {}".format(response_text))
                 return False, response.status_code, ""
-            json_response = json.loads(response.get_data(as_text=True))
+            json_response = json.loads(response_text)
             self.assertIn('transactionContext', json_response)
             transaction_context = json_response['transactionContext']
         else:
@@ -346,10 +347,11 @@ class LiveTestCase(unittest.TestCase):
                 data = json.dumps(testTx),
                 content_type='application/json'
             )
+            response_text = response.get_data(as_text=True)
             if response.status_code != 200:
-                logging.debug("Error creating transaction: {}".format(response.text))
+                logging.debug("Error creating transaction: {}".format(response_text))
                 return False, response.status_code, ""
-            json_response = json.loads(response.get_data(as_text=True))
+            json_response = json.loads(response_text)
             self.assertIn('transactionContext', json_response)
             transaction_context = json_response['transactionContext']
 
@@ -363,10 +365,11 @@ class LiveTestCase(unittest.TestCase):
             data = json.dumps(data),
             content_type='application/json'
         )
+        response_text = response.get_data(as_text=True)
         if response.status_code != 200:
-            logging.debug("Error signing transaction: {}".format(response.text))
+            logging.debug("Error signing transaction: {}".format(response_text))
             return False, response.status_code, ""
-        json_response = json.loads(response.get_data(as_text=True))
+        json_response = json.loads(response_text)
         self.assertIn('signedTransaction', json_response)
         signedTransaction = json_response['signedTransaction']
 
@@ -380,8 +383,9 @@ class LiveTestCase(unittest.TestCase):
             data = json.dumps(data),
             content_type='application/json'
         )
+        response_text = response.get_data(as_text=True)
         if response.status_code != 200:
-            logging.debug("Error broadcasting transaction: {}".format(response.text))
+            logging.debug("Error broadcasting transaction: {}".format(response_text))
             return False, response.status_code, ""
 
         confirmed, hashHex = self._waitForTransactionConfirmation(signedTransaction)
