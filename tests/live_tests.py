@@ -707,7 +707,7 @@ class LiveTestCase(unittest.TestCase):
         json_response = json.loads(response.get_data(as_text=True))
         logging.debug("Balances: {}".format(json_response))
         for address in addressBalances:
-            if address['address'] == 0: #no zero balances
+            if address['balance'] == 0: #no zero balances
                 continue
             addressFound = False
             for item in json_response['items']:
