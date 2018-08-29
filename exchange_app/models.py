@@ -276,7 +276,7 @@ def update_index(new_addr = ''):
             .format(start_block, block_count, addresses))
     #Get blocks from indexed + 1 to end in batches of 100
     step = 100   #How many blocks to retrieve in one batch
-    for bn in range(start_block, block_count, step):
+    for bn in range(start_block, block_count + 1, step):
         logging.debug("update_index: Scanning blocks: {} - {}" \
             .format(bn, bn + step - 1))
         blocks = get_block_range(bn, bn + step - 1)
