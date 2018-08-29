@@ -1,5 +1,3 @@
-from flask import Blueprint
-
-api = Blueprint('api', __name__)
+from ..common import api
 
 from . import address, wallets, assets, capabilities, isalive, balances, history, transactions
