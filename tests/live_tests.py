@@ -29,19 +29,19 @@ class LiveTestCase(unittest.TestCase):
         destAddress1 = self._lockAddress()
         destAddress2 = self._lockAddress()
 
-        #self._addToBalanceObservations(sources + [destAddress1, destAddress2])
+        self._addToBalanceObservations(sources + [destAddress1, destAddress2])
         self._addToHistoryObservations(sources,
             [destAddress1, destAddress2])
         self._checkTransactionSingle(sourceAddress1, destAddress1)
         self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
+        self._removeFromBalanceObservations(sources + [destAddress1, destAddress2])
         self._addToHistoryObservations(sources,
             [destAddress1, destAddress2])
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
         self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
-        #self._removeFromBalanceObservations(sources + [destAddress1, destAddress2])
         self._checkNotObservedHistoryFail(sourceAddress1, destAddress1)
         if sourceAddress1 != '':
             self._freeAddress(sourceAddress1)
@@ -588,7 +588,7 @@ class LiveTestCase(unittest.TestCase):
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
-        #self._checkBalances([{'address' : source, 'balance' : newBalance[source]}])
+        self._checkBalances([{'address' : source, 'balance' : newBalance[source]}])
         self.assertEqual(previousBalance[source],
             newBalance[source] + 1000,
             "Address {0} should have lost 1000 droplets".format(source))
