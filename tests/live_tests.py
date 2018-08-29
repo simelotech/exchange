@@ -604,13 +604,16 @@ class LiveTestCase(unittest.TestCase):
         logging.debug("Balance: {}".format(previousBalance))
         ok, status, hashHex = self._transferSKY(source, [dest], [1000],
                 '4324432444332') #just some operation id
-        self._checkTransactionSingleHistory(source, dest, 1000, hashHex)
         self.assertTrue(ok)
         self.assertEqual(status, 200)
+        self._checkTransactionSingleHistory(source, dest, 1000, hashHex)
         newBalance = self._getBalanceForAddresses([source,
                 dest])
         logging.debug("Balance: {}".format(newBalance))
-        self._checkBalances([{'address' : source, 'balance' : newBalance[source]}])
+        self._checkBalances([{'address' : source,
+            'balance' : newBalance[source]},
+            {'address' : dest,
+                'balance' : newBalance[dest]}])
         self.assertEqual(previousBalance[source],
             newBalance[source] + 1000,
             "Address {0} should have lost 1000 droplets".format(source))
@@ -653,6 +656,12 @@ class LiveTestCase(unittest.TestCase):
         newBalance = self._getBalanceForAddresses([source,
                             dest1, dest2])
         logging.debug("Balance: {}".format(newBalance))
+        self._checkBalances([{'address' : source,
+            'balance' : newBalance[source]},
+            {'address' : dest1,
+                'balance' : newBalance[dest1]},
+            {'address' : dest2,
+                'balance' : newBalance[dest2]}])
         self.assertEqual(previousBalance[source],
             newBalance[source] + 2000,
             "Address {0} should have lost 2000 droplets".format(source))
@@ -697,14 +706,19 @@ class LiveTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))
         logging.debug("Balances: {}".format(json_response))
-        for item in json_response['items']:
-            for address in addressBalances:
+        for address in addressBalances:
+            addressFound = False
+            for item in json_response['items']:
                 if address['address'] == item['address']:
                     item_balance = float(item['balance'])
                     item_balance = round(item_balance, 6)
                     item_balance *= 1e6
-                    self.assertEqual(address['balance'], item_balance,
-                        "Balance mismatch")
+                    if address['balance'] == item_balance:
+                        addressFound = True
+                        break
+            self.assertTrue(addressFound,
+                "Address: {} not match in balance result".format(address))
+
 
     def _addToBalanceObservations(self, addresses):
         for address in addresses:
