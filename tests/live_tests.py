@@ -35,11 +35,11 @@ class LiveTestCase(unittest.TestCase):
         self._checkTransactionSingle(sourceAddress1, destAddress1)
         self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
-        self._removeFromBalanceObservations(sources + [destAddress1, destAddress2])
         self._addToHistoryObservations(sources,
             [destAddress1, destAddress2])
         self._checkTransactionManyOutputs(sourceAddress2,
                 destAddress1, destAddress2)
+        self._removeFromBalanceObservations(sources + [destAddress1, destAddress2])
         self._removeFromHistoryObservations(sources,
             [destAddress1, destAddress2])
         self._checkNotObservedHistoryFail(sourceAddress1, destAddress1)
